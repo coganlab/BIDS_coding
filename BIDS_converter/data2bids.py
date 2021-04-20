@@ -244,8 +244,9 @@ class Data2Bids(): #main conversion and file organization program
             else:
                 newdir = bids_dir
             if os.path.isdir(newdir):
-                proc = subprocess.Popen("rm -rf {file}".format(file=newdir), shell=True, stdout=subprocess.PIPE)
-                proc.communicate()
+                self.force_remove(newdir)
+                #proc = subprocess.Popen("rm -rf {file}".format(file=newdir), shell=True, stdout=subprocess.PIPE)
+                #proc.communicate()
             os.mkdir(newdir)
             bids_dir = newdir
         self._bids_dir = bids_dir
@@ -488,7 +489,7 @@ class Data2Bids(): #main conversion and file organization program
             return list(obj)
         raise TypeError
 
-    def force_remove(self, func, mypath, excinfo):
+    def force_remove(self, mypath):
 
         if os.path.isfile(mypath):
             os.remove(mypath)
@@ -497,7 +498,6 @@ class Data2Bids(): #main conversion and file organization program
                 self.delete_folder(Path(mypath))
         except OSError:
             shutil.rmtree(mypath,ignore_errors=True)
-        func(mypath)
 
     def delete_folder(self, pth):
         for sub in pth.iterdir() :
@@ -674,6 +674,9 @@ class Data2Bids(): #main conversion and file organization program
                         continue
                     elif re.match(".*?" + ".mat", file):
                         self.mat2tsv(src_file_path)
+                        shutil.move(src_file_path.split(".mat")[0]+".tsv", 
+                            self._bids_dir + "/sub-" + part_match + "/" +
+                            os.path.basename(src_file_path).split(".mat")[0]+".tsv")
                         continue
                         # if the file doesn't match the extension, we skip it
                     elif not any(re.match(".*?" + ext, file) for ext in curr_ext):
@@ -785,13 +788,22 @@ class Data2Bids(): #main conversion and file organization program
         if isinstance(mat,dict): #if .mat is a struct
             for i in list(mat):
                 if "__" not in i and "readme" not in i:
-                    with open(mat_file.split(".mat").group(0)+".tsv","wt") as fp :
+                    print(mat_file.split(".mat")[0]+".tsv")
+                    with open(mat_file.split(".mat")[0]+".tsv","wt") as fp :
                         tsv_writer = csv.writer(fp, delimiter="\t")
-                        tsv_writer.writerow(mat[i].dtype.names)
-                        if len(mat[i]) == 1:
-                            tsv_writer.writerows(mat[i][0].tolist())
-                        else:
-                            tsv_writer.writerows(mat[i].tolist())
+                        if mat[i].dtype.names is not None:
+                            tsv_writer.writerow(mat[i].dtype.names)
+                            if len(mat[i]) == 1:
+                                tsv_writer.writerows(mat[i][0].tolist())
+                            else:
+                                tsv_writer.writerows(mat[i].tolist())
+                        else: #is cell array of structs
+                            tsv_writer.writerow(mat[i][0,0].dtype.names)
+                            for j in range(len(mat[i][0])):
+                                if len(mat[i][0,j]) == 1:
+                                    tsv_writer.writerows(mat[i][0,j][0].tolist())
+                                else:
+                                    tsv_writer.writerows(mat[i][0,j].tolist())
         elif isinstance(mat,list): #if .mat is cell array
             print("\n No support for cell arrays yet")
         elif isinstance(mat,np.ndarray): #if .mat is matlab array
