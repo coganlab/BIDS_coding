@@ -1,0 +1,38 @@
+{"dataFormat" : [".nii", ".nii.gz", ".gz", ".edf", ".mgz", ".txt", ".mat"]
+, "compress" : true
+, "repetitionTimeInSec" : 2
+, "delayTimeInSec" : [ 0.028, 0.013, 0.026, 0.040]
+, "series" : "odd-interleaved"
+, "anat": {"left" : ".*?"
+    , "right" : ".*?"
+    , "content" : [ ["T1w","T1"]
+                    ,["CT","CT"]
+]
+    }   
+, "ieeg": {"left" : ".*?"
+            , "right" : ".*?"
+            , "content" : [   ["ieeg",".edf"]
+                            ]
+            }
+, "ieeg.task": {"left" : "_"
+            , "right" : ".*?"
+            , "content" : [ ["Phoneme_Sequence","PHONEMESEQUENCE"]
+         ]
+            }
+, "sessLabel" : {"left" : "_"
+                , "right" : "_"
+                , "content" :   ["[0-9]{2}"]
+                }
+, "runIndex" : {"left" : "run"
+                , "right" : "_"
+                , "content" : ["[0-9]{2}"]
+                }
+, "partLabel" : {"left" : ".*?"
+                , "right" : "[_ ]"
+                , "content" : ["D[0-9]{1,4}"]
+                }
+, "echo" : {"left" : "e"
+    , "right" : "\\."
+    , "content" : ["[0-9]{2}"]
+    }
+}
