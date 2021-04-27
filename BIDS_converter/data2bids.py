@@ -93,6 +93,14 @@ def get_parser(): #parses flags at onset of command
         )
 
     parser.add_argument(
+        "-ow"
+        , "--overwrite"
+        , required=False
+        , action='store_true' 
+        , help="overwrite preexisting BIDS file structures in destination location",
+        )
+
+    parser.add_argument(
         "-verb"
         , "--verbose"
         , required=False
@@ -104,7 +112,9 @@ def get_parser(): #parses flags at onset of command
 
 class Data2Bids(): #main conversion and file organization program
 
-    def __init__(self, input_dir=None, config=None, output_dir=None, DICOM_path=None, multi_echo=None, verbose=False): #sets the .self globalization for self variables
+    def __init__(self, input_dir=None, config=None, output_dir=None, 
+    DICOM_path=None, multi_echo=None, overwrite=False, verbose=False): 
+    #sets the .self globalization for self variables
         self._input_dir = None
         self._config_path = None
         self._config = None
@@ -112,12 +122,17 @@ class Data2Bids(): #main conversion and file organization program
         self._bids_version = "1.5.2"
         self._dataset_name = None
 
+        self.set_overwrite(overwrite)
         self.set_data_dir(input_dir,DICOM_path)
         self.set_config_path(config)
         self.set_bids_dir(output_dir)
         self.set_DICOM(DICOM_path)
         self.set_multi_echo(multi_echo)
         self.set_verbosity(verbose)
+        
+
+    def set_overwrite(self,overwrite):
+        self._is_overwrite = overwrite
 
     def set_verbosity(self,verbose):
         self._is_verbose = verbose
@@ -238,17 +253,21 @@ class Data2Bids(): #main conversion and file organization program
                 self._bids_dir = os.path.join(self._data_dir, self._dataset_name + "_BIDS")
             except TypeError:
                 print("Error: Please provide input data directory if no BIDS directory...")
+        
         else: #deleting old BIDS to make room for new 
-            if not os.path.basename(os.path.normpath(bids_dir)) == "BIDS":
+            if not os.path.basename(bids_dir) == "BIDS":
                 newdir = os.path.join(bids_dir,"BIDS")
             else:
                 newdir = bids_dir
-            if os.path.isdir(newdir):
+            if not os.path.isdir(newdir):
+                os.mkdir(newdir)
+            elif self._is_overwrite:
                 self.force_remove(newdir)
+                os.mkdir(newdir)
+            bids_dir = newdir
                 #proc = subprocess.Popen("rm -rf {file}".format(file=newdir), shell=True, stdout=subprocess.PIPE)
                 #proc.communicate()
-            os.mkdir(newdir)
-            bids_dir = newdir
+            
         self._bids_dir = bids_dir
 
     def get_bids_version(self):
@@ -1010,6 +1029,7 @@ def rot_z(alpha):
 
 def main():
     args = get_parser().parse_args()
+    print(args)
     data2bids = Data2Bids(**vars(args))
     data2bids.run()
     
