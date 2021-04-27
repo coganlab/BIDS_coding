@@ -27,8 +27,11 @@ for SUB_ID in ${SUB_IDS[@]}
      do
         find "$ORIG_DATA_DIR/D_Data/$TASK/$SUB_ID" -name "$SUB_ID*.edf" -type f -exec cp -t "$OUTPUT_DIR/$SUB_ID/" {} +
         find "$ORIG_DATA_DIR/D_Data/$TASK/$SUB_ID" -regex ".*\/mat\/.*[tT]rial[(Info)s].*\.mat" -exec cp -t "$OUTPUT_DIR/$SUB_ID/" {} + 
+
+        find "$OUTPUT_DIR/$SUB_ID" -type f -regex ".*[tT]rial[(Info)s].*\.mat" | xargs -n 1 basename | xargs -I{} mv "$OUTPUT_DIR/$SUB_ID/{}" "$OUTPUT_DIR/$SUB_ID/${SUB_ID}_${TASK}_{}"
     done
     
+
         
     #the big bad python code to convert the renamed files to BIDS
     #requires numpy, nibabel, and pathlib modules
