@@ -6,7 +6,7 @@ They can also be run in the command line and will automatically iterate through 
 
 # Dependencies 
 Software:
-Afni, Freesurfer, Fsl, Anaconda (python 3.3)
+Afni, Freesurfer, Fsl, Anaconda (python 3.8)
 
 ### Python packages: 
 boto3, pathlib, pybids, pydicom, nipype, pip, tedana, scipy
