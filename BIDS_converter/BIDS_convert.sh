@@ -1,7 +1,7 @@
 #
     
 ORIG_DATA_DIR="/media/sf_Box_Sync/CoganLab"
-SUB_IDS=(D47 D48) 
+SUB_IDS=(D52 D48) 
 TASKS=(Phoneme_sequencing)
 
 #declare -l mylist[30]
