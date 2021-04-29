@@ -1,4 +1,9 @@
 {"dataFormat" : [".nii", ".nii.gz", ".gz", ".edf", ".mgz", ".txt", ".mat"]
+,"eventFormat" : ["Subject", "Trial", "Rec", "Day", "FilenamePrefix", "Start",
+    "Auditory", "Go", "StartCode", "AuditoryCode", "GoCode", "Noisy", "NoResponse",
+    "ResponseStart","ResponseEnd","cue", "sound", "go", "cueTime", "block", "cueStart",
+     "Trigger", "cueEnd", "audioStart", "audioAlignedTrigger", "delStart", "delEnd",
+      "goStart", "goEnd", "respStart", "respEnd", "isiStart", "isiEnd", "tCaptureStart"]
 , "compress" : true
 , "repetitionTimeInSec" : 2
 , "delayTimeInSec" : [ 0.028, 0.013, 0.026, 0.040]

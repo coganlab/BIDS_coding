@@ -41,7 +41,7 @@ def get_parser(): #parses flags at onset of command
          Data2bids documentation at https://github.com/SIMEXP/Data2Bids
          Dcm2niix documentation at https://github.com/rordenlab/dcm2niix"""
         , epilog="""
-            Made by Aaron Earle-Richardson (ame224@cornell.edu)
+            Made by Aaron Earle-Richardson (ae166@duke.edu)
             """)
 
     group = parser.add_mutually_exclusive_group(required=True)
@@ -811,11 +811,18 @@ class Data2Bids(): #main conversion and file organization program
                     with open(mat_file.split(".mat")[0]+".tsv","wt") as fp :
                         tsv_writer = csv.writer(fp, delimiter="\t")
                         if mat[i].dtype.names is not None:
+                            '''
+                            df = pd.DataFrame(np.stack(mat[i][0].tolist(),axis=0)[:,:,0], columns = mat[i].dtype.names)
+                            for k in df.columns:
+                                if k not in self._config["eventFormat"];
+                                    df.drop(columns=k)
+                            '''
+                                    
                             tsv_writer.writerow(mat[i].dtype.names)
                             if len(mat[i]) == 1:
-                                tsv_writer.writerows(mat[i][0].tolist())
+                                tsv_writer.writerows(np.stack(mat[i][0].tolist(),axis=0)[:,:,0])
                             else:
-                                tsv_writer.writerows(mat[i].tolist())
+                                tsv_writer.writerows(np.stack(mat[i].tolist(),axis=0)[:,:,0])
                         else: #is cell array of structs
                             tsv_writer.writerow(mat[i][0,0].dtype.names)
                             for j in range(len(mat[i][0])):
@@ -887,29 +894,11 @@ class Data2Bids(): #main conversion and file organization program
                                         fields[runnum-1].append(float(field))
                                         categories[runnum-1].append(category)
                                         writenames[runnum-1].append(dst_file_path_list[i] + name)
-                                    '''
-                                    else:
-                                        tempTRfields[runnum-1].append(field)
-                                        tempTRcategories[runnum-1].append(category)
-                                    '''
                                 break
                             i+=1
                         except AttributeError:
                             print(str(runnum) +"is not in this list:" )
         for j in range(max(run_list)): #actually writing the file
-            '''
-            k = 0
-            for i in range(len(fields[j])): 
-                if k < len(tempTRcategories[j]):
-                    if categories[j][i] == tempTRcategories[j][k]:
-                        TRcategories[j].append(categories[j][i])
-                        TRfields[j].append(tempTRfields[j][k])
-                        k += 1
-                    else:
-                        TRcategories[j].append(None)
-                        TRfields[j].append('0')
-                    #print(len(TRfields[j]))
-            '''
             if fields[j]:
                 #print(len(fields[j]), len(TRfields[j]))
                 categories[j] = [categories[j] for _,categories[j] in sorted(zip(fields[j],categories[j]))]
@@ -1029,7 +1018,7 @@ def rot_z(alpha):
 
 def main():
     args = get_parser().parse_args()
-    print(args)
+    #print(args)
     data2bids = Data2Bids(**vars(args))
     data2bids.run()
     
