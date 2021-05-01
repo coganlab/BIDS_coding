@@ -128,7 +128,7 @@ class Preprocessing():
                         if parsestr[i+1] not in "0123456789":
                             if parsestr[i-1] in "0123456789":
                                 patterns += parsestr[i-1:i+1]
-                            elif parsestr[i] is "0":
+                            elif parsestr[i] == "0":
                                     ".*".join(patterns.split(".*")[:-1]) 
                             else:
                                 patterns += parsestr[i].zfill(2)
