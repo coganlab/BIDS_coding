@@ -36,5 +36,5 @@ jobs:
         flake8 . --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
     - name: Test with pytest
       run: |
-        pytest preprocess.py
-        pytest BIDS_converter/data2bids.py
+        pytest preprocess.py -W ignore::DeprecationWarning
+        pytest BIDS_converter/data2bids.py -W ignore::DeprecationWarning
