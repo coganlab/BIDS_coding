@@ -4,8 +4,10 @@ These scripts are intended for the creation and manipulation of BIDS compliant I
 Each python script can be run repreatedly using an iterator shell script like the one within the bids converter.
 They can also be run in the command line and will automatically iterate through a whole dataset if the top folder is indicated in the command.
 
+BIDS_converter methodology is based off of [this project](https://github.com/SIMEXP/Data2Bids)
+
 # Dependencies 
-Software:
+Software (as needed only):
 Afni, Freesurfer, Fsl, Anaconda (python 3.8)
 
 ### Python packages: 
@@ -15,7 +17,7 @@ boto3, pathlib, pybids, pydicom, nipype, pip, tedana, scipy
 [bids-validator](https://github.com/bids-standard/bids-validator)
 
 ### Ubuntu packages:
-dcm2niix, pigz
+[dcm2niix](https://github.com/rordenlab/dcm2niix), pigz
 
 # Host Requirements
 
