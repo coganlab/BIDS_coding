@@ -603,7 +603,7 @@ if __name__ == "__main__":
             newname = os.path.join(fobj.dirname, "run-{r}_basestack.nii.gz".format(r=run))
             if len(fobjs) >= 2: #multi echo
                 pre.zcat(fobjs,newname)
-                t2smap_workflow(newname,echo_times,label="run-{r}_t2".format(r=run))
+                t2smap_workflow(newname,echo_times)#,label="run-{r}_t2".format(r=run))
             elif len(fobjs) == 1: #single echo
                 newname = fobjs[0]
             else:
