@@ -715,15 +715,18 @@ class Data2Bids(): #main conversion and file organization program
                         continue
                     except OSError: #problem spot, may miss deleting some files causing them to erroneously carry over
                         shutil.rmtree(self._bids_dir + "/sub-" + part_match,ignore_errors=True) 
-                
+                    except TypeError: #problem spot, may miss deleting some files causing them to erroneously carry over
+                        shutil.rmtree(self._bids_dir + "/sub-" + part_match,ignore_errors=True) 
+
                     try:
                         (new_name,dst_file_path,_,
                          _,echo_match,sess_match,_,
                          data_type_match,task_label_match,_) = self.generate_names(part_match, src_file_path, file)
                     
-                    except TypeError as problem:
-                        print("\n Issue in generate names")
+                    except TypeError as problem: #
+                        print("\nIssue in generate names")
                         print("problem with %s:" %src_file_path, problem,"\n")
+                        
                         continue
 
                     # Creating the directory where to store the new file

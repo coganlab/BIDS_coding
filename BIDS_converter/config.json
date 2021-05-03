@@ -22,11 +22,18 @@
 , "ieeg.task": {"left" : "_"
             , "right" : ".*?"
             , "content" : [ ["Phoneme_Sequence","PHONEMESEQUENCE"]
-         ]
-            }
-, "sessLabel" : {"left" : "_"
-                , "right" : "_"
-                , "content" :   ["[0-9]{2}"]
+                            ,["Phoneme_Sequence", "PhonemeSequence"]
+]
+    }
+, "ieeg.loc":{"left" : ".*?"
+    , "right" : ".*?"
+    , "content" : [   ["RAS",".txt"]
+                    ]
+    }
+            
+, "sessLabel" : {"left" : ".*?"
+                , "right" : "\\.[(edf)(mat)]"
+                , "content" :   ["[0-9]"]
                 }
 , "runIndex" : {"left" : "run"
                 , "right" : "_"
