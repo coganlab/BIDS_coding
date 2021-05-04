@@ -1,4 +1,5 @@
 # Work in Progress
+See issues for update on code completion progress
 
 # BIDS_coding
 These scripts are intended for the creation and manipulation of BIDS compliant IEEG data set to the new [specifications](https://bids-specification.readthedocs.io/en/stable/04-modality-specific-files/04-intracranial-electroencephalography.html).
