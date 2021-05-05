@@ -1,6 +1,6 @@
-#
+#!/bin/bash
     
-ORIG_DATA_DIR="/media/sf_Box_Sync/CoganLab"
+ORIG_DATA_DIR="/home/sbf/Desktop/share/CoganLab"
 SUB_IDS=(D52 D48) 
 TASKS=(Phoneme_sequencing)
 
@@ -10,7 +10,7 @@ TASKS=(Phoneme_sequencing)
 for TASK in ${TASKS[@]}
  do
 
-    OUTPUT_DIR="/media/sf_Ubuntu_files/Workspace/$TASK" 
+    OUTPUT_DIR="/home/sbf/Desktop/Workspace/$TASK" 
     BIDS_DIR="$OUTPUT_DIR/BIDS"
     
     if [ -d $BIDS_DIR ]
@@ -49,7 +49,7 @@ for TASK in ${TASKS[@]}
         #requires numpy, nibabel, and pathlib modules
         python3 data2bids.py -c config.json -i "$OUTPUT_DIR/$SUB_ID" -o $BIDS_DIR || { echo "BIDS conversion for $SUB_ID failed, trying next subject" ; continue; }
 
-        RAN_SUBS+=${SUB_ID}" "
+        [[ $RAN_SUBS =~ (^| )$SUB_ID( |$) ]] || RAN_SUBS+=${SUB_ID}" "
         [[ $RAN_TASKS =~ (^| )$TASK( |$) ]] || RAN_TASKS+=${TASK}" "
         printf "subjects ran: $RAN_SUBS\ntasks ran: $RAN_TASKS\n"    
     done

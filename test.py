@@ -8,10 +8,10 @@ import pandas as pd
 
 if __name__ == '__main__':
 
-    with open('/media/sf_Ubuntu_files/git/Cogan_BIDS/BIDS_converter/config.json', 'r') as fst:
+    with open('BIDS_converter/config.json', 'r') as fst:
         config = json.load(fst)
-    mat1 = sio.loadmat('/media/sf_Ubuntu_files/Workspace/Phoneme_Sequencing/D48/D48_Trials.mat')
-    mat2 = sio.loadmat('/media/sf_Ubuntu_files/Workspace/Phoneme_Sequencing/D48/D48_trialInfo.mat')
+    mat1 = sio.loadmat("/home/sbf/Desktop/Workspace/Phoneme_sequencing/D48/D48_Trials.mat")
+    mat2 = sio.loadmat("/home/sbf/Desktop/Workspace/Phoneme_sequencing/D48/D48_trialInfo.mat")
 
     newmat = np.ndarray(shape=(208,0), dtype=float, order='F')
     newmat_names = []
@@ -24,11 +24,11 @@ if __name__ == '__main__':
                     print(np.transpose(mat1[i][j]).shape, newmat.shape)
                     newmat = np.append(newmat, np.transpose(mat1[i][j]),axis=1)
                     newmat_names.append((j,'0'))
-    print(type(newmat_names),newmat.dtype.fields)
-    mat1 = np.array(newmat,dtype=newmat_names)
-    print(mat1.dtype, "here")
-    mat1.dtype = newmat_names
-    print(mat1)
+            print(newmat_names,"\n",type(mat1[i].dtype))
+            mat1[i] = np.array(newmat,dtype=newmat_names)
+            print(mat1[i].dtype, "here")
+            mat1[i].dtype = newmat_names
+            print(mat1[i])
         
 
 
