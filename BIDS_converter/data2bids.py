@@ -16,6 +16,8 @@ import subprocess
 from pathlib import Path
 import pydicom as dicom
 import scipy.io as sio
+loadmat = sio.loadmat
+import pandas as pd
 
 def get_parser(): #parses flags at onset of command
     parser = argparse.ArgumentParser(
@@ -806,21 +808,31 @@ class Data2Bids(): #main conversion and file organization program
             print("Warning: No parameters are defined !")        
 
     def mat2tsv(self, mat_file):
-        mat = sio.loadmat(mat_file)
+        mat = loadmat(mat_file)
         if isinstance(mat,dict): #if .mat is a struct
             for i in list(mat):
                 if "__" not in i and "readme" not in i:
                     print(mat_file.split(".mat")[0]+".tsv")
+                    newmat = np.ndarray(shape=(208,0), dtype=float, order='F')
+                    newmat_names = []
+                    newmat_dtype = []
+                    if mat[i].dtype.names is not None:
+                        for j in mat[i].dtype.names:
+                            #print(np.transpose(mat1[i][j]).shape, newmat.shape)
+                            newmat = np.append(newmat, np.transpose(mat[i][j]),axis=1)
+                            newmat_names.append(j)
+                            newmat_dtype.append(mat[i][j][0][0].dtype)
+                        df = pd.DataFrame(newmat,columns=newmat_names)
+                        
+                        #Set correct data types for smooth looking data in .tsv format
+                        for k in range(len(newmat_names)):
+                            df[newmat_names[k]] = df[newmat_names[k]].astype(newmat_dtype[k])
+                        #print(df)
+                        df.to_csv(mat_file.split(".mat")[0]+".tsv",sep="\t")
+                    '''
                     with open(mat_file.split(".mat")[0]+".tsv","wt") as fp :
                         tsv_writer = csv.writer(fp, delimiter="\t")
-                        if mat[i].dtype.names is not None:
-                            '''
-                            df = pd.DataFrame(np.stack(mat[i][0].tolist(),axis=0)[:,:,0], columns = mat[i].dtype.names)
-                            for k in df.columns:
-                                if k not in self._config["eventFormat"];
-                                    df.drop(columns=k)
-                            '''
-                                    
+                        if mat[i].dtype.names is not None: 
                             tsv_writer.writerow(mat[i].dtype.names)
                             if len(mat[i]) == 1:
                                 tsv_writer.writerows(np.stack(mat[i][0].tolist(),axis=0)[:,:,0])
@@ -833,6 +845,7 @@ class Data2Bids(): #main conversion and file organization program
                                     tsv_writer.writerows(mat[i][0,j][0].tolist())
                                 else:
                                     tsv_writer.writerows(mat[i][0,j].tolist())
+                    '''
         elif isinstance(mat,list): #if .mat is cell array
             print("\n No support for cell arrays yet")
         elif isinstance(mat,np.ndarray): #if .mat is matlab array
