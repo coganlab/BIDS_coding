@@ -584,6 +584,7 @@ class Data2Bids(): #main conversion and file organization program
             d_list = []
             part_match = None
             run_list = []
+            mat_list = []
             for root, _, files in os.walk(self._data_dir, topdown=True):
                 files[:] = [f for f in files if not os.path.join(root,f).startswith(self._bids_dir)] #ignore BIDS directories
                 if not files:
@@ -694,10 +695,7 @@ class Data2Bids(): #main conversion and file organization program
                         d_list.append(src_file_path)
                         continue
                     elif re.match(".*?" + ".mat", file):
-                        self.mat2tsv(src_file_path)
-                        shutil.move(src_file_path.split(".mat")[0]+".tsv", 
-                            self._bids_dir + "/sub-" + part_match + "/" +
-                            os.path.basename(src_file_path).split(".mat")[0]+".tsv")
+                        mat_list.append(src_file_path)
                         continue
                         # if the file doesn't match the extension, we skip it
                     elif not any(re.match(".*?" + ext, file) for ext in curr_ext):
@@ -794,9 +792,12 @@ class Data2Bids(): #main conversion and file organization program
                         run_list.append(int(run_match))
                     except UnboundLocalError:
                         pass
+
             if d_list :
                 self.convert_1D(run_list, d_list, tsv_fso_runs, tsv_condition_runs, names_list, dst_file_path_list)
 
+            if mat_list :
+                self.mat2tsv(mat_list)
             # Output
             if self._is_verbose:
                 tree(self._bids_dir)
@@ -807,85 +808,85 @@ class Data2Bids(): #main conversion and file organization program
         else:
             print("Warning: No parameters are defined !")        
 
-    def mat2tsv(self, mat_file):
-        mat = loadmat(mat_file)
-        if isinstance(mat,dict): #if .mat is a struct
-            for i in list(mat):
-                if "__" not in i and "readme" not in i:
-                    print(mat_file.split(".mat")[0]+".tsv")
-                    if len(mat[i]) == 1:
-                        rownum = len(mat[i][0])
-                    else:
-                        rownum = len(mat[i])
-                    newmat = np.ndarray(shape=(rownum,0), dtype=float, order='F')
-                    karray = []
-                    newmat_names = []
-                    newmat_dtype = []
-                    if mat[i].dtype.names is not None:
-                        for j in mat[i].dtype.names:
-                            if j in self._config['eventFormat']: #if variable is named by user
-                                if self._is_verbose:
-                                    print(np.transpose(mat[i][j]).shape, newmat.shape)
-                                newmat = np.append(newmat, np.transpose(mat[i][j]),axis=1)
-                                newmat_names.append(j)
-                                newmat_dtype.append(mat[i][j][0][0].dtype)
-                        df = pd.DataFrame(newmat,columns=newmat_names)
-                        
-                        #Set correct data types for smooth looking data in .tsv format
-                        for k in range(len(newmat_names)):
-                            df[newmat_names[k]] = df[newmat_names[k]].astype(newmat_dtype[k])
-                        #print(df)
-                        df.to_csv(mat_file.split(".mat")[0]+".tsv",sep="\t")
-                        '''
-                        elif mat[i][0].dtype.names is not None:
-                            for j in mat[i][0].dtype.names:
+    def mat2tsv(self, mat_files):
+        df = pd.DataFrame()
+        for mat_file in mat_files:
+            mat = loadmat(mat_file)
+            if isinstance(mat,dict): #if .mat is a struct
+                for i in list(mat):
+                    if "__" not in i and "readme" not in i: 
+                        if self._is_verbose:
+                            print(mat_file,"--->",mat_file.split(".mat")[0]+".tsv")
+
+                        newmat_names = []
+                        newmat_dtype = []
+                        if mat[i].dtype.names is not None:
+                            for j in mat[i].dtype.names:
                                 if j in self._config['eventFormat']: #if variable is named by user
+                                    karray = np.reshape(np.transpose(mat[i][j]),(-1))
                                     if self._is_verbose:
-                                        print(np.transpose(mat[i][k][j]).shape, newmat.shape)
-                                    for k in range(len(mat[i])):
-                                        karray.append(mat[i][k][j][0][0])
-                                    newmat = np.append(newmat,karray)
-                                    karray=[]
+                                        print(karray.shape)
+                                    df[j] = pd.Series(karray, index=range(len(karray))) #assign columns to dataframe
                                     newmat_names.append(j)
+                                    print(j)
                                     newmat_dtype.append(mat[i][j][0][0].dtype)
-                            df = pd.DataFrame(newmat,columns=newmat_names)
+                        elif mat[i][0][0].dtype.names is not None: #if you're psychotic and made a cell array of STRUCTURES
+                            for j in mat[i][0][0].dtype.names:
+                                if j in self._config['eventFormat']: #if variable is named by user
+                                    #print(np.transpose(mat2[i][0][j]).shape, newmat.shape)
+                                    karray = np.array([])
+                                    for k in range(len(mat[i][0])):
+                                        karray = np.append(karray,mat[i][0][k][j][0][0])
+                                    if self._is_verbose:
+                                        print(karray.shape)
+                                    df[j] = pd.Series(karray, index=range(len(karray)))
+                                    newmat_names.append(j)
+                                    newmat_dtype.append(mat[i][0][0][j][0][0].dtype)
                             
-                            #Set correct data types for smooth looking data in .tsv format
-                            for k in range(len(newmat_names)):
-                                df[newmat_names[k]] = df[newmat_names[k]].astype(newmat_dtype[k])
-                            #print(df)
-                            df.to_csv(mat_file.split(".mat")[0]+".tsv",sep="\t")
-                        '''
-                    elif mat[i][0][0].dtype.names is not None: #if you're psychotic and made a cell array of STRUCTURES
-                        for j in mat[i][0][0].dtype.names:
-                            if j in self._config['eventFormat']: #if variable is named by user
-                                #print(np.transpose(mat2[i][0][j]).shape, newmat.shape)
-                                for k in range(len(mat[i][0])):
-                                    karray = np.append(karray,mat[i][0][k][j][0][0])
-                                print(karray.shape)
-                                newmat = np.append(newmat,np.reshape(karray,(-1,1)),axis=1)
-                                karray = np.array([])
-                                newmat_names.append(j)
-                                newmat_dtype.append(mat[i][0][0][j][0][0].dtype)
-                        df = pd.DataFrame(newmat,columns=newmat_names)
-                        
+                        else: #sorry this code format doesn't leave many options for data formatting but it was the only option
+                            raise KeyError("Current MATLAB data format not yet supported \nCurrent support covers stuctures and cell arrays of structures")
                         #Set correct data types for smooth looking data in .tsv format
                         for k in range(len(newmat_names)):
                             try:
                                 df[newmat_names[k]] = df[newmat_names[k]].astype(newmat_dtype[k])
+                                if isinstance(df[newmat_names[k]][0],str):
+                                    for j in range(df[newmat_names[k]].size):
+                                        df[newmat_names[k]][j] = re.sub("[\'\[\]]",'',df[newmat_names[k]][j])
                             except ValueError:
                                 continue
-                        #print(df)
-                        df.to_csv(mat_file.split(".mat")[0]+".tsv",sep="\t")
-                    else:
-                        raise KeyError
-        elif isinstance(mat,list): #if .mat is cell array
-            print("\n No support for cell arrays yet")
-        elif isinstance(mat,np.ndarray): #if .mat is matlab array
-            print("\n No support for matlab arrays yet")
-        else:
-            datatype = type(mat)
-            print("\n Uknown data type %s" %datatype)
+
+            elif isinstance(mat,list): #if .mat is cell array
+                print("\n No support for cell arrays yet")
+            elif isinstance(mat,np.ndarray): #if .mat is matlab array
+                print("\n No support for matlab arrays yet")
+            else:
+                datatype = type(mat)
+                print("\n Uknown data type %s" %datatype)
+
+        print(df[self._config["eventFormat.IDcol"]].iloc[0],df[self._config["eventFormat.IDcol"]].iloc[-1])
+        try:
+            
+            if self._config["eventFormat.IDcol"] in df.columns:
+                if df[self._config["eventFormat.IDcol"]].iloc[0] == df[self._config["eventFormat.IDcol"]].iloc[-1]: 
+                    #construct fake orig data name to run through name generator
+                    match_name = mat_file.split(os.path.basename(mat_file))[0]+df[self._config["eventFormat.IDcol"]][0] + ".edf"
+                else:
+                    raise KeyError
+            else:
+                raise KeyError
+        except KeyError:
+            match_name = mat_file
+        try:
+            part_match = self.match_regexp(self._config["partLabel"], os.path.basename(match_name))
+        except AssertionError:
+            raise SyntaxError("file: {filename} has no matching {config}\n".format(filename=match_name,config=self._config["content"][:][0]))
+        try:
+            (new_name,dst_file_path, run_match, _,echo_match,sess_match,_,
+                data_type_match,task_label_match,SeqType) = self.generate_names(
+                    part_match, match_name, os.path.basename(match_name))
+        except TypeError as e:
+            raise e
+        df.to_csv(dst_file_path + new_name.split("ieeg")[0] + "event.tsv",sep="\t")
 
 
     def convert_1D(self, run_list, d_list, tsv_fso_runs, tsv_condition_runs, names_list, dst_file_path_list):

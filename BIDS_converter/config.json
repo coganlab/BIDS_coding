@@ -4,6 +4,7 @@
     "ResponseStart","ResponseEnd","cue", "sound", "go", "cueTime", "block", "cueStart",
      "Trigger", "cueEnd", "audioStart", "audioAlignedTrigger", "delStart", "delEnd",
       "goStart", "goEnd", "respStart", "respEnd", "isiStart", "isiEnd", "tCaptureStart"]
+,"eventFormat.IDcol" : "FilenamePrefix"
 , "compress" : true
 , "repetitionTimeInSec" : 2
 , "delayTimeInSec" : [ 0.028, 0.013, 0.026, 0.040]
@@ -23,6 +24,7 @@
             , "right" : ".*?"
             , "content" : [ ["Phoneme_Sequence","PHONEMESEQUENCE"]
                             ,["Phoneme_Sequence", "PhonemeSequence"]
+                            ,["Phoneme_Sequence", "PhonemeSequencing"]
 ]
     }
 , "ieeg.loc":{"left" : ".*?"
@@ -31,7 +33,7 @@
                     ]
     }
             
-, "sessLabel" : {"left" : ".*?"
+, "sessLabel" : {"left" : "^[0-9]*?"
                 , "right" : "\\.[(edf)(mat)]"
                 , "content" :   ["[0-9]"]
                 }
