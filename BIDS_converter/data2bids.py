@@ -813,15 +813,22 @@ class Data2Bids(): #main conversion and file organization program
             for i in list(mat):
                 if "__" not in i and "readme" not in i:
                     print(mat_file.split(".mat")[0]+".tsv")
-                    newmat = np.ndarray(shape=(208,0), dtype=float, order='F')
+                    if len(mat[i]) == 1:
+                        rownum = len(mat[i][0])
+                    else:
+                        rownum = len(mat[i])
+                    newmat = np.ndarray(shape=(rownum,0), dtype=float, order='F')
+                    karray = []
                     newmat_names = []
                     newmat_dtype = []
                     if mat[i].dtype.names is not None:
                         for j in mat[i].dtype.names:
-                            #print(np.transpose(mat1[i][j]).shape, newmat.shape)
-                            newmat = np.append(newmat, np.transpose(mat[i][j]),axis=1)
-                            newmat_names.append(j)
-                            newmat_dtype.append(mat[i][j][0][0].dtype)
+                            if j in self._config['eventFormat']: #if variable is named by user
+                                if self._is_verbose:
+                                    print(np.transpose(mat[i][j]).shape, newmat.shape)
+                                newmat = np.append(newmat, np.transpose(mat[i][j]),axis=1)
+                                newmat_names.append(j)
+                                newmat_dtype.append(mat[i][j][0][0].dtype)
                         df = pd.DataFrame(newmat,columns=newmat_names)
                         
                         #Set correct data types for smooth looking data in .tsv format
@@ -829,23 +836,49 @@ class Data2Bids(): #main conversion and file organization program
                             df[newmat_names[k]] = df[newmat_names[k]].astype(newmat_dtype[k])
                         #print(df)
                         df.to_csv(mat_file.split(".mat")[0]+".tsv",sep="\t")
-                    '''
-                    with open(mat_file.split(".mat")[0]+".tsv","wt") as fp :
-                        tsv_writer = csv.writer(fp, delimiter="\t")
-                        if mat[i].dtype.names is not None: 
-                            tsv_writer.writerow(mat[i].dtype.names)
-                            if len(mat[i]) == 1:
-                                tsv_writer.writerows(np.stack(mat[i][0].tolist(),axis=0)[:,:,0])
-                            else:
-                                tsv_writer.writerows(np.stack(mat[i].tolist(),axis=0)[:,:,0])
-                        else: #is cell array of structs
-                            tsv_writer.writerow(mat[i][0,0].dtype.names)
-                            for j in range(len(mat[i][0])):
-                                if len(mat[i][0,j]) == 1:
-                                    tsv_writer.writerows(mat[i][0,j][0].tolist())
-                                else:
-                                    tsv_writer.writerows(mat[i][0,j].tolist())
-                    '''
+                        '''
+                        elif mat[i][0].dtype.names is not None:
+                            for j in mat[i][0].dtype.names:
+                                if j in self._config['eventFormat']: #if variable is named by user
+                                    if self._is_verbose:
+                                        print(np.transpose(mat[i][k][j]).shape, newmat.shape)
+                                    for k in range(len(mat[i])):
+                                        karray.append(mat[i][k][j][0][0])
+                                    newmat = np.append(newmat,karray)
+                                    karray=[]
+                                    newmat_names.append(j)
+                                    newmat_dtype.append(mat[i][j][0][0].dtype)
+                            df = pd.DataFrame(newmat,columns=newmat_names)
+                            
+                            #Set correct data types for smooth looking data in .tsv format
+                            for k in range(len(newmat_names)):
+                                df[newmat_names[k]] = df[newmat_names[k]].astype(newmat_dtype[k])
+                            #print(df)
+                            df.to_csv(mat_file.split(".mat")[0]+".tsv",sep="\t")
+                        '''
+                    elif mat[i][0][0].dtype.names is not None: #if you're psychotic and made a cell array of STRUCTURES
+                        for j in mat[i][0][0].dtype.names:
+                            if j in self._config['eventFormat']: #if variable is named by user
+                                #print(np.transpose(mat2[i][0][j]).shape, newmat.shape)
+                                for k in range(len(mat[i][0])):
+                                    karray = np.append(karray,mat[i][0][k][j][0][0])
+                                print(karray.shape)
+                                newmat = np.append(newmat,np.reshape(karray,(-1,1)),axis=1)
+                                karray = np.array([])
+                                newmat_names.append(j)
+                                newmat_dtype.append(mat[i][0][0][j][0][0].dtype)
+                        df = pd.DataFrame(newmat,columns=newmat_names)
+                        
+                        #Set correct data types for smooth looking data in .tsv format
+                        for k in range(len(newmat_names)):
+                            try:
+                                df[newmat_names[k]] = df[newmat_names[k]].astype(newmat_dtype[k])
+                            except ValueError:
+                                continue
+                        #print(df)
+                        df.to_csv(mat_file.split(".mat")[0]+".tsv",sep="\t")
+                    else:
+                        raise KeyError
         elif isinstance(mat,list): #if .mat is cell array
             print("\n No support for cell arrays yet")
         elif isinstance(mat,np.ndarray): #if .mat is matlab array
