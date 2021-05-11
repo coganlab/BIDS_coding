@@ -36,7 +36,8 @@ if __name__ == '__main__':
                     df[newmat_names[k]] = df[newmat_names[k]].astype(newmat_dtype[k])
                 #print(df)
                 df.to_csv(i+".tsv",sep="\t")
-            elif mat2[i][0].dtype.names is not None:
+                '''
+                elif mat2[i][0].dtype.names is not None:
                 for j in mat2[i][0].dtype.names:
                     print(np.transpose(mat2[i][k][j]).shape, newmat.shape)
                     for k in range(len(mat2[i])):
@@ -52,6 +53,7 @@ if __name__ == '__main__':
                     df[newmat_names[k]] = df[newmat_names[k]].astype(newmat_dtype[k])
                 #print(df)
                 df.to_csv(mat_file.split(".mat")[0]+".tsv",sep="\t")
+                '''
             elif mat2[i][0][0].dtype.names is not None:
                 for j in mat2[i][0][0].dtype.names:
                     if j in config['eventFormat']: #if variable is named by user
