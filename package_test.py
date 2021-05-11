@@ -9,6 +9,22 @@ import shutil
 def test_1():
 
     os.mkdir("BIDS_converter/testing/BIDS")
+    d2b.Data2Bids(input_dir='BIDS_converter/testing/D52', output_dir='BIDS_converter/testing/BIDS').run()
+
+    xlist =[]
+
+    for x in os.listdir('BIDS_converter/testing/BIDS/sub-D52'):
+        #os.close(x)
+        xlist.append(x)
+
+    while os.path.isdir("BIDS_converter/testing/BIDS"):
+        shutil.rmtree("BIDS_converter/testing/BIDS", ignore_errors=True)
+
+    return xlist
+
+def test_2():
+
+    os.mkdir("BIDS_converter/testing/BIDS")
     d2b.Data2Bids(input_dir='BIDS_converter/testing/D48', output_dir='BIDS_converter/testing/BIDS').run()
 
     xlist =[]
