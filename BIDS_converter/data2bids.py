@@ -34,7 +34,7 @@ def get_parser(): #parses flags at onset of command
          shown in the examples folder.
 
          Both formats use a .json config file that maps either DICOM tags or text within the nifti file name to BIDS metadata. The syntax and formatting of this .json file 
-         can be found here https://github.com/SIMEXP/Data2Bids#heuristic .
+         can be found here https://github.com/SIMEXP/Data2Bids#heuristic.
 
          The only thing this script does not account for is event files. If you have the 1D files that's taken care of, but chances are you have some other 
          format. If this is the case, I recommend https://bids-specification.readthedocs.io/en/stable/04-modality-specific-files/05-task-events.html
@@ -329,7 +329,8 @@ class Data2Bids(): #main conversion and file organization program
             dst_file_path = dst_file_path + "/ses-" + sess_match
             new_name = new_name + "_ses-" + sess_match
         except AssertionError:
-            print("No session found for %s" %src_file_path)
+            if self._is_verbose:
+                print("No session found for %s" %src_file_path)
         
         # Matching the run number
         try:
@@ -344,21 +345,6 @@ class Data2Bids(): #main conversion and file organization program
                                                 ,filename
                                                 , subtype=True)
             dst_file_path = dst_file_path + "/anat"
-
-            try:
-                acq_match = self.match_regexp(self._config["anat.acq"]
-                                              ,filename
-                                              , subtype=True)
-                new_name = new_name + "_acq-" + acq_match
-            except (AssertionError, KeyError) as e:
-                print("no optional labels for %s" %src_file_path)
-                try: 
-                    ce_match = self.match_regexp(self._config["anat.ce"]
-                                                 ,filename
-                                                 , subtype=True)
-                    new_name = new_name + "_ce-" + ce_match
-                except (AssertionError, KeyError) as e:
-                    print("no special contrast labels for %s" %src_file_path)
         except (AssertionError, KeyError) as e:
             # If no anatomical, trying functionnal
             try:
@@ -398,19 +384,33 @@ class Data2Bids(): #main conversion and file organization program
                 except KeyError:
                     print("No anat, func, or ieeg data type found in config file, one of these data types is required")
                     return
-            #if is an MRI
-            if dst_file_path.endswith("/func") or dst_file_path.endswith("/anat"):
-                try: 
-                    SeqType = str(self.match_regexp(self._config["pulseSequenceType"], filename, subtype=True))
-                except AssertionError:
-                    print("No pulse sequence found for %s" %src_file_path)
-                except KeyError:
-                    print("pulse sequence not listed for %s, will look for in file header" %src_file_path)
-                try:
-                    echo_match = self.match_regexp(self._config["echo"],filename)
-                    new_name = new_name + "_echo-" + echo_match 
-                except AssertionError:
-                    print("No echo found for %s" %src_file_path)
+        #check for optional labels
+        try:
+            acq_match = self.match_regexp(self._config["acq"],filename)
+            new_name = new_name + "_acq-" + acq_match
+        except (AssertionError, KeyError) as e:
+            if self._is_verbose:
+                print("no optional labels for %s" %src_file_path)
+        try: 
+            ce_match = self.match_regexp(self._config["ce"]
+                                            ,filename)
+            new_name = new_name + "_ce-" + ce_match
+        except (AssertionError, KeyError) as e:
+            if self._is_verbose:
+                print("no special contrast labels for %s" %src_file_path)
+        #if is an MRI
+        if dst_file_path.endswith("/func") or dst_file_path.endswith("/anat"):
+            try: 
+                SeqType = str(self.match_regexp(self._config["pulseSequenceType"], filename, subtype=True))
+            except AssertionError:
+                print("No pulse sequence found for %s" %src_file_path)
+            except KeyError:
+                print("pulse sequence not listed for %s, will look for in file header" %src_file_path)
+            try:
+                echo_match = self.match_regexp(self._config["echo"],filename)
+                new_name = new_name + "_echo-" + echo_match 
+            except AssertionError:
+                print("No echo found for %s" %src_file_path)
 
          
 	# Adding the modality to the new filename
@@ -824,11 +824,9 @@ class Data2Bids(): #main conversion and file organization program
                             for j in mat[i].dtype.names:
                                 if j in self._config['eventFormat']: #if variable is named by user
                                     karray = np.reshape(np.transpose(mat[i][j]),(-1))
-                                    if self._is_verbose:
-                                        print(karray.shape)
                                     df[j] = pd.Series(karray, index=range(len(karray))) #assign columns to dataframe
                                     newmat_names.append(j)
-                                    print(j)
+                                    #print(j)
                                     newmat_dtype.append(mat[i][j][0][0].dtype)
                         elif mat[i][0][0].dtype.names is not None: #if you're psychotic and made a cell array of STRUCTURES
                             for j in mat[i][0][0].dtype.names:
@@ -837,8 +835,6 @@ class Data2Bids(): #main conversion and file organization program
                                     karray = np.array([])
                                     for k in range(len(mat[i][0])):
                                         karray = np.append(karray,mat[i][0][k][j][0][0])
-                                    if self._is_verbose:
-                                        print(karray.shape)
                                     df[j] = pd.Series(karray, index=range(len(karray)))
                                     newmat_names.append(j)
                                     newmat_dtype.append(mat[i][0][0][j][0][0].dtype)
@@ -851,7 +847,7 @@ class Data2Bids(): #main conversion and file organization program
                                 df[newmat_names[k]] = df[newmat_names[k]].astype(newmat_dtype[k])
                                 if isinstance(df[newmat_names[k]][0],str):
                                     for j in range(df[newmat_names[k]].size):
-                                        df[newmat_names[k]][j] = re.sub("[\'\[\]]",'',df[newmat_names[k]][j])
+                                        df[newmat_names[k]].iloc[j] = re.sub("[\'\[\]]",'',df[newmat_names[k]].iloc[j])
                             except ValueError:
                                 continue
 
@@ -863,7 +859,7 @@ class Data2Bids(): #main conversion and file organization program
                 datatype = type(mat)
                 print("\n Uknown data type %s" %datatype)
 
-        print(df[self._config["eventFormat.IDcol"]].iloc[0],df[self._config["eventFormat.IDcol"]].iloc[-1])
+        #print(df[self._config["eventFormat.IDcol"]].iloc[0],df[self._config["eventFormat.IDcol"]].iloc[-1])
         try:
             
             if self._config["eventFormat.IDcol"] in df.columns:
