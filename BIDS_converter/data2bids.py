@@ -798,6 +798,7 @@ class Data2Bids(): #main conversion and file organization program
 
             if mat_list :
                 self.mat2tsv(mat_list)
+
             # Output
             if self._is_verbose:
                 tree(self._bids_dir)
@@ -809,21 +810,40 @@ class Data2Bids(): #main conversion and file organization program
             print("Warning: No parameters are defined !")        
 
     def mat2tsv(self, mat_files):
-        df = pd.DataFrame()
+        part_match = None
+        written = True
         for mat_file in mat_files:
+            if not self.match_regexp(self._config["partLabel"], mat_file) == part_match: #initialize dataframe if new participant
+                if written:
+                    df = pd.DataFrame()
+                else:
+                    if is_separate:
+                        try:
+                            self._config["eventFormat.Block"]
+                        except AssertionError:
+                            raise FileNotFoundError("{config} variable was not found in {part}'s event files".format(
+                                config=self._config["eventFormat.Block"], part=self.match_regexp(self._config["partLabel"], mat_file)))
+                    raise FileNotFoundError("{config} variable was not found in {part}'s event files".format(
+                        config=self._config["eventFormat.IDcol"], part=self.match_regexp(self._config["partLabel"], mat_file)))
+            try:
+                part_match = self.match_regexp(self._config["partLabel"], mat_file)
+            except AssertionError:
+                raise SyntaxError("file: {filename} has no matching {config}\n".format(filename=match_name,config=self._config["content"][:][0]))
             mat = loadmat(mat_file)
             if isinstance(mat,dict): #if .mat is a struct
                 for i in list(mat):
                     if "__" not in i and "readme" not in i: 
-                        if self._is_verbose:
-                            print(mat_file,"--->",mat_file.split(".mat")[0]+".tsv")
 
                         newmat_names = []
                         newmat_dtype = []
                         if mat[i].dtype.names is not None:
                             for j in mat[i].dtype.names:
-                                if j in self._config['eventFormat']: #if variable is named by user
+                                if j in self._config['eventFormat']: #if variable is named by user    
                                     karray = np.reshape(np.transpose(mat[i][j]),(-1))
+                                    if j in df.columns.values.tolist(): #check if variable is already defined and accross all acquisitions
+                                        if df[j].size >= len(karray):
+                                            continue
+                                    written = False
                                     df[j] = pd.Series(karray, index=range(len(karray))) #assign columns to dataframe
                                     newmat_names.append(j)
                                     #print(j)
@@ -835,12 +855,17 @@ class Data2Bids(): #main conversion and file organization program
                                     karray = np.array([])
                                     for k in range(len(mat[i][0])):
                                         karray = np.append(karray,mat[i][0][k][j][0][0])
+                                    if j in df.columns.values.tolist(): #check if variable is already defined and accross all acquisitions
+                                        if df[j].size >= len(karray):
+                                            continue
+                                    written = False
                                     df[j] = pd.Series(karray, index=range(len(karray)))
                                     newmat_names.append(j)
                                     newmat_dtype.append(mat[i][0][0][j][0][0].dtype)
                             
                         else: #sorry this code format doesn't leave many options for data formatting but it was the only option
-                            raise KeyError("Current MATLAB data format not yet supported \nCurrent support covers stuctures and cell arrays of structures")
+                            raise KeyError("Current MATLAB data format not yet supported \
+                            \nCurrent support covers stuctures and cell arrays of structures")
                         #Set correct data types for smooth looking data in .tsv format
                         for k in range(len(newmat_names)):
                             try:
@@ -859,30 +884,48 @@ class Data2Bids(): #main conversion and file organization program
                 datatype = type(mat)
                 print("\n Uknown data type %s" %datatype)
 
-        #print(df[self._config["eventFormat.IDcol"]].iloc[0],df[self._config["eventFormat.IDcol"]].iloc[-1])
-        try:
-            
-            if self._config["eventFormat.IDcol"] in df.columns:
-                if df[self._config["eventFormat.IDcol"]].iloc[0] == df[self._config["eventFormat.IDcol"]].iloc[-1]: 
-                    #construct fake orig data name to run through name generator
-                    match_name = mat_file.split(os.path.basename(mat_file))[0]+df[self._config["eventFormat.IDcol"]][0] + ".edf"
+            #print(df[self._config["eventFormat.IDcol"]].iloc[0],df[self._config["eventFormat.IDcol"]].iloc[-1])
+            try:
+                
+                if self._config["eventFormat.IDcol"] in df.columns.values.tolist():
+                    if df[self._config["eventFormat.IDcol"]].iloc[0] == df[self._config["eventFormat.IDcol"]].iloc[-1]: 
+                        is_separate = False
+                        #construct fake orig data name to run through name generator
+                        match_name = mat_file.split(os.path.basename(mat_file))[0]+df[self._config["eventFormat.IDcol"]][0] + ".edf"
+                    else: #this means there was more than one recording session. In this case we will separate each trial block into a separate "run"
+                        is_separate = True
                 else:
-                    raise KeyError
+                    continue
+            except KeyError:
+                match_name = mat_file
+
+                #write the tsv from the dataframe
+            if not newmat_names: #check to see if there is anything new to write
+                continue
+            elif is_separate: 
+                if self._config["eventFormat.Block"] not in df.columns.values.tolist():
+                    if self._is_verbose:
+                        print(mat_file)
+                    continue
+                else:
+                    for i in df[self._config["eventFormat.Block"]].unique(): #iterate through every block
+                        nindex = df[self._config["eventFormat.Block"]].where(df[self._config["eventFormat.Block"]] == i).first_valid_index()
+                        match_name = mat_file.split(os.path.basename(mat_file))[0]+df[self._config["eventFormat.IDcol"]][nindex] + ".edf"
+                        (new_name,dst_file_path, run_match, _,echo_match,sess_match,_,
+                            data_type_match,task_label_match,SeqType) = self.generate_names(
+                            part_match, match_name, os.path.basename(match_name))
+                        writedf = df.loc[df[self._config["eventFormat.Block"]] == i]
+                        if self._is_verbose:
+                            print(mat_file,"--->",dst_file_path + new_name.split("ieeg")[0] + "run-" + str(i).zfill(2) + "_event.tsv")
+                        writedf.to_csv(dst_file_path + new_name.split("ieeg")[0] + "run-" + str(i).zfill(2) + "_event.tsv",sep="\t")
             else:
-                raise KeyError
-        except KeyError:
-            match_name = mat_file
-        try:
-            part_match = self.match_regexp(self._config["partLabel"], os.path.basename(match_name))
-        except AssertionError:
-            raise SyntaxError("file: {filename} has no matching {config}\n".format(filename=match_name,config=self._config["content"][:][0]))
-        try:
-            (new_name,dst_file_path, run_match, _,echo_match,sess_match,_,
-                data_type_match,task_label_match,SeqType) = self.generate_names(
+                (new_name,dst_file_path, run_match, _,echo_match,sess_match,_,
+                    data_type_match,task_label_match,SeqType) = self.generate_names(
                     part_match, match_name, os.path.basename(match_name))
-        except TypeError as e:
-            raise e
-        df.to_csv(dst_file_path + new_name.split("ieeg")[0] + "event.tsv",sep="\t")
+                if self._is_verbose:
+                    print(mat_file,"--->",dst_file_path + new_name.split("ieeg")[0] + "event.tsv")
+                df.to_csv(dst_file_path + new_name.split("ieeg")[0] + "event.tsv",sep="\t")
+            written = True
 
 
     def convert_1D(self, run_list, d_list, tsv_fso_runs, tsv_condition_runs, names_list, dst_file_path_list):

@@ -5,6 +5,7 @@
      "Trigger", "cueEnd", "audioStart", "audioAlignedTrigger", "delStart", "delEnd",
       "goStart", "goEnd", "respStart", "respEnd", "isiStart", "isiEnd", "tCaptureStart"]
 ,"eventFormat.IDcol" : "FilenamePrefix"
+,"eventFormat.Block" : "block"
 , "compress" : true
 , "repetitionTimeInSec" : 2
 , "delayTimeInSec" : [ 0.028, 0.013, 0.026, 0.040]
