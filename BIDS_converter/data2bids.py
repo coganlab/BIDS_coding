@@ -812,6 +812,7 @@ class Data2Bids(): #main conversion and file organization program
     def mat2tsv(self, mat_files):
         part_match = None
         written = True
+        is_separate = None
         for mat_file in mat_files:
             if not self.match_regexp(self._config["partLabel"], mat_file) == part_match: #initialize dataframe if new participant
                 if written:
