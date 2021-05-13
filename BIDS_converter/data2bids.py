@@ -829,7 +829,7 @@ class Data2Bids(): #main conversion and file organization program
             try:
                 part_match = self.match_regexp(self._config["partLabel"], mat_file)
             except AssertionError:
-                raise SyntaxError("file: {filename} has no matching {config}\n".format(filename=match_name,config=self._config["content"][:][0]))
+                raise SyntaxError("file: {filename} has no matching {config}\n".format(filename=mat_file,config=self._config["content"][:][0]))
             mat = loadmat(mat_file)
             if isinstance(mat,dict): #if .mat is a struct
                 for i in list(mat):
