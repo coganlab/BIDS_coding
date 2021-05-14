@@ -9,6 +9,7 @@ import shutil
 import json
 import subprocess
 import gzip
+from warnings import WarningMessage
 import numpy as np
 import nibabel as nib
 import csv
@@ -902,6 +903,7 @@ class Data2Bids(): #main conversion and file organization program
                 if self._config["eventFormat.IDcol"] in df.columns.values.tolist():
                     if len(df[self._config["eventFormat.IDcol"]].unique()) == 1 : #CHANGE this in case literal name doesn't change
                         is_separate = False
+                        print("Warning: data may have been lost if file ID did not change but the recording session did")
                         #construct fake orig data name to run through name generator
                         match_name = mat_file.split(os.path.basename(mat_file))[0]+df[self._config["eventFormat.IDcol"]][0] + ".edf"
                     else: #this means there was more than one recording session. In this case we will separate each trial block into a separate "run"
