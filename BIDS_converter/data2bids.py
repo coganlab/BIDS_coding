@@ -19,6 +19,7 @@ import pydicom as dicom
 import scipy.io as sio
 loadmat = sio.loadmat
 import pandas as pd
+import exrex as ex
 
 def get_parser(): #parses flags at onset of command
     parser = argparse.ArgumentParser(
@@ -305,6 +306,23 @@ class Data2Bids(): #main conversion and file organization program
                     match_found = True
         assert match_found
         return match
+
+    def gen_match_regexp(self,config_regexp, data,subtype=False):
+
+        match_found = False
+        for to_match in config_regexp["content"]:
+            if re.match(to_match,data):
+                match_found = True
+        assert match_found
+        left = ex.getone(config_regexp["left"])
+        right = ex.getone(config_regexp["right"])
+        newname = left+data+right
+
+        if data == self.match_regexp(config_regexp,newname,subtype=subtype):
+            return newname
+        else:
+            raise AssertionError("{newname} doesn't match config criteria".format(newname=newname))
+
 
     def bids_validator(self):
         assert self._bids_dir is not None, "Cannot launch bids-validator without specifying bids directory !"
@@ -596,7 +614,7 @@ class Data2Bids(): #main conversion and file organization program
             part_match = None
             run_list = []
             mat_list = []
-            for root, _, files in os.walk(self._data_dir, topdown=True):
+            for root, _, files in os.walk(self._data_dir, topdown=True): #each loop is a new participant so long as participant is top level
                 files[:] = [f for f in files if not os.path.join(root,f).startswith(self._bids_dir)] #ignore BIDS directories
                 if not files:
                     continue
@@ -605,7 +623,7 @@ class Data2Bids(): #main conversion and file organization program
                     print(files)
                 while files:
                     file=files.pop(0)
-                    #print(file)
+                    print(file)
                     src_file_path = os.path.join(root, file)
                     dst_file_path = self._bids_dir
                     data_type_match = None
@@ -804,15 +822,15 @@ class Data2Bids(): #main conversion and file organization program
                     except UnboundLocalError:
                         pass
 
-            if d_list :
-                self.convert_1D(run_list, d_list, tsv_fso_runs, tsv_condition_runs, names_list, dst_file_path_list)
+                if d_list :
+                    self.convert_1D(run_list, d_list, tsv_fso_runs, tsv_condition_runs, names_list, dst_file_path_list)
 
-            if mat_list :
-                self.mat2tsv(mat_list)
+                if mat_list :
+                    self.mat2tsv(mat_list)
 
-            # Output
-            if self._is_verbose:
-                tree(self._bids_dir)
+                # Output
+                if self._is_verbose:
+                    tree(self._bids_dir)
 
             # Finally, we check with bids_validator if everything went alright (This wont work)
             #self.bids_validator()
@@ -914,6 +932,7 @@ class Data2Bids(): #main conversion and file organization program
                 match_name = mat_file
 
                 #write the tsv from the dataframe
+            print(newmat_names)
             if not newmat_names: #check to see if there is anything new to write
                 continue
             elif is_separate: 
@@ -922,18 +941,22 @@ class Data2Bids(): #main conversion and file organization program
                         print(mat_file)
                     continue
                 else: #fix this
-                    df.filter(self._config["eventFormat.Sep"].values()).drop_duplicates().itertuples(index=False) #.groupby().size().reset_index()
+                    #.groupby().size().reset_index()
                     for i in df.filter(self._config["eventFormat.Sep"].values()).drop_duplicates().itertuples(index=False): #iterate through every block
-                        nindex = df[self._config["eventFormat.Sep"].values()].where( #needs major rework
-                            df[self._config["eventFormat.Sep"].values] == i[:]).first_valid_index()
-                        match_name = mat_file.split(os.path.basename(mat_file))[0]+df[self._config["eventFormat.IDcol"]][nindex] + \
-                         "run" + i + + ".edf"
+                        nindex = (df.where(df.filter(self._config["eventFormat.Sep"].values())==i) == df).filter(
+                            self._config["eventFormat.Sep"].values()).all(axis=1)
+                        match_name = mat_file.split(os.path.basename(mat_file))[0]+df[self._config["eventFormat.IDcol"]][nindex]
+                        for k in self._config["eventFormat.Sep"].keys():
+                            if k in df.columns.values.tolist():
+                                data = df.loc[nindex].filter(self._config["eventFormat.Sep"][k]).first_valid_index()
+                                match_name = match_name + self.gen_match_regexp(self._config[k],data)
+                            match_name = match_name + ".edf"
                         (new_name,dst_file_path,_,_,_,_,_,_,_,_) = self.generate_names(
                             part_match, match_name, os.path.basename(match_name))
-                        writedf = df.loc[df[self._config["eventFormat.Sep"].values()] == i[:]]
+                        writedf = df.loc[nindex]
                         if self._is_verbose:
                             print(mat_file,"--->",dst_file_path + new_name.split("ieeg")[0] + "_event.tsv")
-                        writedf.to_csv(dst_file_path + new_name.split("ieeg")[0] "_event.tsv",sep="\t")
+                        writedf.to_csv(dst_file_path + new_name.split("ieeg")[0] + "_event.tsv",sep="\t")
             else:
                 (new_name,dst_file_path,_,_,_,_,_,_,_,_) = self.generate_names(
                     part_match, match_name, os.path.basename(match_name))
