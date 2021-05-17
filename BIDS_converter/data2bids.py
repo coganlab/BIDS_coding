@@ -829,8 +829,8 @@ class Data2Bids(): #main conversion and file organization program
                     self.mat2tsv(mat_list)
 
                 # Output
-                if self._is_verbose:
-                    tree(self._bids_dir)
+            if self._is_verbose:
+                tree(self._bids_dir)
 
             # Finally, we check with bids_validator if everything went alright (This wont work)
             #self.bids_validator()
@@ -846,7 +846,11 @@ class Data2Bids(): #main conversion and file organization program
             if not self.match_regexp(self._config["partLabel"], mat_file) == part_match: #initialize dataframe if new participant
                 if written:
                     df = pd.DataFrame()
-                else:
+                elif not part_match == self.match_regexp(self._config["partLabel"], mat_file):
+                    raise FileNotFoundError("{config} variable was not found in {part}'s event files".format(
+                        config="some", part=part_match))
+                
+                '''else:
                     if is_separate:
                         try:
                             for i in self._config["eventFormat.Sep"].values():
@@ -854,8 +858,10 @@ class Data2Bids(): #main conversion and file organization program
                         except KeyError:
                             raise FileNotFoundError("{config} variable was not found in {part}'s event files".format(
                                 config=i, part=self.match_regexp(self._config["partLabel"], mat_file)))
-                    raise FileNotFoundError("{config} variable was not found in {part}'s event files".format(
-                        config=self._config["eventFormat.IDcol"], part=self.match_regexp(self._config["partLabel"], mat_file)))
+                    else:
+                        raise FileNotFoundError("{config} variable was not found in {part}'s event files".format(
+                            config=self._config["eventFormat.IDcol"], part=self.match_regexp(self._config["partLabel"], mat_file)))
+                    '''
             try:
                 part_match = self.match_regexp(self._config["partLabel"], mat_file)
             except AssertionError:
@@ -914,11 +920,12 @@ class Data2Bids(): #main conversion and file organization program
             else:
                 datatype = type(mat)
                 print("\n Uknown data type %s" %datatype)
-
-            #print(df[self._config["eventFormat.IDcol"]].iloc[0],df[self._config["eventFormat.IDcol"]].iloc[-1])
+            if newmat_names:
+                print(df)
             try:
-                
+                print(self._config["eventFormat.IDcol"])
                 if self._config["eventFormat.IDcol"] in df.columns.values.tolist():
+                    print(df[self._config["eventFormat.IDcol"]].unique())
                     if len(df[self._config["eventFormat.IDcol"]].unique()) == 1 : #CHANGE this in case literal name doesn't change
                         is_separate = False
                         print("Warning: data may have been lost if file ID did not change but the recording session did")
@@ -936,27 +943,27 @@ class Data2Bids(): #main conversion and file organization program
             if not newmat_names: #check to see if there is anything new to write
                 continue
             elif is_separate: 
-                if any(self._config["eventFormat.Sep"].values()) not in df.columns.values.tolist():
+                '''if any(self._config["eventFormat.Sep"].values()) not in df.columns.values.tolist():
                     if self._is_verbose:
                         print(mat_file)
                     continue
                 else: #fix this
-                    #.groupby().size().reset_index()
-                    for i in df.filter(self._config["eventFormat.Sep"].values()).drop_duplicates().itertuples(index=False): #iterate through every block
-                        nindex = (df.where(df.filter(self._config["eventFormat.Sep"].values())==i) == df).filter(
-                            self._config["eventFormat.Sep"].values()).all(axis=1)
-                        match_name = mat_file.split(os.path.basename(mat_file))[0]+df[self._config["eventFormat.IDcol"]][nindex]
-                        for k in self._config["eventFormat.Sep"].keys():
-                            if k in df.columns.values.tolist():
-                                data = df.loc[nindex].filter(self._config["eventFormat.Sep"][k]).first_valid_index()
-                                match_name = match_name + self.gen_match_regexp(self._config[k],data)
-                            match_name = match_name + ".edf"
-                        (new_name,dst_file_path,_,_,_,_,_,_,_,_) = self.generate_names(
-                            part_match, match_name, os.path.basename(match_name))
-                        writedf = df.loc[nindex]
-                        if self._is_verbose:
-                            print(mat_file,"--->",dst_file_path + new_name.split("ieeg")[0] + "_event.tsv")
-                        writedf.to_csv(dst_file_path + new_name.split("ieeg")[0] + "_event.tsv",sep="\t")
+                    #.groupby().size().reset_index()'''
+                for i in df.filter(self._config["eventFormat.Sep"].values()).drop_duplicates().itertuples(index=False): #iterate through every block
+                    nindex = (df.where(df.filter(self._config["eventFormat.Sep"].values())==i) == df).filter(
+                        self._config["eventFormat.Sep"].values()).all(axis=1)
+                    match_name = mat_file.split(os.path.basename(mat_file))[0]+str(df[self._config["eventFormat.IDcol"]][nindex].iloc[0])
+                    for k in self._config["eventFormat.Sep"].keys():
+                        if k in df.columns.values.tolist():
+                            data = df.loc[nindex].filter(self._config["eventFormat.Sep"][k]).first_valid_index()
+                            match_name = match_name + self.gen_match_regexp(self._config[k],data)
+                        match_name = match_name + ".edf"
+                    (new_name,dst_file_path,_,_,_,_,_,_,_,_) = self.generate_names(
+                        part_match, match_name, os.path.basename(match_name))
+                    writedf = df.loc[nindex]
+                    if self._is_verbose:
+                        print(mat_file,"--->",dst_file_path + new_name.split("ieeg")[0] + "_event.tsv")
+                    writedf.to_csv(dst_file_path + new_name.split("ieeg")[0] + "_event.tsv",sep="\t")
             else:
                 (new_name,dst_file_path,_,_,_,_,_,_,_,_) = self.generate_names(
                     part_match, match_name, os.path.basename(match_name))
