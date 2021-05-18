@@ -7,3 +7,4 @@ pybids>=0.13
 numpy>=1.19.2
 pydicom>=2.1.2
 bids>=0.0
+exrex >=0.10.5

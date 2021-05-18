@@ -9,6 +9,7 @@ import shutil
 import json
 import subprocess
 import gzip
+from warnings import WarningMessage
 import numpy as np
 import nibabel as nib
 import csv
@@ -18,6 +19,7 @@ import pydicom as dicom
 import scipy.io as sio
 loadmat = sio.loadmat
 import pandas as pd
+import exrex as ex
 
 def get_parser(): #parses flags at onset of command
     parser = argparse.ArgumentParser(
@@ -282,6 +284,7 @@ class Data2Bids(): #main conversion and file organization program
 
         if subtype:
             for to_match in config_regexp["content"]:
+                #print(".*?" + delimiter_left + '(' + to_match[1] + ')' + delimiter_right + ".*?")
                 if re.match(".*?"
                             + delimiter_left
                             + '(' + to_match[1] + ')'
@@ -296,6 +299,7 @@ class Data2Bids(): #main conversion and file organization program
                             + '(' + to_match + ')'
                             + delimiter_right
                             + ".*?", filename):
+                    #print(re.match(".*?"+ delimiter_left + '(' + to_match + ')' + delimiter_right + ".*?",filename).groups())
                     match = re.match(".*?"
                                      + delimiter_left
                                      + '(' + to_match + ')'
@@ -305,6 +309,38 @@ class Data2Bids(): #main conversion and file organization program
         assert match_found
         return match
 
+    def gen_match_regexp(self,config_regexp, data,subtype=False):
+
+        if data.startswith("0"):
+            data = data.lstrip("0")
+        match_found = False
+        for to_match in config_regexp["content"]:
+            if re.match(to_match,data):
+                match_found = True
+        if not match_found:
+            raise AssertionError("{newname} doesn't match config criteria {given}".format(newname=data, given=config_regexp["content"]))
+        #if config_regexp["left"].startswith("[(") and config_regexp["left"].endswith(")]"):
+        #    left = ex.getone(config_regexp["left"].lstrip("[").rstrip("]"))
+        #else:
+        left = ex.getone(config_regexp["left"])
+        #if config_regexp["right"].startswith("[(") and config_regexp["right"].endswith(")]"):
+        #    right = ex.getone(config_regexp["right"].lstrip("[").rstrip("]"))
+        #else:
+        right = ex.getone(config_regexp["right"])
+        newname = left+data+right
+
+        try:
+            #print(self.match_regexp(config_regexp,newname,subtype=subtype))
+            if data == self.match_regexp(config_regexp,newname,subtype=subtype):
+                return newname
+            else:
+                raise ValueError("{newname} doesn't match config criteria".format(newname=newname))
+        except AssertionError:
+            #return self.gen_match_regexp(config_regexp, data.lstrip("0"),subtype)
+            #except RecursionError:
+            raise AssertionError("{newname} doesn't match config criteria {given}".format(newname=newname,given=config_regexp))
+
+
     def bids_validator(self):
         assert self._bids_dir is not None, "Cannot launch bids-validator without specifying bids directory !"
         #try:
@@ -312,49 +348,78 @@ class Data2Bids(): #main conversion and file organization program
         #except FileNotFoundError:
         #    print("bids-validator does not appear to be installed")
 
-    def generate_names(self, part_match, src_file_path, filename, namelist=None): #function to run through name text and generate metadata
-        sess_match = None
-        ce_match = None
-        acq_match = None
-        echo_match = None
-        data_type_match = None
-        task_label_match = None
-        run_match = None
+    def generate_names(self, part_match, src_file_path, filename, #function to run through name text and generate metadata
+                            sess_match = None,
+                            ce_match = None,
+                            acq_match = None,
+                            echo_match = None,
+                            data_type_match = None,
+                            task_label_match = None,
+                            run_match = None):
         dst_file_path = self._bids_dir + "/sub-" + part_match
         new_name = "/sub-" + part_match
         SeqType = None
         # Matching the session
         try:
-            sess_match = self.match_regexp(self._config["sessLabel"], filename)
+            if sess_match is None:
+                sess_match = self.match_regexp(self._config["sessLabel"], filename)
             dst_file_path = dst_file_path + "/ses-" + sess_match
             new_name = new_name + "_ses-" + sess_match
         except AssertionError:
             if self._is_verbose:
                 print("No session found for %s" %src_file_path)
+
+        #check for optional labels
+        try:
+            if acq_match is None:
+                acq_match = self.match_regexp(self._config["acq"],filename)
+            new_name = new_name + "_acq-" + acq_match
+        except (AssertionError, KeyError) as e:
+            if self._is_verbose:
+                print("no optional labels for %s" %src_file_path)
+        try:
+            if ce_match is None: 
+                ce_match = self.match_regexp(self._config["ce"]
+                                            ,filename)
+            new_name = new_name + "_ce-" + ce_match
+
+        except (AssertionError, KeyError) as e:
+            if self._is_verbose:
+                print("no special contrast labels for %s" %src_file_path)
         
         # Matching the run number
         try:
-            run_match = self.match_regexp(self._config["runIndex"],filename)
+            if run_match is None:
+                run_match = self.match_regexp(self._config["runIndex"],filename)
+            try:
+                run_match = run_match.zfill(self._config["fill"])
+            except KeyError:
+                pass
             new_name = new_name + "_run-" + run_match
+
         except AssertionError:
             pass
 
+
         # Matching the anat/fmri data type and task
         try:
-            data_type_match = self.match_regexp(self._config["anat"]
+            if data_type_match is None:
+                data_type_match = self.match_regexp(self._config["anat"]
                                                 ,filename
                                                 , subtype=True)
             dst_file_path = dst_file_path + "/anat"
         except (AssertionError, KeyError) as e:
             # If no anatomical, trying functionnal
             try:
-                data_type_match = self.match_regexp(self._config["func"]
+                if data_type_match is None:
+                    data_type_match = self.match_regexp(self._config["func"]
                                                     ,filename
                                                     , subtype=True)
                 dst_file_path = dst_file_path + "/func"
                 # Now trying to match the task
                 try:
-                    task_label_match = self.match_regexp(self._config["func.task"]
+                    if task_label_match is None:
+                        task_label_match = self.match_regexp(self._config["func.task"]
                                                          ,filename
                                                          , subtype=True)
                     new_name = new_name + "_task-" + task_label_match
@@ -365,13 +430,15 @@ class Data2Bids(): #main conversion and file organization program
             except (AssertionError, KeyError) as e:
                 # no functional or anatomical, try ieeg
                 try:
-                    data_type_match = self.match_regexp(self._config["ieeg"]
+                    if data_type_match is None:
+                        data_type_match = self.match_regexp(self._config["ieeg"]
                                                         ,filename
                                                         ,subtype=True)
                     dst_file_path = dst_file_path + "/ieeg"
                     # Now trying to match the task
                     try:
-                        task_label_match = self.match_regexp(self._config["ieeg.task"]
+                        if task_label_match is None:
+                            task_label_match = self.match_regexp(self._config["ieeg.task"]
                                                          ,filename
                                                          , subtype=True)
                         new_name = new_name + "_task-" + task_label_match
@@ -384,20 +451,7 @@ class Data2Bids(): #main conversion and file organization program
                 except KeyError:
                     print("No anat, func, or ieeg data type found in config file, one of these data types is required")
                     return
-        #check for optional labels
-        try:
-            acq_match = self.match_regexp(self._config["acq"],filename)
-            new_name = new_name + "_acq-" + acq_match
-        except (AssertionError, KeyError) as e:
-            if self._is_verbose:
-                print("no optional labels for %s" %src_file_path)
-        try: 
-            ce_match = self.match_regexp(self._config["ce"]
-                                            ,filename)
-            new_name = new_name + "_ce-" + ce_match
-        except (AssertionError, KeyError) as e:
-            if self._is_verbose:
-                print("no special contrast labels for %s" %src_file_path)
+        
         #if is an MRI
         if dst_file_path.endswith("/func") or dst_file_path.endswith("/anat"):
             try: 
@@ -407,7 +461,8 @@ class Data2Bids(): #main conversion and file organization program
             except KeyError:
                 print("pulse sequence not listed for %s, will look for in file header" %src_file_path)
             try:
-                echo_match = self.match_regexp(self._config["echo"],filename)
+                if echo_match is None:
+                    echo_match = self.match_regexp(self._config["echo"],filename)
                 new_name = new_name + "_echo-" + echo_match 
             except AssertionError:
                 print("No echo found for %s" %src_file_path)
@@ -585,7 +640,7 @@ class Data2Bids(): #main conversion and file organization program
             part_match = None
             run_list = []
             mat_list = []
-            for root, _, files in os.walk(self._data_dir, topdown=True):
+            for root, _, files in os.walk(self._data_dir, topdown=True): #each loop is a new participant so long as participant is top level
                 files[:] = [f for f in files if not os.path.join(root,f).startswith(self._bids_dir)] #ignore BIDS directories
                 if not files:
                     continue
@@ -594,7 +649,7 @@ class Data2Bids(): #main conversion and file organization program
                     print(files)
                 while files:
                     file=files.pop(0)
-                    #print(file)
+                    print(file)
                     src_file_path = os.path.join(root, file)
                     dst_file_path = self._bids_dir
                     data_type_match = None
@@ -793,13 +848,13 @@ class Data2Bids(): #main conversion and file organization program
                     except UnboundLocalError:
                         pass
 
-            if d_list :
-                self.convert_1D(run_list, d_list, tsv_fso_runs, tsv_condition_runs, names_list, dst_file_path_list)
+                if d_list :
+                    self.convert_1D(run_list, d_list, tsv_fso_runs, tsv_condition_runs, names_list, dst_file_path_list)
 
-            if mat_list :
-                self.mat2tsv(mat_list)
+                if mat_list :
+                    self.mat2tsv(mat_list)
 
-            # Output
+                # Output
             if self._is_verbose:
                 tree(self._bids_dir)
 
@@ -817,15 +872,10 @@ class Data2Bids(): #main conversion and file organization program
             if not self.match_regexp(self._config["partLabel"], mat_file) == part_match: #initialize dataframe if new participant
                 if written:
                     df = pd.DataFrame()
-                else:
-                    if is_separate:
-                        try:
-                            self._config["eventFormat.Block"]
-                        except AssertionError:
-                            raise FileNotFoundError("{config} variable was not found in {part}'s event files".format(
-                                config=self._config["eventFormat.Block"], part=self.match_regexp(self._config["partLabel"], mat_file)))
+                elif not part_match == self.match_regexp(self._config["partLabel"], mat_file):
                     raise FileNotFoundError("{config} variable was not found in {part}'s event files".format(
-                        config=self._config["eventFormat.IDcol"], part=self.match_regexp(self._config["partLabel"], mat_file)))
+                        config="some", part=part_match))
+                
             try:
                 part_match = self.match_regexp(self._config["partLabel"], mat_file)
             except AssertionError:
@@ -884,13 +934,15 @@ class Data2Bids(): #main conversion and file organization program
             else:
                 datatype = type(mat)
                 print("\n Uknown data type %s" %datatype)
-
-            #print(df[self._config["eventFormat.IDcol"]].iloc[0],df[self._config["eventFormat.IDcol"]].iloc[-1])
+            if newmat_names and self._is_verbose:
+                print(df)
             try:
-                
+                #print(self._config["eventFormat.IDcol"])
                 if self._config["eventFormat.IDcol"] in df.columns.values.tolist():
-                    if df[self._config["eventFormat.IDcol"]].iloc[0] == df[self._config["eventFormat.IDcol"]].iloc[-1]: 
+                    #print(df[self._config["eventFormat.IDcol"]].unique())
+                    if len(df[self._config["eventFormat.IDcol"]].unique()) == 1 : #CHANGE this in case literal name doesn't change
                         is_separate = False
+                        print("Warning: data may have been lost if file ID did not change but the recording session did")
                         #construct fake orig data name to run through name generator
                         match_name = mat_file.split(os.path.basename(mat_file))[0]+df[self._config["eventFormat.IDcol"]][0] + ".edf"
                     else: #this means there was more than one recording session. In this case we will separate each trial block into a separate "run"
@@ -901,27 +953,35 @@ class Data2Bids(): #main conversion and file organization program
                 match_name = mat_file
 
                 #write the tsv from the dataframe
+            #print(newmat_names)
             if not newmat_names: #check to see if there is anything new to write
                 continue
             elif is_separate: 
-                if self._config["eventFormat.Block"] not in df.columns.values.tolist():
+                #print(all(j in df.columns.values.tolist() for j in self._config["eventFormat.Sep"].values()))
+                if not all(j in df.columns.values.tolist() for j in self._config["eventFormat.Sep"].values()):
                     if self._is_verbose:
                         print(mat_file)
                     continue
-                else:
-                    for i in df[self._config["eventFormat.Block"]].unique(): #iterate through every block
-                        nindex = df[self._config["eventFormat.Block"]].where(df[self._config["eventFormat.Block"]] == i).first_valid_index()
-                        match_name = mat_file.split(os.path.basename(mat_file))[0]+df[self._config["eventFormat.IDcol"]][nindex] + ".edf"
-                        (new_name,dst_file_path, run_match, _,echo_match,sess_match,_,
-                            data_type_match,task_label_match,SeqType) = self.generate_names(
-                            part_match, match_name, os.path.basename(match_name))
-                        writedf = df.loc[df[self._config["eventFormat.Block"]] == i]
-                        if self._is_verbose:
-                            print(mat_file,"--->",dst_file_path + new_name.split("ieeg")[0] + "run-" + str(i).zfill(2) + "_event.tsv")
-                        writedf.to_csv(dst_file_path + new_name.split("ieeg")[0] + "run-" + str(i).zfill(2) + "_event.tsv",sep="\t")
+                for i in df.filter(self._config["eventFormat.Sep"].values()).drop_duplicates().itertuples(index=False): #iterate through every block
+                    nindex = (df.where(df.filter(self._config["eventFormat.Sep"].values())==i) == df).filter(
+                        self._config["eventFormat.Sep"].values()).all(axis=1)
+                    match_name = mat_file.split(os.path.basename(mat_file))[0]+str(df[self._config["eventFormat.IDcol"]][nindex].iloc[0])
+                    for k in self._config["eventFormat.Sep"].keys():
+                        #print(k,df.columns.values.tolist())
+                        if k in self._config.keys():
+                            
+                            data = str(df[self._config["eventFormat.Sep"][k]][nindex].iloc[0])
+                            #print(self._config[k],data)
+                            match_name = match_name + self.gen_match_regexp(self._config[k],data)
+                    match_name = match_name + ".edf"
+                    (new_name,dst_file_path,_,_,_,_,_,_,_,_) = self.generate_names(
+                        part_match, match_name, os.path.basename(match_name))
+                    writedf = df.loc[nindex]
+                    if self._is_verbose:
+                        print(mat_file,"--->",dst_file_path + new_name.split("ieeg")[0] + "event.tsv")
+                    writedf.to_csv(dst_file_path + new_name.split("ieeg")[0] + "_event.tsv",sep="\t")
             else:
-                (new_name,dst_file_path, run_match, _,echo_match,sess_match,_,
-                    data_type_match,task_label_match,SeqType) = self.generate_names(
+                (new_name,dst_file_path,_,_,_,_,_,_,_,_) = self.generate_names(
                     part_match, match_name, os.path.basename(match_name))
                 if self._is_verbose:
                     print(mat_file,"--->",dst_file_path + new_name.split("ieeg")[0] + "event.tsv")
