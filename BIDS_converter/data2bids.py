@@ -284,6 +284,7 @@ class Data2Bids(): #main conversion and file organization program
 
         if subtype:
             for to_match in config_regexp["content"]:
+                #print(".*?" + delimiter_left + '(' + to_match[1] + ')' + delimiter_right + ".*?")
                 if re.match(".*?"
                             + delimiter_left
                             + '(' + to_match[1] + ')'
@@ -298,6 +299,7 @@ class Data2Bids(): #main conversion and file organization program
                             + '(' + to_match + ')'
                             + delimiter_right
                             + ".*?", filename):
+                    #print(re.match(".*?"+ delimiter_left + '(' + to_match + ')' + delimiter_right + ".*?",filename).groups())
                     match = re.match(".*?"
                                      + delimiter_left
                                      + '(' + to_match + ')'
@@ -309,24 +311,34 @@ class Data2Bids(): #main conversion and file organization program
 
     def gen_match_regexp(self,config_regexp, data,subtype=False):
 
+        if data.startswith("0"):
+            data = data.lstrip("0")
         match_found = False
         for to_match in config_regexp["content"]:
             if re.match(to_match,data):
                 match_found = True
         if not match_found:
             raise AssertionError("{newname} doesn't match config criteria {given}".format(newname=data, given=config_regexp["content"]))
+        #if config_regexp["left"].startswith("[(") and config_regexp["left"].endswith(")]"):
+        #    left = ex.getone(config_regexp["left"].lstrip("[").rstrip("]"))
+        #else:
         left = ex.getone(config_regexp["left"])
+        #if config_regexp["right"].startswith("[(") and config_regexp["right"].endswith(")]"):
+        #    right = ex.getone(config_regexp["right"].lstrip("[").rstrip("]"))
+        #else:
         right = ex.getone(config_regexp["right"])
         newname = left+data+right
 
         try:
+            #print(self.match_regexp(config_regexp,newname,subtype=subtype))
             if data == self.match_regexp(config_regexp,newname,subtype=subtype):
                 return newname
             else:
-                raise AssertionError("{newname} doesn't match config criteria".format(newname=newname))
+                raise ValueError("{newname} doesn't match config criteria".format(newname=newname))
         except AssertionError:
-            return self.gen_match_regexp(config_regexp, data,subtype)
-            #raise AssertionError("{newname} doesn't match config criteria {given}".format(newname=newname,given=config_regexp))
+            #return self.gen_match_regexp(config_regexp, data.lstrip("0"),subtype)
+            #except RecursionError:
+            raise AssertionError("{newname} doesn't match config criteria {given}".format(newname=newname,given=config_regexp))
 
 
     def bids_validator(self):
@@ -356,14 +368,38 @@ class Data2Bids(): #main conversion and file organization program
         except AssertionError:
             if self._is_verbose:
                 print("No session found for %s" %src_file_path)
+
+        #check for optional labels
+        try:
+            if acq_match is None:
+                acq_match = self.match_regexp(self._config["acq"],filename)
+            new_name = new_name + "_acq-" + acq_match
+        except (AssertionError, KeyError) as e:
+            if self._is_verbose:
+                print("no optional labels for %s" %src_file_path)
+        try:
+            if ce_match is None: 
+                ce_match = self.match_regexp(self._config["ce"]
+                                            ,filename)
+            new_name = new_name + "_ce-" + ce_match
+
+        except (AssertionError, KeyError) as e:
+            if self._is_verbose:
+                print("no special contrast labels for %s" %src_file_path)
         
         # Matching the run number
         try:
             if run_match is None:
                 run_match = self.match_regexp(self._config["runIndex"],filename)
+            try:
+                run_match = run_match.zfill(self._config["fill"])
+            except KeyError:
+                pass
             new_name = new_name + "_run-" + run_match
+
         except AssertionError:
             pass
+
 
         # Matching the anat/fmri data type and task
         try:
@@ -415,22 +451,7 @@ class Data2Bids(): #main conversion and file organization program
                 except KeyError:
                     print("No anat, func, or ieeg data type found in config file, one of these data types is required")
                     return
-        #check for optional labels
-        try:
-            if acq_match is None:
-                acq_match = self.match_regexp(self._config["acq"],filename)
-            new_name = new_name + "_acq-" + acq_match
-        except (AssertionError, KeyError) as e:
-            if self._is_verbose:
-                print("no optional labels for %s" %src_file_path)
-        try:
-            if ce_match is None: 
-                ce_match = self.match_regexp(self._config["ce"]
-                                            ,filename)
-            new_name = new_name + "_ce-" + ce_match
-        except (AssertionError, KeyError) as e:
-            if self._is_verbose:
-                print("no special contrast labels for %s" %src_file_path)
+        
         #if is an MRI
         if dst_file_path.endswith("/func") or dst_file_path.endswith("/anat"):
             try: 
@@ -855,18 +876,6 @@ class Data2Bids(): #main conversion and file organization program
                     raise FileNotFoundError("{config} variable was not found in {part}'s event files".format(
                         config="some", part=part_match))
                 
-                '''else:
-                    if is_separate:
-                        try:
-                            for i in self._config["eventFormat.Sep"].values():
-                                df[i]
-                        except KeyError:
-                            raise FileNotFoundError("{config} variable was not found in {part}'s event files".format(
-                                config=i, part=self.match_regexp(self._config["partLabel"], mat_file)))
-                    else:
-                        raise FileNotFoundError("{config} variable was not found in {part}'s event files".format(
-                            config=self._config["eventFormat.IDcol"], part=self.match_regexp(self._config["partLabel"], mat_file)))
-                    '''
             try:
                 part_match = self.match_regexp(self._config["partLabel"], mat_file)
             except AssertionError:
@@ -925,12 +934,12 @@ class Data2Bids(): #main conversion and file organization program
             else:
                 datatype = type(mat)
                 print("\n Uknown data type %s" %datatype)
-            if newmat_names:
+            if newmat_names and self._is_verbose:
                 print(df)
             try:
-                print(self._config["eventFormat.IDcol"])
+                #print(self._config["eventFormat.IDcol"])
                 if self._config["eventFormat.IDcol"] in df.columns.values.tolist():
-                    print(df[self._config["eventFormat.IDcol"]].unique())
+                    #print(df[self._config["eventFormat.IDcol"]].unique())
                     if len(df[self._config["eventFormat.IDcol"]].unique()) == 1 : #CHANGE this in case literal name doesn't change
                         is_separate = False
                         print("Warning: data may have been lost if file ID did not change but the recording session did")
@@ -944,27 +953,25 @@ class Data2Bids(): #main conversion and file organization program
                 match_name = mat_file
 
                 #write the tsv from the dataframe
-            print(newmat_names)
+            #print(newmat_names)
             if not newmat_names: #check to see if there is anything new to write
                 continue
             elif is_separate: 
-                print(all(j in df.columns.values.tolist() for j in self._config["eventFormat.Sep"].values()))
+                #print(all(j in df.columns.values.tolist() for j in self._config["eventFormat.Sep"].values()))
                 if not all(j in df.columns.values.tolist() for j in self._config["eventFormat.Sep"].values()):
                     if self._is_verbose:
                         print(mat_file)
                     continue
-                '''else: #fix this
-                    #.groupby().size().reset_index()'''
                 for i in df.filter(self._config["eventFormat.Sep"].values()).drop_duplicates().itertuples(index=False): #iterate through every block
                     nindex = (df.where(df.filter(self._config["eventFormat.Sep"].values())==i) == df).filter(
                         self._config["eventFormat.Sep"].values()).all(axis=1)
                     match_name = mat_file.split(os.path.basename(mat_file))[0]+str(df[self._config["eventFormat.IDcol"]][nindex].iloc[0])
                     for k in self._config["eventFormat.Sep"].keys():
-                        print(k,df.columns.values.tolist())
+                        #print(k,df.columns.values.tolist())
                         if k in self._config.keys():
                             
                             data = str(df[self._config["eventFormat.Sep"][k]][nindex].iloc[0])
-                            print(self._config[k],data)
+                            #print(self._config[k],data)
                             match_name = match_name + self.gen_match_regexp(self._config[k],data)
                     match_name = match_name + ".edf"
                     (new_name,dst_file_path,_,_,_,_,_,_,_,_) = self.generate_names(
