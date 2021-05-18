@@ -356,6 +356,15 @@ class Data2Bids(): #main conversion and file organization program
                             data_type_match = None,
                             task_label_match = None,
                             run_match = None):
+        
+        try:
+            if re.match("^[^\d]{1,3}",part_match):
+                part_matches = re.split("([^\d]{1,3})",part_match,1)
+                part_match = part_matches[1] + part_matches[2].zfill(self._config["partLabel"]["fill"])
+            else:
+                part_match = part_match.zfill(self._config["partLabel"]["fill"])
+        except KeyError:
+            pass
         dst_file_path = self._bids_dir + "/sub-" + part_match
         new_name = "/sub-" + part_match
         SeqType = None
@@ -373,6 +382,15 @@ class Data2Bids(): #main conversion and file organization program
         try:
             if acq_match is None:
                 acq_match = self.match_regexp(self._config["acq"],filename)
+            try:
+                if re.match("^[^\d]{1,3}",acq_match):
+                    acq_matches = re.split("([^\d]{1,3})",acq_match,1)
+                    acq_match = acq_matches[1] + acq_matches[2].zfill(self._config["acq"]["fill"])
+                else:
+                    acq_match = acq_match.zfill(self._config["acq"]["fill"])
+            except KeyError:
+                pass
+
             new_name = new_name + "_acq-" + acq_match
         except (AssertionError, KeyError) as e:
             if self._is_verbose:
@@ -392,10 +410,13 @@ class Data2Bids(): #main conversion and file organization program
             if run_match is None:
                 run_match = self.match_regexp(self._config["runIndex"],filename)
             try:
-                run_match = run_match.zfill(self._config["runIndex"]["fill"])
+                if re.match("^[^\d]{1,3}",run_match):
+                    run_matches = re.split("([^\d]{1,3})",run_match,1)
+                    run_match = run_matches[1] + run_matches[2].zfill(self._config["runIndex"]["fill"])
+                else:
+                    run_match = run_match.zfill(self._config["runIndex"]["fill"])
             except KeyError:
                 pass
-            
 
         except AssertionError:
             pass
@@ -957,11 +978,9 @@ class Data2Bids(): #main conversion and file organization program
                 match_name = mat_file
 
                 #write the tsv from the dataframe
-            #print(newmat_names)
             if not newmat_names: #check to see if there is anything new to write
                 continue
             elif is_separate: 
-                #print(all(j in df.columns.values.tolist() for j in self._config["eventFormat.Sep"].values()))
                 if not all(j in df.columns.values.tolist() for j in self._config["eventFormat.Sep"].values()):
                     if self._is_verbose:
                         print(mat_file)
@@ -977,7 +996,6 @@ class Data2Bids(): #main conversion and file organization program
                                 try: #making sure actualy key errors get caught
                                     if df_unique[jval].iat[i] in df_unique[jval].tolist()[:i]:
                                         df_unique[jval].iat[i] = str(int(max(df_unique[jval].tolist())) +1)
-                                    #df_unique.at[i,j] = str(int(df_unique.at[i,j]) + nadd)
                                 except KeyError as e:
                                     raise ValueError(e)
                             else: 
@@ -991,11 +1009,9 @@ class Data2Bids(): #main conversion and file organization program
                         self._config["eventFormat.Sep"].values()).all(axis=1)
                     match_name = mat_file.split(os.path.basename(mat_file))[0]+str(df[self._config["eventFormat.IDcol"]][nindex].iloc[0])
                     for k in self._config["eventFormat.Sep"].keys():
-                        #print(k,df.columns.values.tolist())
                         if k in self._config.keys():
                             
                             data = str(df_unique[self._config["eventFormat.Sep"][k]].iloc[i])
-                            #print(self._config[k],data)
                             match_name = match_name + self.gen_match_regexp(self._config[k],data)
                     match_name = match_name + ".edf"
                     (new_name,dst_file_path,_,_,_,_,_,_,_,_) = self.generate_names(

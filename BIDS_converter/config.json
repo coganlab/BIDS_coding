@@ -40,6 +40,7 @@
 , "partLabel" : {"left" : ".*?"
                 , "right" : "[_ ]"
                 , "content" : ["D[0-9]{1,4}"]
+                , "fill": 4
                 }
 , "echo" : {"left" : "e"
     , "right" : "\\."
@@ -48,6 +49,7 @@
 , "acq" : {"left" : "Session"
     , "right" : "[_ \\.]"
     , "content" : ["[0-9]{1,3}"]
+    , "fill": 2
     }
 , "ce" : {"left" : "_%&#$%"
     , "right" : "_$#^#^"
