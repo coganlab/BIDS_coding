@@ -34,7 +34,8 @@
 , "runIndex" : {"left" : "run"
                 , "right" : "_"
                 , "content" : ["[0-9]{1,3}"]
-                , "fill" : 3
+                , "fill" : 2
+                , "repeat" : false
                 }
 , "partLabel" : {"left" : ".*?"
                 , "right" : "[_ ]"

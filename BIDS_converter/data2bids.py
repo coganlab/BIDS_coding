@@ -392,10 +392,10 @@ class Data2Bids(): #main conversion and file organization program
             if run_match is None:
                 run_match = self.match_regexp(self._config["runIndex"],filename)
             try:
-                run_match = run_match.zfill(self._config["fill"])
+                run_match = run_match.zfill(self._config["runIndex"]["fill"])
             except KeyError:
                 pass
-            new_name = new_name + "_run-" + run_match
+            
 
         except AssertionError:
             pass
@@ -452,6 +452,9 @@ class Data2Bids(): #main conversion and file organization program
                     print("No anat, func, or ieeg data type found in config file, one of these data types is required")
                     return
         
+        if run_match is not None:
+            new_name = new_name + "_run-" + run_match
+
         #if is an MRI
         if dst_file_path.endswith("/func") or dst_file_path.endswith("/anat"):
             try: 
@@ -467,6 +470,7 @@ class Data2Bids(): #main conversion and file organization program
             except AssertionError:
                 print("No echo found for %s" %src_file_path)
 
+        
          
 	# Adding the modality to the new filename
         new_name = new_name + "_" + data_type_match
@@ -962,15 +966,35 @@ class Data2Bids(): #main conversion and file organization program
                     if self._is_verbose:
                         print(mat_file)
                     continue
-                for i in df.filter(self._config["eventFormat.Sep"].values()).drop_duplicates().itertuples(index=False): #iterate through every block
-                    nindex = (df.where(df.filter(self._config["eventFormat.Sep"].values())==i) == df).filter(
+
+                #make sure numbers do not repeat when not wanted
+                df_unique = df.filter(self._config["eventFormat.Sep"].values()).drop_duplicates()
+                for i in range(df_unique.shape[0])[1:]:
+                    for j in self._config["eventFormat.Sep"].keys():
+                        jval = self._config["eventFormat.Sep"][j]
+                        try:
+                            if self._config[j]["repeat"] is False:
+                                try: #making sure actualy key errors get caught
+                                    if df_unique[jval].iat[i] in df_unique[jval].tolist()[:i]:
+                                        df_unique[jval].iat[i] = str(int(max(df_unique[jval].tolist())) +1)
+                                    #df_unique.at[i,j] = str(int(df_unique.at[i,j]) + nadd)
+                                except KeyError as e:
+                                    raise ValueError(e)
+                            else: 
+                                continue
+                        except KeyError:
+                            continue
+                
+                tupelist = list(df.filter(self._config["eventFormat.Sep"].values()).drop_duplicates().itertuples(index=False))
+                for i in range(len(tupelist)): #iterate through every block
+                    nindex = (df.where(df.filter(self._config["eventFormat.Sep"].values())==tupelist[i]) == df).filter(
                         self._config["eventFormat.Sep"].values()).all(axis=1)
                     match_name = mat_file.split(os.path.basename(mat_file))[0]+str(df[self._config["eventFormat.IDcol"]][nindex].iloc[0])
                     for k in self._config["eventFormat.Sep"].keys():
                         #print(k,df.columns.values.tolist())
                         if k in self._config.keys():
                             
-                            data = str(df[self._config["eventFormat.Sep"][k]][nindex].iloc[0])
+                            data = str(df_unique[self._config["eventFormat.Sep"][k]].iloc[i])
                             #print(self._config[k],data)
                             match_name = match_name + self.gen_match_regexp(self._config[k],data)
                     match_name = match_name + ".edf"
@@ -979,7 +1003,7 @@ class Data2Bids(): #main conversion and file organization program
                     writedf = df.loc[nindex]
                     if self._is_verbose:
                         print(mat_file,"--->",dst_file_path + new_name.split("ieeg")[0] + "event.tsv")
-                    writedf.to_csv(dst_file_path + new_name.split("ieeg")[0] + "_event.tsv",sep="\t")
+                    writedf.to_csv(dst_file_path + new_name.split("ieeg")[0] + "event.tsv",sep="\t")
             else:
                 (new_name,dst_file_path,_,_,_,_,_,_,_,_) = self.generate_names(
                     part_match, match_name, os.path.basename(match_name))
