@@ -20,6 +20,7 @@ import scipy.io as sio
 loadmat = sio.loadmat
 import pandas as pd
 import exrex as ex
+import pyedflib
 
 def get_parser(): #parses flags at onset of command
     parser = argparse.ArgumentParser(
@@ -775,8 +776,12 @@ class Data2Bids(): #main conversion and file organization program
                         d_list.append(src_file_path)
                         continue
                     elif re.match(".*?" + ".mat", file):
-                        mat_list.append(src_file_path)
-                        continue
+                        try:
+                            if re.match(".*?"+self._config["eventFiles"]+".*?",file):
+                                mat_list.append(src_file_path)
+                                continue
+                        except KeyError:
+                            pass
                         # if the file doesn't match the extension, we skip it
                     elif not any(re.match(".*?" + ext, file) for ext in curr_ext):
                         print("Warning : Skipping %s" %src_file_path)

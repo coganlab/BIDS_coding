@@ -11,7 +11,7 @@
     }   
 , "ieeg": {"left" : ".*?"
             , "right" : ".*?"
-            , "content" : [   ["ieeg",".edf"]
+            , "content" : [   ["ieeg",".dat"]
                             ]
             }
 , "ieeg.task": {"left" : "_"
@@ -55,6 +55,7 @@
     , "right" : "_$#^#^"
     , "content" : ["[0-9]{6}"]
     }    
+,"eventFiles" : "([Tt]rial(s|Info).*?\\.mat)"
 ,"eventFormat" : ["Subject", "Trial", "Rec", "Day", "FilenamePrefix", "Start",
     "Auditory", "Go", "StartCode", "AuditoryCode", "GoCode", "Noisy", "NoResponse",
     "ResponseStart","ResponseEnd","cue", "sound", "go", "cueTime", "block", "cueStart",
