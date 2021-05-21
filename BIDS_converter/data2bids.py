@@ -916,19 +916,31 @@ class Data2Bids(): #main conversion and file organization program
                     if "__" not in i and "readme" not in i: 
 
                         newmat_names = []
-                        newmat_dtype = []
                         if mat[i].dtype.names is not None:
-                            for j in mat[i].dtype.names:
-                                if j in self._config['eventFormat']: #if variable is named by user    
-                                    karray = np.reshape(np.transpose(mat[i][j]),(-1))
-                                    if j in df.columns.values.tolist(): #check if variable is already defined and accross all acquisitions
-                                        if df[j].size >= len(karray):
-                                            continue
-                                    written = False
-                                    df[j] = pd.Series(karray, index=range(len(karray))) #assign columns to dataframe
-                                    newmat_names.append(j)
-                                    #print(j)
-                                    newmat_dtype.append(mat[i][j][0][0].dtype)
+                            names = mat[i].dtype.names
+                            dtypes = mat[i][:][0][0].dtype
+                            karray = np.reshape(np.transpose(mat[i][:]),(-1))
+                        elif mat[i][0][0].dtype.names is not None:
+                            names = mat[i][0][0].dtype.names
+                            dtypes = mat[i][0][0][:][0][0].dtype
+                            karray = np.array([])
+                            for k in range(len(mat[i][0])):
+                                karray = np.append(karray,mat[i][0][k][:][0][0])
+                        else: #sorry this code format doesn't leave many options for data formatting but it was the only option
+                            raise KeyError("Current MATLAB data format not yet supported \
+                            \nCurrent support covers stuctures and cell arrays of structures")
+                        for j in names:
+                            if j in self._config['eventFormat']: #if variable is named by user    
+                                if j in df.columns.values.tolist(): #check if variable is already defined and accross all acquisitions
+                                    if df[j].size >= len(karray[j]):
+                                        continue
+                                written = False
+                                try:
+                                    df[j] = pd.Series(karray[j], index=range(len(karray[j])),dtype=dtypes[j])
+                                except ValueError:
+                                    df[j] = pd.Series(karray[j], index=range(len(karray[j]))) #assign columns to dataframe
+                                newmat_names.append(j)
+                                '''
                         elif mat[i][0][0].dtype.names is not None: #if you're psychotic and made a cell array of STRUCTURES
                             for j in mat[i][0][0].dtype.names:
                                 if j in self._config['eventFormat']: #if variable is named by user
@@ -942,12 +954,11 @@ class Data2Bids(): #main conversion and file organization program
                                     written = False
                                     df[j] = pd.Series(karray, index=range(len(karray)))
                                     newmat_names.append(j)
-                                    newmat_dtype.append(mat[i][0][0][j][0][0].dtype)
+                                    newmat_dtype.append(mat[i][0][0][j][0][0].dtype)'''
                             
-                        else: #sorry this code format doesn't leave many options for data formatting but it was the only option
-                            raise KeyError("Current MATLAB data format not yet supported \
-                            \nCurrent support covers stuctures and cell arrays of structures")
+                        
                         #Set correct data types for smooth looking data in .tsv format
+                        '''
                         for k in range(len(newmat_names)):
                             try:
                                 df[newmat_names[k]] = df[newmat_names[k]].astype(newmat_dtype[k])
@@ -955,7 +966,7 @@ class Data2Bids(): #main conversion and file organization program
                                     for j in range(df[newmat_names[k]].size):
                                         df[newmat_names[k]].iloc[j] = re.sub("[\'\[\]]",'',df[newmat_names[k]].iloc[j])
                             except ValueError:
-                                continue
+                                continue'''
 
             elif isinstance(mat,list): #if .mat is cell array
                 print("\n No support for cell arrays yet")
