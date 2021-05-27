@@ -1,5 +1,6 @@
-{"dataFormat" : [".nii", ".nii.gz", ".gz", ".edf", ".mgz", ".txt", ".mat"]
+{"dataFormat" : [".nii", ".nii.gz", ".gz", ".edf", ".mgz", ".txt", ".mat",".dat.gz",".dat"]
 , "compress" : true
+, "compressLevel" : 6
 , "repetitionTimeInSec" : 2
 , "delayTimeInSec" : [ 0.028, 0.013, 0.026, 0.040]
 , "series" : "odd-interleaved"
@@ -11,8 +12,14 @@
     }   
 , "ieeg": {"left" : ".*?"
             , "right" : ".*?"
-            , "content" : [   ["ieeg",".dat"]
+            , "content" : [   ["ieeg",".dat.gz"]
+                               , ["ieeg",".dat"]
                             ]
+            , "binary?" : true
+            , "binaryEncoding": "float32"
+            , "headerFile": "experiment\\.mat"
+            , "headerData": "channels.name"
+            , "sampleRate": "recording.sample_rate"
             }
 , "ieeg.task": {"left" : "_"
             , "right" : ".*?"
