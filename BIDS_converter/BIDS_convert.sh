@@ -10,8 +10,9 @@ TASKS=(Phoneme_sequencing)
 for TASK in ${TASKS[@]}
  do
 
-    OUTPUT_DIR="/home/sbf/Desktop/Workspace/sourcedata/$TASK" 
-    BIDS_DIR="$OUTPUT_DIR/BIDS"
+    OUTPUT_DIR="/home/sbf/Desktop/git/BIDS_coding/BIDS_converter/testing"
+    BIDS_DIR="/home/sbf/Desktop/Workspace/$TASK"
+    ZIP=true
     
     if [ -d $BIDS_DIR ]
      then
@@ -43,7 +44,11 @@ for TASK in ${TASKS[@]}
         x=( $(find "$ORIG_DATA_DIR/D_Data/$TASK/$SUB_ID" -regex ".*$SUB_ID.*\.ieeg.dat" -type f | rev | sed -r "s|/|_|" | sed -r "s|/|noisseS/|" | rev | xargs -n 1 basename | sed -r "s|${SUB_ID}_||") )
         y=( $(find "$ORIG_DATA_DIR/D_Data/$TASK/$SUB_ID" -regex ".*$SUB_ID.*\.ieeg.dat") )
         z=${#x[@]}
-        for((i=0;i<=$z-1;i+=1));  do cp ${y[$i]} "$OUTPUT_DIR/$SUB_ID/${SUB_ID}_${x[$i]}" ; done
+        if $ZIP ; then
+            for((i=0;i<=$z-1;i+=1));  do gzip -c -6 -v ${y[$i]} > "$OUTPUT_DIR/$SUB_ID/${SUB_ID}_${x[$i]}.gz" ; done
+        else 
+            for((i=0;i<=$z-1;i+=1));  do cp ${y[$i]} "$OUTPUT_DIR/$SUB_ID/${SUB_ID}_${x[$i]}" ; done
+        fi
         #find "$ORIG_DATA_DIR/D_Data/$TASK/$SUB_ID" -type f -regex ".*$SUB_ID.*\.ieeg\.dat" | xargs -n 1 basename | xargs -I{} cp "$OUTPUT_DIR/$SUB_ID/{}" "$OUTPUT_DIR/$SUB_ID/${SUB_ID}_{}"
         find "$ORIG_DATA_DIR/D_Data/$TASK/$SUB_ID" -regex ".*experiment\.mat" -exec cp -t "$OUTPUT_DIR/$SUB_ID/" {} + 
         #event .mat
