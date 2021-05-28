@@ -19,7 +19,7 @@ import pydicom as dicom
 import pandas as pd
 import exrex as ex
 import pyedflib
-from matgrab.matgrab import mat2df
+from matgrab import mat2df
 
 def get_parser(): #parses flags at onset of command
     parser = argparse.ArgumentParser(
