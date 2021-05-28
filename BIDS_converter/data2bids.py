@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
+
 import os
 import argparse
 import sys
@@ -18,7 +19,7 @@ import pydicom as dicom
 import pandas as pd
 import exrex as ex
 import pyedflib
-from BIDS_converter.matgrab import mat2df
+from matgrab.matgrab import mat2df
 
 def get_parser(): #parses flags at onset of command
     parser = argparse.ArgumentParser(
