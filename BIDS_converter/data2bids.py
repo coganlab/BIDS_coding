@@ -18,7 +18,8 @@ import pydicom as dicom
 import pandas as pd
 import exrex as ex
 import pyedflib
-from matgrab import mat2df
+from BIDS_converter.matgrab import mat2df
+
 
 def get_parser(): #parses flags at onset of command
     parser = argparse.ArgumentParser(
@@ -558,7 +559,7 @@ class Data2Bids(): #main conversion and file organization program
                         seqlist.append(None)
                 [ScanningSequence, SequenceVariant, SequenceOptions, AquisitionType, SequenceName] = seqlist
                 try:
-                    timings
+                    timings = []
                 except NameError:
                     timings = [None] * int(ImagesInAcquisition/vols_per_time)
 
