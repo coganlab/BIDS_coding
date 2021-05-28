@@ -14,7 +14,7 @@
             , "right" : ".*?"
             , "content" : [   ["ieeg",".dat.gz"]
                                , ["ieeg",".dat"]
-                               , ["ieeg",".edf"]
+                              , ["ieeg",".edf"]
                             ]
             , "binary?" : true
             , "binaryEncoding": "float32"

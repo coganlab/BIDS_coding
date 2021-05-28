@@ -20,6 +20,7 @@ import exrex as ex
 import pyedflib
 from BIDS_converter.matgrab import mat2df
 
+
 def get_parser(): #parses flags at onset of command
     parser = argparse.ArgumentParser(
         formatter_class=argparse.RawDescriptionHelpFormatter
