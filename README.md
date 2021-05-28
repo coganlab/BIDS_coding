@@ -2,7 +2,7 @@
 See issues for update on code completion progress
 
 # BIDS_coding
-These scripts are intended for the creation and manipulation of BIDS compliant IEEG data set to the new [specifications](https://bids-specification.readthedocs.io/en/stable/04-modality-specific-files/04-intracranial-electroencephalography.html).
+These scripts are intended for the creation and manipulation of BIDS compliant IEEG data set to the new [specifications](https://bids-specification.readthedocs.io/en/stable/04-modality-specific-files/04-intracranial-electroencephalography.html). Currently focused on EEG data type conversion, although multi-echo MRI data is also supported. For more conventional fMRI type BIDS conversions it is recommended you first look at [BIDScoin](https://github.com/Donders-Institute/bidscoin) as it has great general coverage than this repository.
 
 Each python script can be run repreatedly using an iterator shell script like the one within the bids converter.
 They can also be run in the command line and will automatically iterate through a whole dataset if the top folder is indicated in the command.
