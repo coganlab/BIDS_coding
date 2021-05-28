@@ -18,7 +18,7 @@ import pydicom as dicom
 import pandas as pd
 import exrex as ex
 import pyedflib
-from BIDS_coding.BIDS_converter.matgrab import mat2df
+from BIDS_converter.matgrab import mat2df
 
 def get_parser(): #parses flags at onset of command
     parser = argparse.ArgumentParser(

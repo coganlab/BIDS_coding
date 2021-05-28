@@ -1,16 +1,17 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
-from BIDS_coding.BIDS_converter.data2bids import Data2Bids
-import os
+
+
+from BIDS_converter.data2bids import Data2Bids
+#Data2Bids = BIDS_converter.data2bids.Data2Bids
 import shutil
+import os
 
 def test_1():
 
-    try:
-        os.mkdir("BIDS_converter/samples/BIDS")
-    except FileExistsError:
-        pass
+    
+    os.makedirs("BIDS_converter/samples/BIDS",exist_ok=True)
     Data2Bids(input_dir='BIDS_converter/samples/D52', output_dir='BIDS_converter/samples/BIDS').run()
 
     xlist =[]
@@ -26,10 +27,8 @@ def test_1():
 
 def test_2():
 
-    try:
-        os.mkdir("BIDS_converter/samples/BIDS")
-    except FileExistsError:
-        pass
+    os.makedirs("BIDS_converter/samples/BIDS",exist_ok=True)
+
     Data2Bids(input_dir='BIDS_converter/samples/D48', output_dir='BIDS_converter/samples/BIDS').run()
 
     xlist =[]
