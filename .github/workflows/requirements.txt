@@ -8,3 +8,4 @@ numpy>=1.19.2
 pydicom>=2.1.2
 bids>=0.0
 exrex >=0.10.5
+pyEDFlib == 0.1.22

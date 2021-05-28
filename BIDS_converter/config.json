@@ -1,5 +1,6 @@
-{"dataFormat" : [".nii", ".nii.gz", ".gz", ".edf", ".mgz", ".txt", ".mat"]
+{"dataFormat" : [".nii", ".nii.gz", ".gz", ".edf", ".mgz", ".txt", ".mat",".dat.gz",".dat"]
 , "compress" : true
+, "compressLevel" : 6
 , "repetitionTimeInSec" : 2
 , "delayTimeInSec" : [ 0.028, 0.013, 0.026, 0.040]
 , "series" : "odd-interleaved"
@@ -11,8 +12,15 @@
     }   
 , "ieeg": {"left" : ".*?"
             , "right" : ".*?"
-            , "content" : [   ["ieeg",".edf"]
+            , "content" : [   ["ieeg",".dat.gz"]
+                               , ["ieeg",".dat"]
+                              , ["ieeg",".edf"]
                             ]
+            , "binary?" : true
+            , "binaryEncoding": "float32"
+            , "headerFile": "experiment\\.mat"
+            , "headerData": "channels.name"
+            , "sampleRate": "recording.sample_rate"
             }
 , "ieeg.task": {"left" : "_"
             , "right" : ".*?"
@@ -40,6 +48,7 @@
 , "partLabel" : {"left" : ".*?"
                 , "right" : "[_ ]"
                 , "content" : ["D[0-9]{1,4}"]
+                , "fill": 4
                 }
 , "echo" : {"left" : "e"
     , "right" : "\\."
@@ -48,11 +57,13 @@
 , "acq" : {"left" : "Session"
     , "right" : "[_ \\.]"
     , "content" : ["[0-9]{1,3}"]
+    , "fill": 2
     }
 , "ce" : {"left" : "_%&#$%"
     , "right" : "_$#^#^"
     , "content" : ["[0-9]{6}"]
     }    
+,"eventFiles" : "([Tt]rial(s|Info).*?\\.mat)"
 ,"eventFormat" : ["Subject", "Trial", "Rec", "Day", "FilenamePrefix", "Start",
     "Auditory", "Go", "StartCode", "AuditoryCode", "GoCode", "Noisy", "NoResponse",
     "ResponseStart","ResponseEnd","cue", "sound", "go", "cueTime", "block", "cueStart",

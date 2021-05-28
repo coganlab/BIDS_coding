@@ -9,17 +9,17 @@ import shutil
 import json
 import subprocess
 import gzip
-from warnings import WarningMessage
 import numpy as np
 import nibabel as nib
 import csv
 import subprocess
 from pathlib import Path
 import pydicom as dicom
-import scipy.io as sio
-loadmat = sio.loadmat
 import pandas as pd
 import exrex as ex
+import pyedflib
+from BIDS_converter.matgrab import mat2df
+
 
 def get_parser(): #parses flags at onset of command
     parser = argparse.ArgumentParser(
@@ -125,6 +125,7 @@ class Data2Bids(): #main conversion and file organization program
         self._bids_dir = None
         self._bids_version = "1.5.2"
         self._dataset_name = None
+        self._data_types = {"anat": False, "func": False,"ieeg":False}
 
         self.set_overwrite(overwrite)
         self.set_data_dir(input_dir,DICOM_path)
@@ -356,6 +357,15 @@ class Data2Bids(): #main conversion and file organization program
                             data_type_match = None,
                             task_label_match = None,
                             run_match = None):
+        
+        try:
+            if re.match("^[^\d]{1,3}",part_match):
+                part_matches = re.split("([^\d]{1,3})",part_match,1)
+                part_match = part_matches[1] + part_matches[2].zfill(self._config["partLabel"]["fill"])
+            else:
+                part_match = part_match.zfill(self._config["partLabel"]["fill"])
+        except KeyError:
+            pass
         dst_file_path = self._bids_dir + "/sub-" + part_match
         new_name = "/sub-" + part_match
         SeqType = None
@@ -373,6 +383,15 @@ class Data2Bids(): #main conversion and file organization program
         try:
             if acq_match is None:
                 acq_match = self.match_regexp(self._config["acq"],filename)
+            try:
+                if re.match("^[^\d]{1,3}",acq_match):
+                    acq_matches = re.split("([^\d]{1,3})",acq_match,1)
+                    acq_match = acq_matches[1] + acq_matches[2].zfill(self._config["acq"]["fill"])
+                else:
+                    acq_match = acq_match.zfill(self._config["acq"]["fill"])
+            except KeyError:
+                pass
+
             new_name = new_name + "_acq-" + acq_match
         except (AssertionError, KeyError) as e:
             if self._is_verbose:
@@ -392,10 +411,13 @@ class Data2Bids(): #main conversion and file organization program
             if run_match is None:
                 run_match = self.match_regexp(self._config["runIndex"],filename)
             try:
-                run_match = run_match.zfill(self._config["runIndex"]["fill"])
+                if re.match("^[^\d]{1,3}",run_match):
+                    run_matches = re.split("([^\d]{1,3})",run_match,1)
+                    run_match = run_matches[1] + run_matches[2].zfill(self._config["runIndex"]["fill"])
+                else:
+                    run_match = run_match.zfill(self._config["runIndex"]["fill"])
             except KeyError:
                 pass
-            
 
         except AssertionError:
             pass
@@ -408,6 +430,7 @@ class Data2Bids(): #main conversion and file organization program
                                                 ,filename
                                                 , subtype=True)
             dst_file_path = dst_file_path + "/anat"
+            self._data_types["anat"] = True
         except (AssertionError, KeyError) as e:
             # If no anatomical, trying functionnal
             try:
@@ -416,6 +439,7 @@ class Data2Bids(): #main conversion and file organization program
                                                     ,filename
                                                     , subtype=True)
                 dst_file_path = dst_file_path + "/func"
+                self._data_types["func"] = True
                 # Now trying to match the task
                 try:
                     if task_label_match is None:
@@ -435,6 +459,7 @@ class Data2Bids(): #main conversion and file organization program
                                                         ,filename
                                                         ,subtype=True)
                     dst_file_path = dst_file_path + "/ieeg"
+                    self._data_types["ieeg"] = True
                     # Now trying to match the task
                     try:
                         if task_label_match is None:
@@ -534,7 +559,7 @@ class Data2Bids(): #main conversion and file organization program
                         seqlist.append(None)
                 [ScanningSequence, SequenceVariant, SequenceOptions, AquisitionType, SequenceName] = seqlist
                 try:
-                    timings
+                    timings = []
                 except NameError:
                     timings = [None] * int(ImagesInAcquisition/vols_per_time)
 
@@ -644,16 +669,20 @@ class Data2Bids(): #main conversion and file organization program
             part_match = None
             run_list = []
             mat_list = []
+            passed_list = []
             for root, _, files in os.walk(self._data_dir, topdown=True): #each loop is a new participant so long as participant is top level
                 files[:] = [f for f in files if not os.path.join(root,f).startswith(self._bids_dir)] #ignore BIDS directories
+                headers = None
+                sample_rate = None
                 if not files:
                     continue
                 files.sort()
                 if self._is_verbose:
                     print(files)
-                while files:
+                while files: #loops over each participant file
                     file=files.pop(0)
-                    print(file)
+                    if self._is_verbose:
+                        print(file)
                     src_file_path = os.path.join(root, file)
                     dst_file_path = self._bids_dir
                     data_type_match = None
@@ -754,8 +783,19 @@ class Data2Bids(): #main conversion and file organization program
                         d_list.append(src_file_path)
                         continue
                     elif re.match(".*?" + ".mat", file):
-                        mat_list.append(src_file_path)
-                        continue
+                        try:
+                            if re.match(".*?"+self._config["ieeg"]["headerFile"]+".*?",file):
+                                try:
+                                    headers = mat2df(src_file_path,self._config["ieeg"]["headerData"]).tolist()
+                                    sample_rate = mat2df(src_file_path,self._config["ieeg"]["sampleRate"]).iloc[0]
+                                    continue
+                                except KeyError as e:
+                                    raise NotImplementedError(e)
+                            else: #re.match(".*?"+self._config["eventFiles"]+".*?",file):
+                                mat_list.append(src_file_path)
+                                continue
+                        except KeyError:
+                            continue
                         # if the file doesn't match the extension, we skip it
                     elif not any(re.match(".*?" + ext, file) for ext in curr_ext):
                         print("Warning : Skipping %s" %src_file_path)
@@ -837,12 +877,41 @@ class Data2Bids(): #main conversion and file organization program
                             if compress is True:
                                 print("zipping " + file)
                                 with open(dst_file_path + new_name + ".nii", 'rb') as f_in:
-                                    with gzip.open(dst_file_path + new_name + ".nii.gz", 'wb',9) as f_out:
+                                    with gzip.open(dst_file_path + new_name + ".nii.gz", 'wb',self._config["compressLevel"]) as f_out:
                                         shutil.copyfileobj(f_in, f_out)
                                 os.remove(dst_file_path + new_name + ".nii")
 
-                    elif file.endswith(".edf"):
-                        shutil.copy(src_file_path, dst_file_path + new_name + ".edf")
+                    elif dst_file_path.endswith("/ieeg"):
+                        if file.endswith(".edf"):
+                            shutil.copy(src_file_path, dst_file_path + new_name + ".edf")
+                        elif not self._config["ieeg"]["binary?"]:
+                            raise NotImplementedError("{file} file format not yet supported. If file is binary format, please indicate so and what encoding in the config.json file".format(file=file))
+                        elif headers is not None and sample_rate is not None: #assume has binary encoding
+                            try: #open binary file and write decoded numbers as array where rows = channels
+                                #check if zipped
+                                if file.endswith(".gz"):
+                                    with gzip.open(src_file_path,'rb',self._config["compressLevel"]) as f:
+                                        data = np.frombuffer(f.read(),dtype=np.dtype(self._config["ieeg"]["binaryEncoding"]))
+                                else:
+                                    with open(src_file_path,mode='rb') as f:
+                                        data = np.fromfile(f,dtype=self._config["ieeg"]["binaryEncoding"])
+                                array = np.reshape(data,[len(headers),-1],order='F') #byte order is Fortran encoding, dont know why
+                                
+                            except OSError as e:
+                                print("eeg file is either not detailed well enough in config file or file type not yet supported")
+                                raise e
+                            edfname = dst_file_path + new_name + ".edf"
+                            signal_headers = pyedflib.highlevel.make_signal_headers(headers,sample_rate=sample_rate,
+                            physical_max=np.amax(array),physical_min=(np.amin(array)))
+                            pyedflib.highlevel.write_edf(edfname,array,signal_headers,pyedflib.highlevel.make_header(patientname=part_match))
+
+                            continue
+                        elif file not in passed_list:
+                            files.append(file)
+                            passed_list.append(file)
+                            continue
+                        else:
+                            raise FileNotFoundError("{file} header could not be found".format(file=file))
                     # move the sidecar from input to output
 
                     names_list.append(new_name)
@@ -873,72 +942,29 @@ class Data2Bids(): #main conversion and file organization program
         written = True
         is_separate = None
         for mat_file in mat_files:
+
             if not self.match_regexp(self._config["partLabel"], mat_file) == part_match: #initialize dataframe if new participant
                 if written:
                     df = pd.DataFrame()
                 elif not part_match == self.match_regexp(self._config["partLabel"], mat_file):
+                    bindex = [j not in df.columns.values.tolist() for j in self._config["eventFormat.Sep"]].index(True)
                     raise FileNotFoundError("{config} variable was not found in {part}'s event files".format(
-                        config="some", part=part_match))
-                
+                        config=list(self._config["eventFormat.Sep"].values())[bindex], part=part_match)) 
             try:
                 part_match = self.match_regexp(self._config["partLabel"], mat_file)
             except AssertionError:
                 raise SyntaxError("file: {filename} has no matching {config}\n".format(filename=mat_file,config=self._config["content"][:][0]))
-            mat = loadmat(mat_file)
-            if isinstance(mat,dict): #if .mat is a struct
-                for i in list(mat):
-                    if "__" not in i and "readme" not in i: 
-
-                        newmat_names = []
-                        newmat_dtype = []
-                        if mat[i].dtype.names is not None:
-                            for j in mat[i].dtype.names:
-                                if j in self._config['eventFormat']: #if variable is named by user    
-                                    karray = np.reshape(np.transpose(mat[i][j]),(-1))
-                                    if j in df.columns.values.tolist(): #check if variable is already defined and accross all acquisitions
-                                        if df[j].size >= len(karray):
-                                            continue
-                                    written = False
-                                    df[j] = pd.Series(karray, index=range(len(karray))) #assign columns to dataframe
-                                    newmat_names.append(j)
-                                    #print(j)
-                                    newmat_dtype.append(mat[i][j][0][0].dtype)
-                        elif mat[i][0][0].dtype.names is not None: #if you're psychotic and made a cell array of STRUCTURES
-                            for j in mat[i][0][0].dtype.names:
-                                if j in self._config['eventFormat']: #if variable is named by user
-                                    #print(np.transpose(mat2[i][0][j]).shape, newmat.shape)
-                                    karray = np.array([])
-                                    for k in range(len(mat[i][0])):
-                                        karray = np.append(karray,mat[i][0][k][j][0][0])
-                                    if j in df.columns.values.tolist(): #check if variable is already defined and accross all acquisitions
-                                        if df[j].size >= len(karray):
-                                            continue
-                                    written = False
-                                    df[j] = pd.Series(karray, index=range(len(karray)))
-                                    newmat_names.append(j)
-                                    newmat_dtype.append(mat[i][0][0][j][0][0].dtype)
-                            
-                        else: #sorry this code format doesn't leave many options for data formatting but it was the only option
-                            raise KeyError("Current MATLAB data format not yet supported \
-                            \nCurrent support covers stuctures and cell arrays of structures")
-                        #Set correct data types for smooth looking data in .tsv format
-                        for k in range(len(newmat_names)):
-                            try:
-                                df[newmat_names[k]] = df[newmat_names[k]].astype(newmat_dtype[k])
-                                if isinstance(df[newmat_names[k]][0],str):
-                                    for j in range(df[newmat_names[k]].size):
-                                        df[newmat_names[k]].iloc[j] = re.sub("[\'\[\]]",'',df[newmat_names[k]].iloc[j])
-                            except ValueError:
-                                continue
-
-            elif isinstance(mat,list): #if .mat is cell array
-                print("\n No support for cell arrays yet")
-            elif isinstance(mat,np.ndarray): #if .mat is matlab array
-                print("\n No support for matlab arrays yet")
+            df_new = mat2df(mat_file,self._config["eventFormat"])
+            #check to see if new data is introduced. If not then keep searching
+            if df_new.shape[0] > df.shape[0]:
+                df = pd.concat([df[df.columns.difference(df_new.columns)],df_new],axis=1) #auto filters duplicates
+            elif df_new.shape[0] == df.shape[0]:
+                df = pd.concat([df,df_new[df_new.columns.difference(df.columns)]],axis=1) #auto filters duplicates
             else:
-                datatype = type(mat)
-                print("\n Uknown data type %s" %datatype)
-            if newmat_names and self._is_verbose:
+                continue
+            written = False
+
+            if self._is_verbose:
                 print(df)
             try:
                 #print(self._config["eventFormat.IDcol"])
@@ -948,7 +974,8 @@ class Data2Bids(): #main conversion and file organization program
                         is_separate = False
                         print("Warning: data may have been lost if file ID did not change but the recording session did")
                         #construct fake orig data name to run through name generator
-                        match_name = mat_file.split(os.path.basename(mat_file))[0]+df[self._config["eventFormat.IDcol"]][0] + ".edf"
+                        #fix this as well so it works for all data types and modalities
+                        match_name = mat_file.split(os.path.basename(mat_file))[0]+df[self._config["eventFormat.IDcol"]][0] + self._config["ieeg"]["content"][0][1]
                     else: #this means there was more than one recording session. In this case we will separate each trial block into a separate "run"
                         is_separate = True
                 else:
@@ -957,11 +984,9 @@ class Data2Bids(): #main conversion and file organization program
                 match_name = mat_file
 
                 #write the tsv from the dataframe
-            #print(newmat_names)
-            if not newmat_names: #check to see if there is anything new to write
-                continue
-            elif is_separate: 
-                #print(all(j in df.columns.values.tolist() for j in self._config["eventFormat.Sep"].values()))
+            #if not changed: #check to see if there is anything new to write
+            #    continue
+            if is_separate: 
                 if not all(j in df.columns.values.tolist() for j in self._config["eventFormat.Sep"].values()):
                     if self._is_verbose:
                         print(mat_file)
@@ -977,7 +1002,6 @@ class Data2Bids(): #main conversion and file organization program
                                 try: #making sure actualy key errors get caught
                                     if df_unique[jval].iat[i] in df_unique[jval].tolist()[:i]:
                                         df_unique[jval].iat[i] = str(int(max(df_unique[jval].tolist())) +1)
-                                    #df_unique.at[i,j] = str(int(df_unique.at[i,j]) + nadd)
                                 except KeyError as e:
                                     raise ValueError(e)
                             else: 
@@ -991,13 +1015,13 @@ class Data2Bids(): #main conversion and file organization program
                         self._config["eventFormat.Sep"].values()).all(axis=1)
                     match_name = mat_file.split(os.path.basename(mat_file))[0]+str(df[self._config["eventFormat.IDcol"]][nindex].iloc[0])
                     for k in self._config["eventFormat.Sep"].keys():
-                        #print(k,df.columns.values.tolist())
                         if k in self._config.keys():
                             
                             data = str(df_unique[self._config["eventFormat.Sep"][k]].iloc[i])
-                            #print(self._config[k],data)
                             match_name = match_name + self.gen_match_regexp(self._config[k],data)
-                    match_name = match_name + ".edf"
+
+                    #fix this to check for data type
+                    match_name = match_name + self._config["ieeg"]["content"][0][1]
                     (new_name,dst_file_path,_,_,_,_,_,_,_,_) = self.generate_names(
                         part_match, match_name, os.path.basename(match_name))
                     writedf = df.loc[nindex]
