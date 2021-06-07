@@ -664,14 +664,6 @@ class Data2Bids(): #main conversion and file organization program
             d_list = []
             part_match = None
             run_list = []
-            '''
-            acq_list = []
-            task_list = []
-            echo_list = []
-            data_type_list = []
-            ce_list = []
-            sess_list = []
-            '''
             mat_list = []
             passed_list = []
             for root, _, files in os.walk(self._data_dir, topdown=True): #each loop is a new participant so long as participant is top level
@@ -935,14 +927,25 @@ class Data2Bids(): #main conversion and file organization program
                     self.convert_1D(run_list, d_list, tsv_fso_runs, tsv_condition_runs, names_list, dst_file_path_list)
 
                 if mat_list :
-                    for item in mat_list:
-                        for name, mat_len in eeg_len.items():
-                            if len(mat2df(item)) == mat_len:
-                                edf_content = pyedflib.highlevel.read_edf(name)
-                                print(edf_content)
-
+                    n_mat_list = []
+                    try:
+                        while mat_list:
+                            item = mat_list.pop(0)
+                            rem_bool = False
+                            for name, mat_len in eeg_len.items():
+                                if len(mat2df(item)) == mat_len:
+                                    rem_bool = True
+                                    edf_content = pyedflib.highlevel.read_edf(name)
+                                    print(edf_content)
+                            if rem_bool:
+                                _ = item
+                            else:
+                                n_mat_list.append(item)
                             
-                    self.mat2tsv(mat_list)
+                    except MemoryError as e:
+                        print("Warning:" + str(e))
+                            
+                    self.mat2tsv(n_mat_list)
 
                 # write JSON file for any missing files
                 for file_path in dst_file_path_list:

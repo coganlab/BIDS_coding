@@ -1,6 +1,6 @@
 #!/bin/bash
     
-ORIG_DATA_DIR="/media/sf_Box_Sync/CoganLab"
+ORIG_DATA_DIR="/home/sbf/Desktop/share/CoganLab"
 SUB_IDS=(D52 D48) 
 TASKS=(Phoneme_sequencing)
 
@@ -10,8 +10,8 @@ TASKS=(Phoneme_sequencing)
 for TASK in ${TASKS[@]}
  do
 
-    OUTPUT_DIR="/media/sf_Ubuntu_files/Workspace/$TASK"
-    BIDS_DIR="$OUTPUT_DIR/BIDS"
+    OUTPUT_DIR="/home/sbf/Desktop/Workspace/sourcedata/$TASK"
+    BIDS_DIR="$OUTPUT_DIR/../../$TASK/BIDS"
     ZIP=false
     
     if [ -d $BIDS_DIR ]
