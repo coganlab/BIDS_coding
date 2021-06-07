@@ -1,6 +1,6 @@
 #!/bin/bash
     
-ORIG_DATA_DIR="/home/sbf/Desktop/share/CoganLab"
+ORIG_DATA_DIR="/media/sf_Box_Sync/CoganLab"
 SUB_IDS=(D52 D48) 
 TASKS=(Phoneme_sequencing)
 
@@ -10,9 +10,9 @@ TASKS=(Phoneme_sequencing)
 for TASK in ${TASKS[@]}
  do
 
-    OUTPUT_DIR="/home/sbf/Desktop/git/BIDS_coding/BIDS_converter/testing"
-    BIDS_DIR="/home/sbf/Desktop/Workspace/$TASK"
-    ZIP=true
+    OUTPUT_DIR="/media/sf_Ubuntu_files/Workspace/$TASK"
+    BIDS_DIR="$OUTPUT_DIR/BIDS"
+    ZIP=false
     
     if [ -d $BIDS_DIR ]
      then
@@ -53,6 +53,8 @@ for TASK in ${TASKS[@]}
         find "$ORIG_DATA_DIR/D_Data/$TASK/$SUB_ID" -regex ".*experiment\.mat" -exec cp -t "$OUTPUT_DIR/$SUB_ID/" {} + 
         #event .mat
         find "$ORIG_DATA_DIR/D_Data/$TASK/$SUB_ID" -regex ".*\/mat\/.*[tT]rial[(Info)s].*\.mat" -exec cp -t "$OUTPUT_DIR/$SUB_ID/" {} + 
+        #triggers
+        find "$ORIG_DATA_DIR/D_Data/$TASK/$SUB_ID" -regex ".*[Tt]rigger[0-9]?[0-9]?\.mat$" -exec cp -t "$OUTPUT_DIR/$SUB_ID/" {} +
         #rename .mat
         find "$OUTPUT_DIR/$SUB_ID" -type f -regex ".*\.mat" | xargs -n 1 basename | xargs -I{} mv "$OUTPUT_DIR/$SUB_ID/{}" "$OUTPUT_DIR/$SUB_ID/${SUB_ID}_{}"
         #rename .dat

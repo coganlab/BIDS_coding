@@ -255,25 +255,21 @@ class Data2Bids(): #main conversion and file organization program
         if bids_dir is None:
             # Creating a new directory for BIDS
             try:
-                self._bids_dir = os.path.join(self._data_dir, self._dataset_name + "_BIDS")
+                newdir = self._data_dir+ "/BIDS"
             except TypeError:
                 print("Error: Please provide input data directory if no BIDS directory...")
         
-        else: #deleting old BIDS to make room for new 
-            if not os.path.basename(bids_dir) == "BIDS":
-                newdir = os.path.join(bids_dir,"BIDS")
-            else:
-                newdir = bids_dir
-            if not os.path.isdir(newdir):
-                os.mkdir(newdir)
-            elif self._is_overwrite:
-                self.force_remove(newdir)
-                os.mkdir(newdir)
-            bids_dir = newdir
-                #proc = subprocess.Popen("rm -rf {file}".format(file=newdir), shell=True, stdout=subprocess.PIPE)
-                #proc.communicate()
-            
-        self._bids_dir = bids_dir
+         #deleting old BIDS to make room for new 
+        elif not os.path.basename(bids_dir) == "BIDS":
+            newdir = os.path.join(bids_dir,"BIDS")
+        else:
+            newdir = bids_dir
+        if not os.path.isdir(newdir):
+            os.mkdir(newdir)
+        elif self._is_overwrite:
+            self.force_remove(newdir)
+            os.mkdir(newdir)
+        self._bids_dir = newdir
 
     def get_bids_version(self):
         return self._bids_version
@@ -668,12 +664,21 @@ class Data2Bids(): #main conversion and file organization program
             d_list = []
             part_match = None
             run_list = []
+            '''
+            acq_list = []
+            task_list = []
+            echo_list = []
+            data_type_list = []
+            ce_list = []
+            sess_list = []
+            '''
             mat_list = []
             passed_list = []
             for root, _, files in os.walk(self._data_dir, topdown=True): #each loop is a new participant so long as participant is top level
                 files[:] = [f for f in files if not os.path.join(root,f).startswith(self._bids_dir)] #ignore BIDS directories
                 headers = None
                 sample_rate = None
+                eeg_len = dict()
                 if not files:
                     continue
                 files.sort()
@@ -696,8 +701,9 @@ class Data2Bids(): #main conversion and file organization program
                         except AssertionError:
                             raise SyntaxError("file: {filename} has no matching {config}".format(filename=file,config=self._config["content"][:][0]))
                         try:
-                            (new_name,dst_file_path, run_match, _,echo_match,sess_match,_,
-                             data_type_match,task_label_match,SeqType) = self.generate_names(part_match, src_file_path, file)
+                            (new_name,dst_file_path,run_match,
+                            acq_match,echo_match,sess_match,ce_match,
+                            data_type_match,task_label_match,SeqType) = self.generate_names(part_match, src_file_path, file)
                         except TypeError:
                             continue
                         if echo_match is None:
@@ -791,6 +797,7 @@ class Data2Bids(): #main conversion and file organization program
                                     continue
                                 except KeyError as e:
                                     raise NotImplementedError(e)
+                            
                             else: #re.match(".*?"+self._config["eventFiles"]+".*?",file):
                                 mat_list.append(src_file_path)
                                 continue
@@ -818,8 +825,8 @@ class Data2Bids(): #main conversion and file organization program
                         shutil.rmtree(self._bids_dir + "/sub-" + part_match,ignore_errors=True) 
 
                     try:
-                        (new_name,dst_file_path,_,
-                         _,echo_match,sess_match,_,
+                        (new_name,dst_file_path,run_match,
+                         acq_match,echo_match,sess_match,ce_match,
                          data_type_match,task_label_match,_) = self.generate_names(part_match, src_file_path, file)
                     
                     except TypeError as problem: #
@@ -887,6 +894,7 @@ class Data2Bids(): #main conversion and file organization program
                         elif not self._config["ieeg"]["binary?"]:
                             raise NotImplementedError("{file} file format not yet supported. If file is binary format, please indicate so and what encoding in the config.json file".format(file=file))
                         elif headers is not None and sample_rate is not None: #assume has binary encoding
+                            edfname = dst_file_path + new_name + ".edf"
                             try: #open binary file and write decoded numbers as array where rows = channels
                                 #check if zipped
                                 if file.endswith(".gz"):
@@ -896,14 +904,15 @@ class Data2Bids(): #main conversion and file organization program
                                     with open(src_file_path,mode='rb') as f:
                                         data = np.fromfile(f,dtype=self._config["ieeg"]["binaryEncoding"])
                                 array = np.reshape(data,[len(headers),-1],order='F') #byte order is Fortran encoding, dont know why
-                                
+                                eeg_len[edfname] = array.shape[1]
+                                print(eeg_len)
                             except OSError as e:
                                 print("eeg file is either not detailed well enough in config file or file type not yet supported")
                                 raise e
-                            edfname = dst_file_path + new_name + ".edf"
-                            signal_headers = pyedflib.highlevel.make_signal_headers(headers,sample_rate=sample_rate,
-                            physical_max=np.amax(array),physical_min=(np.amin(array)))
-                            pyedflib.highlevel.write_edf(edfname,array,signal_headers,pyedflib.highlevel.make_header(patientname=part_match))
+                            signal_headers = pyedflib.highlevel.make_signal_headers(headers,
+                            sample_rate=sample_rate,physical_max=np.amax(array),physical_min=(np.amin(array)))
+                            pyedflib.highlevel.write_edf(edfname,array,signal_headers
+                            ,pyedflib.highlevel.make_header(patientname=part_match))
 
                             continue
                         elif file not in passed_list:
@@ -917,7 +926,8 @@ class Data2Bids(): #main conversion and file organization program
                     names_list.append(new_name)
                     dst_file_path_list.append(dst_file_path)
                     try:
-                        run_list.append(int(run_match))
+                        if run_match is not None:
+                            run_list.append(int(run_match))
                     except UnboundLocalError:
                         pass
 
@@ -925,8 +935,21 @@ class Data2Bids(): #main conversion and file organization program
                     self.convert_1D(run_list, d_list, tsv_fso_runs, tsv_condition_runs, names_list, dst_file_path_list)
 
                 if mat_list :
+                    for item in mat_list:
+                        for name, mat_len in eeg_len.items():
+                            if len(mat2df(item)) == mat_len:
+                                edf_content = pyedflib.highlevel.read_edf(name)
+                                print(edf_content)
+
+                            
                     self.mat2tsv(mat_list)
 
+                # write JSON file for any missing files
+                for file_path in dst_file_path_list:
+                    if os.path.dirname(file_path).endswith(("/anat","/func","/ieeg")):
+                        data = {}
+                        with open(os.path.splitext(file_path)+".json","w") as fst:
+                            json.dump(fst,data)
                 # Output
             if self._is_verbose:
                 tree(self._bids_dir)
