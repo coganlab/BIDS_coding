@@ -12,9 +12,9 @@
     }   
 , "ieeg": {"left" : ".*?"
             , "right" : ".*?"
-            , "content" : [   ["ieeg",".dat.gz"]
+            , "content" : [   ["ieeg",".edf"]
                                , ["ieeg",".dat"]
-                               , ["ieeg",".edf"]
+                               , ["ieeg",".dat.gz"]
                                , ["ieeg",".edf.gz"]
                             ]
             , "binary?" : true

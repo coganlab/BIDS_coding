@@ -882,16 +882,20 @@ class Data2Bids(): #main conversion and file organization program
                                 os.remove(dst_file_path + new_name + ".nii")
 
                     elif dst_file_path.endswith("/ieeg"):
-                        if file.endswith(".edf"):
-                            shutil.copy(src_file_path, dst_file_path + new_name + ".edf")
+                        edfname = dst_file_path + new_name + ".edf"
+                        if headers is None and file not in passed_list:
+                            files.append(file)
+                            passed_list.append(file)
+                            continue
+                        elif file.endswith(".edf"):
+                            shutil.copy(src_file_path, edfname)
                         elif file.endswith(".edf.gz"):
-                            with gzip.open(src_file_path, 'rb') as f_in:
-                                with open(dst_file_path + new_name + ".edf", 'wb',self._config["compressLevel"]) as f_out:
+                            with gzip.open(src_file_path, 'rb',self._config["compressLevel"]) as f_in:
+                                with open(edfname, 'wb') as f_out:
                                     shutil.copyfileobj(f_in, f_out)
                         elif not self._config["ieeg"]["binary?"]:
                             raise NotImplementedError("{file} file format not yet supported. If file is binary format, please indicate so and what encoding in the config.json file".format(file=file))
                         elif headers is not None and sample_rate is not None: #assume has binary encoding
-                            edfname = dst_file_path + new_name + ".edf"
                             try: #open binary file and write decoded numbers as array where rows = channels
                                 #check if zipped
                                 if file.endswith(".gz"):
@@ -901,8 +905,6 @@ class Data2Bids(): #main conversion and file organization program
                                     with open(src_file_path,mode='rb') as f:
                                         data = np.fromfile(f,dtype=self._config["ieeg"]["binaryEncoding"])
                                 array = np.reshape(data,[len(headers),-1],order='F') #byte order is Fortran encoding, dont know why
-                                eeg_len[edfname] = array.shape[1]
-                                print(eeg_len)
                             except OSError as e:
                                 print("eeg file is either not detailed well enough in config file or file type not yet supported")
                                 raise e
@@ -911,11 +913,18 @@ class Data2Bids(): #main conversion and file organization program
                             pyedflib.highlevel.write_edf(edfname,array,signal_headers
                             ,pyedflib.highlevel.make_header(patientname=part_match))
 
-                        elif file not in passed_list:
-                            files.append(file)
-                            passed_list.append(file)
                         else:
                             raise FileNotFoundError("{file} header could not be found".format(file=file))
+                        #record eeg file lengths for automatic appending of concurrent channels
+                        pyedflib.highlevel.drop_channels(edfname,to_keep=headers)
+                        f = pyedflib.EdfReader(edfname)
+                        eeg_len[f.file_name] = f.samples_in_file(0)
+                        f.close()
+                        print(eeg_len)
+                        if headers is not None: #only keep desired channels
+                            pyedflib.highlevel.drop_channels(edfname,to_keep=headers)
+                            os.remove(edfname)
+                            os.rename(dst_file_path + new_name + "_dropped.edf",edfname)
                     # move the sidecar from input to output
                     #print(file+" ---> "+dst_file_path+new_name)
                     names_list.append(new_name)
@@ -925,7 +934,7 @@ class Data2Bids(): #main conversion and file organization program
                             run_list.append(int(run_match))
                     except UnboundLocalError:
                         pass
-
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              
                 if d_list :
                     self.convert_1D(run_list, d_list, tsv_fso_runs, tsv_condition_runs, names_list, dst_file_path_list)
 
@@ -936,10 +945,20 @@ class Data2Bids(): #main conversion and file organization program
                             item = mat_list.pop(0)
                             rem_bool = False
                             for name, mat_len in eeg_len.items():
-                                if len(mat2df(item)) == mat_len:
+                                if len(mat2df(item)) == mat_len: # if .mat data is an eeg channel, automatically append
+                                    array = []
                                     rem_bool = True
+                                    #for some reasond appending requires reading and rewriting the whole file
                                     edf_content = pyedflib.highlevel.read_edf(name)
-                                    print(edf_content[0])
+                                    array = np.append([edf_content[0],mat2df(item).to_numpy(np.float64)],axis=0)
+                                    headers.append(os.path.splitext(item)[0])
+                                    os.remove(edfname)
+                                    #rewrite
+                                    signal_headers = pyedflib.highlevel.make_signal_headers(headers,
+                                    sample_rate=sample_rate,physical_max=np.amax(array),physical_min=(np.amin(array)))
+                                    pyedflib.highlevel.write_edf(edfname,array,signal_headers
+                                    ,pyedflib.highlevel.make_header(patientname=part_match))
+                                    pyedflib.highlevel.anonymize_edf(edfname,to_remove=['startdate'])
                             if not rem_bool:
                                 n_mat_list.append(item)
                             
