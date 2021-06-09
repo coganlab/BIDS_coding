@@ -949,8 +949,8 @@ class Data2Bids(): #main conversion and file organization program
                                     array = []
                                     rem_bool = True
                                     #for some reasond appending requires reading and rewriting the whole file
-                                    edf_content = pyedflib.highlevel.read_edf(name)
-                                    array = np.append([edf_content[0],mat2df(item).to_numpy(np.float64)],axis=0)
+                                    edf_content = pyedflib.highlevel.read_edf(name,verbose=self._is_verbose)
+                                    array = np.append(edf_content[0],mat2df(item).to_numpy(np.float64),axis=0)
                                     headers.append(os.path.splitext(item)[0])
                                     os.remove(edfname)
                                     #rewrite
