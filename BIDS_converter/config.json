@@ -1,4 +1,4 @@
-{"dataFormat" : [".nii", ".nii.gz", ".gz", ".edf", ".mgz", ".txt", ".mat",".dat.gz",".dat"]
+{"dataFormat" : [".nii", ".nii.gz", ".gz", ".edf",".edf.gz", ".mgz", ".txt", ".mat",".dat.gz",".dat"]
 , "compress" : true
 , "compressLevel" : 6
 , "repetitionTimeInSec" : 2
@@ -15,6 +15,7 @@
             , "content" : [   ["ieeg",".dat.gz"]
                                , ["ieeg",".dat"]
                                , ["ieeg",".edf"]
+                               , ["ieeg",".edf.gz"]
                             ]
             , "binary?" : true
             , "binaryEncoding": "float32"

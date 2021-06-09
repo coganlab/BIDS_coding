@@ -15,6 +15,7 @@ import nibabel as nib
 import csv
 import subprocess
 from pathlib import Path
+from pandas.core.frame import DataFrame
 import pydicom as dicom
 import pandas as pd
 import exrex as ex
@@ -123,7 +124,7 @@ class Data2Bids(): #main conversion and file organization program
         self._config_path = None
         self._config = None
         self._bids_dir = None
-        self._bids_version = "1.5.2"
+        self._bids_version = "1.6.0"
         self._dataset_name = None
         self._data_types = {"anat": False, "func": False,"ieeg":False}
 
@@ -357,9 +358,9 @@ class Data2Bids(): #main conversion and file organization program
         try:
             if re.match("^[^\d]{1,3}",part_match):
                 part_matches = re.split("([^\d]{1,3})",part_match,1)
-                part_match = part_matches[1] + part_matches[2].zfill(self._config["partLabel"]["fill"])
+                part_match = part_matches[1] + str(int(part_matches[2])).zfill(self._config["partLabel"]["fill"])
             else:
-                part_match = part_match.zfill(self._config["partLabel"]["fill"])
+                part_match = str(int(part_match)).zfill(self._config["partLabel"]["fill"])
         except KeyError:
             pass
         dst_file_path = self._bids_dir + "/sub-" + part_match
@@ -382,9 +383,9 @@ class Data2Bids(): #main conversion and file organization program
             try:
                 if re.match("^[^\d]{1,3}",acq_match):
                     acq_matches = re.split("([^\d]{1,3})",acq_match,1)
-                    acq_match = acq_matches[1] + acq_matches[2].zfill(self._config["acq"]["fill"])
+                    acq_match = acq_matches[1] + str(int(acq_matches[2])).zfill(self._config["acq"]["fill"])
                 else:
-                    acq_match = acq_match.zfill(self._config["acq"]["fill"])
+                    acq_match = str(int(acq_match)).zfill(self._config["acq"]["fill"])
             except KeyError:
                 pass
 
@@ -409,9 +410,9 @@ class Data2Bids(): #main conversion and file organization program
             try:
                 if re.match("^[^\d]{1,3}",run_match):
                     run_matches = re.split("([^\d]{1,3})",run_match,1)
-                    run_match = run_matches[1] + run_matches[2].zfill(self._config["runIndex"]["fill"])
+                    run_match = run_matches[1] + str(int(run_matches[2])).zfill(self._config["runIndex"]["fill"])
                 else:
-                    run_match = run_match.zfill(self._config["runIndex"]["fill"])
+                    run_match = str(int(run_match)).zfill(self._config["runIndex"]["fill"])
             except KeyError:
                 pass
 
@@ -883,6 +884,10 @@ class Data2Bids(): #main conversion and file organization program
                     elif dst_file_path.endswith("/ieeg"):
                         if file.endswith(".edf"):
                             shutil.copy(src_file_path, dst_file_path + new_name + ".edf")
+                        elif file.endswith(".edf.gz"):
+                            with gzip.open(src_file_path, 'rb') as f_in:
+                                with open(dst_file_path + new_name + ".edf", 'wb',self._config["compressLevel"]) as f_out:
+                                    shutil.copyfileobj(f_in, f_out)
                         elif not self._config["ieeg"]["binary?"]:
                             raise NotImplementedError("{file} file format not yet supported. If file is binary format, please indicate so and what encoding in the config.json file".format(file=file))
                         elif headers is not None and sample_rate is not None: #assume has binary encoding
@@ -906,15 +911,13 @@ class Data2Bids(): #main conversion and file organization program
                             pyedflib.highlevel.write_edf(edfname,array,signal_headers
                             ,pyedflib.highlevel.make_header(patientname=part_match))
 
-                            continue
                         elif file not in passed_list:
                             files.append(file)
                             passed_list.append(file)
-                            continue
                         else:
                             raise FileNotFoundError("{file} header could not be found".format(file=file))
                     # move the sidecar from input to output
-
+                    #print(file+" ---> "+dst_file_path+new_name)
                     names_list.append(new_name)
                     dst_file_path_list.append(dst_file_path)
                     try:
@@ -926,7 +929,7 @@ class Data2Bids(): #main conversion and file organization program
                 if d_list :
                     self.convert_1D(run_list, d_list, tsv_fso_runs, tsv_condition_runs, names_list, dst_file_path_list)
 
-                if mat_list :
+                if mat_list : #deal with .mat files
                     n_mat_list = []
                     try:
                         while mat_list:
@@ -936,10 +939,8 @@ class Data2Bids(): #main conversion and file organization program
                                 if len(mat2df(item)) == mat_len:
                                     rem_bool = True
                                     edf_content = pyedflib.highlevel.read_edf(name)
-                                    print(edf_content)
-                            if rem_bool:
-                                _ = item
-                            else:
+                                    print(edf_content[0])
+                            if not rem_bool:
                                 n_mat_list.append(item)
                             
                     except MemoryError as e:
@@ -948,11 +949,14 @@ class Data2Bids(): #main conversion and file organization program
                     self.mat2tsv(n_mat_list)
 
                 # write JSON file for any missing files
-                for file_path in dst_file_path_list:
-                    if os.path.dirname(file_path).endswith(("/anat","/func","/ieeg")):
+                for new_name in names_list:
+                    file_path = dst_file_path_list[names_list.index(new_name)]
+
+                    if file_path.endswith(("/anat","/func","/ieeg")):
+
                         data = {}
-                        with open(os.path.splitext(file_path)+".json","w") as fst:
-                            json.dump(fst,data)
+                        with open(file_path + new_name+".json","w") as fst:
+                            json.dump(data,fst)
                 # Output
             if self._is_verbose:
                 tree(self._bids_dir)
@@ -982,6 +986,8 @@ class Data2Bids(): #main conversion and file organization program
                 raise SyntaxError("file: {filename} has no matching {config}\n".format(filename=mat_file,config=self._config["content"][:][0]))
             df_new = mat2df(mat_file,self._config["eventFormat"])
             #check to see if new data is introduced. If not then keep searching
+            if isinstance(df_new,pd.Series):
+                df_new = pd.DataFrame(df_new)
             if df_new.shape[0] > df.shape[0]:
                 df = pd.concat([df[df.columns.difference(df_new.columns)],df_new],axis=1) #auto filters duplicates
             elif df_new.shape[0] == df.shape[0]:
