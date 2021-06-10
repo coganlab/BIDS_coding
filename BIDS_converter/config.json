@@ -19,8 +19,10 @@
                             ]
             , "binary?" : true
             , "binaryEncoding": "float32"
-            , "headerFile": "experiment\\.mat"
-            , "headerData": "channels.name"
+            , "headerData": {"experiment.mat": "channels.name"
+                            , "D52": "DC1"
+                            , "D48": "DC1"
+                        }
             , "sampleRate": "recording.sample_rate"
             }
 , "ieeg.task": {"left" : "_"

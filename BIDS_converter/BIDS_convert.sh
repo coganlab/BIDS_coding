@@ -12,7 +12,7 @@ for TASK in ${TASKS[@]}
 
     OUTPUT_DIR="/home/sbf/Desktop/Workspace/sourcedata/$TASK"
     BIDS_DIR="$OUTPUT_DIR/../../$TASK/BIDS"
-    ZIP=true
+    ZIP=false
     
     if [ -d $BIDS_DIR ]
      then
@@ -68,7 +68,7 @@ for TASK in ${TASKS[@]}
         
         #the big bad python code to convert the renamed files to BIDS
         #requires numpy, nibabel, and pathlib modules
-        python3 data2bids.py -c config.json -i "$OUTPUT_DIR/$SUB_ID" -o $BIDS_DIR || { echo "BIDS conversion for $SUB_ID failed, trying next subject" ; continue; }
+        python3 data2bids.py -c config.json -i "$OUTPUT_DIR/$SUB_ID" -o $BIDS_DIR -v || { echo "BIDS conversion for $SUB_ID failed, trying next subject" ; continue; }
 
         [[ $RAN_SUBS =~ (^| )$SUB_ID( |$) ]] || RAN_SUBS+=${SUB_ID}" "
         [[ $RAN_TASKS =~ (^| )$TASK( |$) ]] || RAN_TASKS+=${TASK}" "

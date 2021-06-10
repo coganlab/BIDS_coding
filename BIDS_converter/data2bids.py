@@ -19,8 +19,10 @@ from pandas.core.frame import DataFrame
 import pydicom as dicom
 import pandas as pd
 import exrex as ex
-import pyedflib
+import datetime
+from pyedflib import highlevel, EdfReader
 from matgrab import mat2df
+
 
 def get_parser(): #parses flags at onset of command
     parser = argparse.ArgumentParser(
@@ -106,7 +108,17 @@ def get_parser(): #parses flags at onset of command
         )
 
     parser.add_argument(
-        "-verb"
+        "-ch"
+        ,"--channels"
+        , nargs='*'
+        , required=False
+        , help="""
+        Indicator of channels to keep from edf files. 
+        """
+        )
+
+    parser.add_argument(
+        "-v"
         , "--verbose"
         , required=False
         , action='store_true' 
@@ -118,7 +130,7 @@ def get_parser(): #parses flags at onset of command
 class Data2Bids(): #main conversion and file organization program
 
     def __init__(self, input_dir=None, config=None, output_dir=None, 
-    DICOM_path=None, multi_echo=None, overwrite=False, verbose=False): 
+    DICOM_path=None, multi_echo=None, overwrite=False, channels=None, verbose=False): 
     #sets the .self globalization for self variables
         self._input_dir = None
         self._config_path = None
@@ -134,8 +146,12 @@ class Data2Bids(): #main conversion and file organization program
         self.set_bids_dir(output_dir)
         self.set_DICOM(DICOM_path)
         self.set_multi_echo(multi_echo)
+        self.set_channels(channels)
         self.set_verbosity(verbose)
         
+    def set_channels(self,channels):
+
+        self.channels = channels
 
     def set_overwrite(self,overwrite):
         self._is_overwrite = overwrite
@@ -669,7 +685,15 @@ class Data2Bids(): #main conversion and file organization program
             passed_list = []
             for root, _, files in os.walk(self._data_dir, topdown=True): #each loop is a new participant so long as participant is top level
                 files[:] = [f for f in files if not os.path.join(root,f).startswith(self._bids_dir)] #ignore BIDS directories
-                headers = None
+                if self.channels is None:
+                    headers = []
+                else:
+                    headers = list(self.channels)
+                try:
+                    headers_dict = self._config["ieeg"]["headerData"]
+                    print(headers_dict)
+                except KeyError:
+                    headers_dict = None
                 sample_rate = None
                 eeg_len = dict()
                 if not files:
@@ -782,19 +806,37 @@ class Data2Bids(): #main conversion and file organization program
                         d_list.append(src_file_path)
                         continue
                     elif re.match(".*?" + ".mat", file):
-                        try:
-                            if re.match(".*?"+self._config["ieeg"]["headerFile"]+".*?",file):
-                                try:
-                                    headers = mat2df(src_file_path,self._config["ieeg"]["headerData"]).tolist()
-                                    sample_rate = mat2df(src_file_path,self._config["ieeg"]["sampleRate"]).iloc[0]
+                        if part_match is None:
+                            files.append(src_file_path)
+                            continue
+                        elif headers_dict:
+                            dict_copy = headers_dict
+                            while dict_copy:
+                                tsv_bool = True
+                                name, var = dict_copy.popitem()
+                                if name is part_match:
+                                    headers = headers + var
+                                    if name in list(headers_dict.keys()):
+                                        print(headers_dict)
+                                        _ = headers_dict.pop(name)
                                     continue
-                                except KeyError as e:
-                                    raise NotImplementedError(e)
-                            
-                            else: #re.match(".*?"+self._config["eventFiles"]+".*?",file):
+                                if re.match(name+"$",file):
+                                    if name in list(headers_dict.keys()):
+                                        print(headers_dict)
+                                        _ = headers_dict.pop(name)
+                                    tsv_bool = False
+                                    try:
+                                        print(mat2df(src_file_path,var))
+                                        headers = headers + mat2df(src_file_path,var).tolist()
+                                        sample_rate = mat2df(src_file_path,self._config["ieeg"]["sampleRate"]).iloc[0]
+                                        continue
+                                    except KeyError as e:
+                                        raise NotImplementedError(e)
+                            if tsv_bool:
                                 mat_list.append(src_file_path)
                                 continue
-                        except KeyError:
+                        else: #re.match(".*?"+self._config["eventFiles"]+".*?",file):
+                            mat_list.append(src_file_path)
                             continue
                         # if the file doesn't match the extension, we skip it
                     elif not any(re.match(".*?" + ext, file) for ext in curr_ext):
@@ -883,7 +925,7 @@ class Data2Bids(): #main conversion and file organization program
 
                     elif dst_file_path.endswith("/ieeg"):
                         edfname = dst_file_path + new_name + ".edf"
-                        if headers is None and file not in passed_list:
+                        if headers_dict and file not in passed_list:
                             files.append(file)
                             passed_list.append(file)
                             continue
@@ -908,21 +950,24 @@ class Data2Bids(): #main conversion and file organization program
                             except OSError as e:
                                 print("eeg file is either not detailed well enough in config file or file type not yet supported")
                                 raise e
-                            signal_headers = pyedflib.highlevel.make_signal_headers(headers,
+                            signal_headers = highlevel.make_signal_headers(headers,
                             sample_rate=sample_rate,physical_max=np.amax(array),physical_min=(np.amin(array)))
-                            pyedflib.highlevel.write_edf(edfname,array,signal_headers
-                            ,pyedflib.highlevel.make_header(patientname=part_match))
+                            if os.path.isfile(edfname):
+                                print("removing " + edfname)
+                                os.remove(edfname)
+                            highlevel.write_edf(edfname,array,signal_headers,highlevel.make_header(patientname=part_match))
+                            highlevel.anonymize_edf(edfname,to_remove=['startdate'],verbose=self._is_verbose)
 
-                        else:
-                            raise FileNotFoundError("{file} header could not be found".format(file=file))
+                        #else:
+                        #    raise FileNotFoundError("{file} header could not be found".format(file=file))
                         #record eeg file lengths for automatic appending of concurrent channels
-                        pyedflib.highlevel.drop_channels(edfname,to_keep=headers)
-                        f = pyedflib.EdfReader(edfname)
+                        #highlevel.drop_channels(edfname,to_keep=headers,verbose=self._is_verbose)
+                        f = EdfReader(edfname)
                         eeg_len[f.file_name] = f.samples_in_file(0)
                         f.close()
                         print(eeg_len)
                         if headers is not None: #only keep desired channels
-                            pyedflib.highlevel.drop_channels(edfname,to_keep=headers)
+                            highlevel.drop_channels(edfname,to_keep=headers,verbose=self._is_verbose)
                             os.remove(edfname)
                             os.rename(dst_file_path + new_name + "_dropped.edf",edfname)
                     # move the sidecar from input to output
@@ -943,24 +988,30 @@ class Data2Bids(): #main conversion and file organization program
                     try:
                         while mat_list:
                             item = mat_list.pop(0)
-                            rem_bool = False
                             for name, mat_len in eeg_len.items():
                                 if len(mat2df(item)) == mat_len: # if .mat data is an eeg channel, automatically append
                                     array = []
-                                    rem_bool = True
+
                                     #for some reasond appending requires reading and rewriting the whole file
-                                    edf_content = pyedflib.highlevel.read_edf(name,verbose=self._is_verbose)
-                                    array = np.append(edf_content[0],mat2df(item).to_numpy(np.float64),axis=0)
+                                    edf_content = highlevel.read_edf(name,verbose=self._is_verbose)
+                                    array = np.vstack([edf_content[0],mat2df(item).to_numpy(np.float64)])
                                     headers.append(os.path.splitext(item)[0])
                                     os.remove(edfname)
                                     #rewrite
-                                    signal_headers = pyedflib.highlevel.make_signal_headers(headers,
-                                    sample_rate=sample_rate,physical_max=np.amax(array),physical_min=(np.amin(array)))
-                                    pyedflib.highlevel.write_edf(edfname,array,signal_headers
-                                    ,pyedflib.highlevel.make_header(patientname=part_match))
-                                    pyedflib.highlevel.anonymize_edf(edfname,to_remove=['startdate'])
-                            if not rem_bool:
-                                n_mat_list.append(item)
+                                    highlevel.write_edf_quick(edfname,array,sample_rate)
+                                    highlevel.make_signal_headers()
+                                    #signal_headers = highlevel.make_signal_headers(headers,
+                                    #    sample_rate=sample_rate,physical_max=np.amax(array),physical_min=(np.amin(array)))
+                                    #highlevel.write_edf(edfname,array,signal_headers,
+                                    #    highlevel.make_header(patientname=part_match))
+                                    #highlevel.anonymize_edf(edfname,to_remove=['startdate'],verbose=self._is_verbose)
+                                elif len(mat2df(item)) >= mat_len*0.99 and len(mat2df(item)) <= mat_len*1.01:
+                                    print("""Warning: {channel} length of {clength} is within 1% ({percent}) of eeg 
+                                        file length{flength},likely meaning it's supposed to be appended but cannot be.
+                                        Will skip this file for now""".format(channel=item, clength=len(mat2df(item)),
+                                         percent=(len(mat2df(item))-mat_len)/mat_len, flength=mat_len))
+                                else:
+                                    n_mat_list.append(item)
                             
                     except MemoryError as e:
                         print("Warning:" + str(e))
