@@ -1,4 +1,4 @@
-{"dataFormat" : [".nii", ".nii.gz", ".gz", ".edf", ".mgz", ".txt", ".mat",".dat.gz",".dat"]
+{"dataFormat" : [".nii", ".nii.gz", ".gz", ".edf",".edf.gz", ".mgz", ".txt", ".mat",".dat.gz",".dat"]
 , "compress" : true
 , "compressLevel" : 6
 , "repetitionTimeInSec" : 2
@@ -12,14 +12,17 @@
     }   
 , "ieeg": {"left" : ".*?"
             , "right" : ".*?"
-            , "content" : [   ["ieeg",".dat.gz"]
+            , "content" : [   ["ieeg",".edf"]
                                , ["ieeg",".dat"]
-                               , ["ieeg",".edf"]
+                               , ["ieeg",".dat.gz"]
+                               , ["ieeg",".edf.gz"]
                             ]
             , "binary?" : true
             , "binaryEncoding": "float32"
-            , "headerFile": "experiment\\.mat"
-            , "headerData": "channels.name"
+            , "headerData": {"experiment.mat": "channels.name"
+                            , "D52": "DC1"
+                            , "D48": "DC1"
+                        }
             , "sampleRate": "recording.sample_rate"
             }
 , "ieeg.task": {"left" : "_"
