@@ -927,6 +927,8 @@ class Data2Bids(): #main conversion and file organization program
                 if mat_list :
                     self.mat2tsv(mat_list)
 
+                #needs a file scan here
+
                 # Output
             if self._is_verbose:
                 tree(self._bids_dir)
