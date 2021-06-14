@@ -17,13 +17,14 @@
                                , ["ieeg",".dat.gz"]
                                , ["ieeg",".edf.gz"]
                             ]
-            , "binary?" : true
+            , "binary?" : false
             , "binaryEncoding": "float32"
             , "headerData": {"experiment.mat": "channels.name"
                             , "D52": "DC1"
                             , "D48": "DC1"
                         }
             , "sampleRate": "recording.sample_rate"
+            , "digital": true
             }
 , "ieeg.task": {"left" : "_"
             , "right" : ".*?"
@@ -75,4 +76,5 @@
 ,"eventFormat.IDcol" : "FilenamePrefix"
 ,"eventFormat.Sep" : { "runIndex" : "block",
                              "acq" : "Rec" }
+,"eventFormat.Timing": "Start"
 }
