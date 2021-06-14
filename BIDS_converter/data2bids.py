@@ -10,6 +10,7 @@ import shutil
 import json
 import subprocess
 import gzip
+import threading
 import numpy as np
 import nibabel as nib
 import csv
@@ -18,8 +19,10 @@ from pathlib import Path
 import pydicom as dicom
 import pandas as pd
 import exrex as ex
-import pyedflib
+import datetime
+from pyedflib import highlevel, EdfReader
 from matgrab import mat2df
+
 
 def get_parser(): #parses flags at onset of command
     parser = argparse.ArgumentParser(
@@ -105,7 +108,17 @@ def get_parser(): #parses flags at onset of command
         )
 
     parser.add_argument(
-        "-verb"
+        "-ch"
+        ,"--channels"
+        , nargs='*'
+        , required=False
+        , help="""
+        Indicator of channels to keep from edf files. 
+        """
+        )
+
+    parser.add_argument(
+        "-v"
         , "--verbose"
         , required=False
         , action='store_true' 
@@ -117,13 +130,13 @@ def get_parser(): #parses flags at onset of command
 class Data2Bids(): #main conversion and file organization program
 
     def __init__(self, input_dir=None, config=None, output_dir=None, 
-    DICOM_path=None, multi_echo=None, overwrite=False, verbose=False): 
+    DICOM_path=None, multi_echo=None, overwrite=False, channels=None, verbose=False): 
     #sets the .self globalization for self variables
         self._input_dir = None
         self._config_path = None
         self._config = None
         self._bids_dir = None
-        self._bids_version = "1.5.2"
+        self._bids_version = "1.6.0"
         self._dataset_name = None
         self._data_types = {"anat": False, "func": False,"ieeg":False}
 
@@ -134,7 +147,59 @@ class Data2Bids(): #main conversion and file organization program
         self.set_DICOM(DICOM_path)
         self.set_multi_echo(multi_echo)
         self.set_verbosity(verbose)
+        self.set_channels(channels)
         
+        
+    def set_channels(self,channels):
+        try:
+            headers_dict = self._config["ieeg"]["headerData"]
+        except KeyError:
+            headers_dict = None
+        self.channels = {}
+        self.sample_rate = {}
+        self._ignore = []
+        part_match = None
+        if self._data_dir:
+            for root, _, files in os.walk(self._data_dir):
+                for file in files:
+                    src = os.path.join(root,file)
+                    if not part_match == self.match_regexp(self._config["partLabel"], file):
+                        part_match = self.match_regexp(self._config["partLabel"], file)
+                        self.channels[part_match] = []
+                    for name,var in headers_dict.items():
+                        if name == part_match:
+                            if isinstance(var,str):
+                                var=[var]
+                            self.channels[part_match] = self.channels[part_match] + [ v for v in var if v not in self.channels[part_match] ]
+                        elif re.match(".*?" + part_match + ".*?" + name,src):
+                            if name.endswith(".mat") and re.match(".*?" + part_match + ".*?" + name,src):
+                                self.channels[part_match] = self.channels[part_match] + mat2df(src,var).tolist()
+                                try:
+                                    self.sample_rate = mat2df(src,self._config['ieeg']['sampleRate']).iloc[0]
+                                except KeyError:
+                                    self.sample_rate = None
+                                except AttributeError:
+                                    raise IndexError(self._config['ieeg']['sampleRate'] + " not found in " + src) 
+                                self._ignore.append(src)
+                            elif name.endswith((".txt",".csv",".tsv")) and re.match(".*?" + part_match + ".*?" + name,src):
+                                f = open(name,'r')
+                                content = f.read()
+                                f.close()
+                                self.channels[part_match] = self.channels[part_match] + content.split()
+                            elif name.endswith(tuple(self._config['dataFormat'])) and re.match(".*?" + part_match + ".*?" + name,src):
+                                raise NotImplementedError(src +
+                                    "\nthis file format does not yet support {ext} files for channel labels".format(ext=os.path.splitext(src)[1]))
+        print(self._ignore)
+        if isinstance(channels,str) and channels not in channels[part_match]:
+            self.channels[part_match] = self.channels[part_match] + [channels]
+        elif channels is not None:
+            self.channels[part_match] = self.channels[part_match] + [c for c in channels if c not in self.channels[part_match]]
+        if self._is_verbose:
+            print("Channels for participant " + part_match + " are")
+            print(self.channels[part_match])
+            for i in self._ignore:
+                if part_match in i:
+                    print("From "+i)
 
     def set_overwrite(self,overwrite):
         self._is_overwrite = overwrite
@@ -255,25 +320,21 @@ class Data2Bids(): #main conversion and file organization program
         if bids_dir is None:
             # Creating a new directory for BIDS
             try:
-                self._bids_dir = os.path.join(self._data_dir, self._dataset_name + "_BIDS")
+                newdir = self._data_dir+ "/BIDS"
             except TypeError:
                 print("Error: Please provide input data directory if no BIDS directory...")
         
-        else: #deleting old BIDS to make room for new 
-            if not os.path.basename(bids_dir) == "BIDS":
-                newdir = os.path.join(bids_dir,"BIDS")
-            else:
-                newdir = bids_dir
-            if not os.path.isdir(newdir):
-                os.mkdir(newdir)
-            elif self._is_overwrite:
-                self.force_remove(newdir)
-                os.mkdir(newdir)
-            bids_dir = newdir
-                #proc = subprocess.Popen("rm -rf {file}".format(file=newdir), shell=True, stdout=subprocess.PIPE)
-                #proc.communicate()
-            
-        self._bids_dir = bids_dir
+         #deleting old BIDS to make room for new 
+        elif not os.path.basename(bids_dir) == "BIDS":
+            newdir = os.path.join(bids_dir,"BIDS")
+        else:
+            newdir = bids_dir
+        if not os.path.isdir(newdir):
+            os.mkdir(newdir)
+        elif self._is_overwrite:
+            self.force_remove(newdir)
+            os.mkdir(newdir)
+        self._bids_dir = newdir
 
     def get_bids_version(self):
         return self._bids_version
@@ -361,9 +422,9 @@ class Data2Bids(): #main conversion and file organization program
         try:
             if re.match("^[^\d]{1,3}",part_match):
                 part_matches = re.split("([^\d]{1,3})",part_match,1)
-                part_match = part_matches[1] + part_matches[2].zfill(self._config["partLabel"]["fill"])
+                part_match = part_matches[1] + str(int(part_matches[2])).zfill(self._config["partLabel"]["fill"])
             else:
-                part_match = part_match.zfill(self._config["partLabel"]["fill"])
+                part_match = str(int(part_match)).zfill(self._config["partLabel"]["fill"])
         except KeyError:
             pass
         dst_file_path = self._bids_dir + "/sub-" + part_match
@@ -386,9 +447,9 @@ class Data2Bids(): #main conversion and file organization program
             try:
                 if re.match("^[^\d]{1,3}",acq_match):
                     acq_matches = re.split("([^\d]{1,3})",acq_match,1)
-                    acq_match = acq_matches[1] + acq_matches[2].zfill(self._config["acq"]["fill"])
+                    acq_match = acq_matches[1] + str(int(acq_matches[2])).zfill(self._config["acq"]["fill"])
                 else:
-                    acq_match = acq_match.zfill(self._config["acq"]["fill"])
+                    acq_match = str(int(acq_match)).zfill(self._config["acq"]["fill"])
             except KeyError:
                 pass
 
@@ -413,9 +474,9 @@ class Data2Bids(): #main conversion and file organization program
             try:
                 if re.match("^[^\d]{1,3}",run_match):
                     run_matches = re.split("([^\d]{1,3})",run_match,1)
-                    run_match = run_matches[1] + run_matches[2].zfill(self._config["runIndex"]["fill"])
+                    run_match = run_matches[1] + str(int(run_matches[2])).zfill(self._config["runIndex"]["fill"])
                 else:
-                    run_match = run_match.zfill(self._config["runIndex"]["fill"])
+                    run_match = str(int(run_match)).zfill(self._config["runIndex"]["fill"])
             except KeyError:
                 pass
 
@@ -671,9 +732,9 @@ class Data2Bids(): #main conversion and file organization program
             mat_list = []
             passed_list = []
             for root, _, files in os.walk(self._data_dir, topdown=True): #each loop is a new participant so long as participant is top level
-                files[:] = [f for f in files if not os.path.join(root,f).startswith(self._bids_dir)] #ignore BIDS directories
-                headers = None
+                files[:] = [f for f in files if not os.path.join(root,f).startswith(self._bids_dir) and os.path.join(root,f) not in self._ignore] #ignore BIDS directories
                 sample_rate = None
+                eeg_len = dict()
                 if not files:
                     continue
                 files.sort()
@@ -696,8 +757,9 @@ class Data2Bids(): #main conversion and file organization program
                         except AssertionError:
                             raise SyntaxError("file: {filename} has no matching {config}".format(filename=file,config=self._config["content"][:][0]))
                         try:
-                            (new_name,dst_file_path, run_match, _,echo_match,sess_match,_,
-                             data_type_match,task_label_match,SeqType) = self.generate_names(part_match, src_file_path, file)
+                            (new_name,dst_file_path,run_match,
+                            acq_match,echo_match,sess_match,ce_match,
+                            data_type_match,task_label_match,SeqType) = self.generate_names(part_match, src_file_path, file)
                         except TypeError:
                             continue
                         if echo_match is None:
@@ -783,19 +845,8 @@ class Data2Bids(): #main conversion and file organization program
                         d_list.append(src_file_path)
                         continue
                     elif re.match(".*?" + ".mat", file):
-                        try:
-                            if re.match(".*?"+self._config["ieeg"]["headerFile"]+".*?",file):
-                                try:
-                                    headers = mat2df(src_file_path,self._config["ieeg"]["headerData"]).tolist()
-                                    sample_rate = mat2df(src_file_path,self._config["ieeg"]["sampleRate"]).iloc[0]
-                                    continue
-                                except KeyError as e:
-                                    raise NotImplementedError(e)
-                            else: #re.match(".*?"+self._config["eventFiles"]+".*?",file):
-                                mat_list.append(src_file_path)
-                                continue
-                        except KeyError:
-                            continue
+                        mat_list.append(src_file_path)
+                        continue
                         # if the file doesn't match the extension, we skip it
                     elif not any(re.match(".*?" + ext, file) for ext in curr_ext):
                         print("Warning : Skipping %s" %src_file_path)
@@ -818,8 +869,8 @@ class Data2Bids(): #main conversion and file organization program
                         shutil.rmtree(self._bids_dir + "/sub-" + part_match,ignore_errors=True) 
 
                     try:
-                        (new_name,dst_file_path,_,
-                         _,echo_match,sess_match,_,
+                        (new_name,dst_file_path,run_match,
+                         acq_match,echo_match,sess_match,ce_match,
                          data_type_match,task_label_match,_) = self.generate_names(part_match, src_file_path, file)
                     
                     except TypeError as problem: #
@@ -882,11 +933,68 @@ class Data2Bids(): #main conversion and file organization program
                                 os.remove(dst_file_path + new_name + ".nii")
 
                     elif dst_file_path.endswith("/ieeg"):
+                        headers_dict = self.channels[part_match]
+                        edfname = dst_file_path + new_name + ".edf" 
+                        header = None
+                        d={}
+                        d[str]=[]
+                        d[int]=[]
+                        for i in headers_dict:
+                            d[type(i)].append(i)
+                        if self._is_verbose:
+                            print("Reading "+file+"...")
                         if file.endswith(".edf"):
-                            shutil.copy(src_file_path, dst_file_path + new_name + ".edf")
+                            f = EdfReader(src_file_path)
+                            chn_nums = d[int] + [i for i, x in enumerate(f.getSignalLabels()) if x in headers_dict]
+                            f.close()
+                            chn_nums.sort()
+                            #read edf
+                            [array,signal_headers,header] = highlevel.read_edf(src_file_path,ch_nrs=chn_nums,
+                            digital=self._config["ieeg"]["digital"],verbose=self._is_verbose)
+                            f = EdfReader(src_file_path)
+
+                            #check for extra channels in data, not working in other file modalities
+                            if any(len(mat2df(os.path.join(root,fname))) == len(f.readSignal(0)) for fname in [ i for i in files if i.endswith(
+                                ".mat")]) or any(len(mat2df(os.path.join(root,fname))) == len(f.readSignal(0)) for fname in [
+                                     i for i in mat_list if i.endswith(".mat")]):
+                                
+                                for fname in [ i for i in files + mat_list if i.endswith(".mat")]:
+                                    sig_len = len(f.readSignal(0))
+                                    if not os.path.isfile(fname):
+                                        fname = os.path.join(root,fname)
+                                    #print(mat2df(fname))
+                                    if mat2df(fname) is None:
+                                        continue
+                                    elif len(mat2df(fname)) == sig_len:
+                                        if fname in files:
+                                            files.remove(fname)
+                                        if fname in mat_list:
+                                            mat_list.remove(fname)
+                                        df = pd.DataFrame(mat2df(fname))
+                                        for cols in df.columns:
+                                            array = np.vstack([array,df[cols]])
+                                            signal_headers.append(highlevel.make_signal_header(os.path.splitext(os.path.basename(fname))[0]
+                                                ,sample_rate=signal_headers[0]["sample_rate"],))
+                                    elif len(mat2df(fname)) >= sig_len*0.99 and len(mat2df(fname)) <= sig_len*1.01:
+                                        raise BufferError(file + "of size" + sig_len + "is not the same size as" + fname + "of size" + len(mat2df(fname)))
+                                highlevel.write_edf(edfname,array,signal_headers,
+                                highlevel.make_header(patientname=part_match,startdate=datetime.datetime(1,1,1)), #needs a fix for digital max and mins / units
+                                digital=self._config["ieeg"]["digital"])
+                            #shutil.copy(src_file_path, edfname)
+                        elif file.endswith(".edf.gz"):
+                            with gzip.open(src_file_path, 'rb',self._config["compressLevel"]) as f_in:
+                                with open(edfname, 'wb') as f_out:
+                                    shutil.copyfileobj(f_in, f_out)
+                            f = EdfReader(edfname)
+                            chn_nums = d[int] + [i for i, x in enumerate(f.getSignalLabels()) if x in headers_dict]
+                            chn_nums.sort()
+                            f.close()
+                            highlevel.drop_channels(edfname,to_keep=headers_dict,verbose=self._is_verbose)
+                            os.remove(edfname)
+                            os.rename(dst_file_path + new_name + "_dropped.edf",edfname)
                         elif not self._config["ieeg"]["binary?"]:
                             raise NotImplementedError("{file} file format not yet supported. If file is binary format, please indicate so and what encoding in the config.json file".format(file=file))
-                        elif headers is not None and sample_rate is not None: #assume has binary encoding
+                        elif headers_dict and any(".mat" in i for i in files) and self.sample_rate is not None: #assume has binary encoding
                             try: #open binary file and write decoded numbers as array where rows = channels
                                 #check if zipped
                                 if file.endswith(".gz"):
@@ -895,40 +1003,48 @@ class Data2Bids(): #main conversion and file organization program
                                 else:
                                     with open(src_file_path,mode='rb') as f:
                                         data = np.fromfile(f,dtype=self._config["ieeg"]["binaryEncoding"])
-                                array = np.reshape(data,[len(headers),-1],order='F') #byte order is Fortran encoding, dont know why
-                                
+                                array = np.reshape(data,[len(headers_dict),-1],order='F') #byte order is Fortran encoding, dont know why
                             except OSError as e:
                                 print("eeg file is either not detailed well enough in config file or file type not yet supported")
                                 raise e
-                            edfname = dst_file_path + new_name + ".edf"
-                            signal_headers = pyedflib.highlevel.make_signal_headers(headers,sample_rate=sample_rate,
-                            physical_max=np.amax(array),physical_min=(np.amin(array)))
-                            pyedflib.highlevel.write_edf(edfname,array,signal_headers,pyedflib.highlevel.make_header(patientname=part_match))
+                            signal_headers = highlevel.make_signal_headers(headers_dict,
+                            sample_rate=sample_rate,physical_max=np.amax(array),physical_min=(np.amin(array)))
+                            if os.path.isfile(edfname):
+                                print("removing " + edfname)
+                                os.remove(edfname)
 
-                            continue
-                        elif file not in passed_list:
-                            files.append(file)
-                            passed_list.append(file)
-                            continue
                         else:
                             raise FileNotFoundError("{file} header could not be found".format(file=file))
+                        #record eeg file lengths for automatic appending of concurrent channels
+                        #highlevel.drop_channels(edfname,to_keep=headers,verbose=self._is_verbose)
+                        if self._is_verbose:
+                            print("writing "+file+"...")
+                        if header is None:
+                            header = highlevel.make_header(patientname=part_match,startdate=datetime(1,1,1))
+                        if not os.path.isfile(edfname):
+                            highlevel.write_edf(edfname,array,signal_headers,header,digital=self._config["ieeg"]["digital"])
+                        f = EdfReader(edfname)
+                        eeg_len[f.file_name] = f.samples_in_file(0)
+                        f.close()
+                        print(eeg_len)
                     # move the sidecar from input to output
-
+                    #print(file+" ---> "+dst_file_path+new_name)
                     names_list.append(new_name)
                     dst_file_path_list.append(dst_file_path)
                     try:
-                        run_list.append(int(run_match))
+                        if run_match is not None:
+                            run_list.append(int(run_match))
                     except UnboundLocalError:
                         pass
-
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              
                 if d_list :
                     self.convert_1D(run_list, d_list, tsv_fso_runs, tsv_condition_runs, names_list, dst_file_path_list)
 
-                if mat_list :
+                if mat_list : #deal with remaining .mat files
                     self.mat2tsv(mat_list)
 
                 #needs a file scan here
-
+  
                 # Output
             if self._is_verbose:
                 tree(self._bids_dir)
@@ -958,6 +1074,8 @@ class Data2Bids(): #main conversion and file organization program
                 raise SyntaxError("file: {filename} has no matching {config}\n".format(filename=mat_file,config=self._config["content"][:][0]))
             df_new = mat2df(mat_file,self._config["eventFormat"])
             #check to see if new data is introduced. If not then keep searching
+            if isinstance(df_new,pd.Series):
+                df_new = pd.DataFrame(df_new)
             if df_new.shape[0] > df.shape[0]:
                 df = pd.concat([df[df.columns.difference(df_new.columns)],df_new],axis=1) #auto filters duplicates
             elif df_new.shape[0] == df.shape[0]:
@@ -1195,6 +1313,16 @@ class DisplayablePath(): # this code simply creates a tree visual to explain the
             parent = parent.parent
 
         return ''.join(reversed(parts))
+
+def cat_edf(filename):
+    f = EdfReader(filename)
+    for i in range(f.signals_in_file):
+        print(f.readSignal(i),threading.current_thread().getName())
+
+def read_write_edf(read_obj,chn):
+    if isinstance(chn,str):
+        chn = read_obj.getSignalLabels().index(chn)
+    read_obj.readSignal(chn)
 #this part of the code creates the tree graphic
 def tree(path):
     paths = DisplayablePath.make_tree(Path(path))
