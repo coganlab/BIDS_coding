@@ -734,7 +734,7 @@ class Data2Bids(): #main conversion and file organization program
             for root, _, files in os.walk(self._data_dir, topdown=True): #each loop is a new participant so long as participant is top level
                 files[:] = [f for f in files if not os.path.join(root,f).startswith(self._bids_dir) and os.path.join(root,f) not in self._ignore] #ignore BIDS directories
                 sample_rate = None
-                eeg_len = dict()
+                eeg = []
                 if not files:
                     continue
                 files.sort()
@@ -949,17 +949,17 @@ class Data2Bids(): #main conversion and file organization program
                             f.close()
                             chn_nums.sort()
                             #read edf
-                            [array,signal_headers,header] = highlevel.read_edf(src_file_path,ch_nrs=chn_nums,
+                            [array,signal_headers,_] = highlevel.read_edf(src_file_path,ch_nrs=chn_nums,
                             digital=self._config["ieeg"]["digital"],verbose=self._is_verbose)
                             f = EdfReader(src_file_path)
 
                             #check for extra channels in data, not working in other file modalities
-                            if any(len(mat2df(os.path.join(root,fname))) == len(f.readSignal(0)) for fname in [ i for i in files if i.endswith(
-                                ".mat")]) or any(len(mat2df(os.path.join(root,fname))) == len(f.readSignal(0)) for fname in [
+                            if any(len(mat2df(os.path.join(root,fname))) == f.samples_in_file(0) for fname in [ i for i in files if i.endswith(
+                                ".mat")]) or any(len(mat2df(os.path.join(root,fname))) == f.samples_in_file(0) for fname in [
                                      i for i in mat_list if i.endswith(".mat")]):
                                 
                                 for fname in [ i for i in files + mat_list if i.endswith(".mat")]:
-                                    sig_len = len(f.readSignal(0))
+                                    sig_len = f.samples_in_file(0)
                                     if not os.path.isfile(fname):
                                         fname = os.path.join(root,fname)
                                     #print(mat2df(fname))
@@ -971,15 +971,9 @@ class Data2Bids(): #main conversion and file organization program
                                         if fname in mat_list:
                                             mat_list.remove(fname)
                                         df = pd.DataFrame(mat2df(fname))
-                                        for cols in df.columns:
-                                            array = np.vstack([array,df[cols]])
-                                            signal_headers.append(highlevel.make_signal_header(os.path.splitext(os.path.basename(fname))[0]
-                                                ,sample_rate=signal_headers[0]["sample_rate"],))
+                                        for cols in df.columns:ict()
                                     elif len(mat2df(fname)) >= sig_len*0.99 and len(mat2df(fname)) <= sig_len*1.01:
                                         raise BufferError(file + "of size" + sig_len + "is not the same size as" + fname + "of size" + len(mat2df(fname)))
-                                highlevel.write_edf(edfname,array,signal_headers,
-                                highlevel.make_header(patientname=part_match,startdate=datetime.datetime(1,1,1)), #needs a fix for digital max and mins / units
-                                digital=self._config["ieeg"]["digital"])
                             #shutil.copy(src_file_path, edfname)
                         elif file.endswith(".edf.gz"):
                             with gzip.open(src_file_path, 'rb',self._config["compressLevel"]) as f_in:
@@ -992,6 +986,8 @@ class Data2Bids(): #main conversion and file organization program
                             highlevel.drop_channels(edfname,to_keep=headers_dict,verbose=self._is_verbose)
                             os.remove(edfname)
                             os.rename(dst_file_path + new_name + "_dropped.edf",edfname)
+                            [array,signal_headers,_] = highlevel.read_edf(src_file_path,ch_nrs=chn_nums,
+                                digital=self._config["ieeg"]["digital"])
                         elif not self._config["ieeg"]["binary?"]:
                             raise NotImplementedError("{file} file format not yet supported. If file is binary format, please indicate so and what encoding in the config.json file".format(file=file))
                         elif headers_dict and any(".mat" in i for i in files) and self.sample_rate is not None: #assume has binary encoding
@@ -1018,15 +1014,16 @@ class Data2Bids(): #main conversion and file organization program
                         #record eeg file lengths for automatic appending of concurrent channels
                         #highlevel.drop_channels(edfname,to_keep=headers,verbose=self._is_verbose)
                         if self._is_verbose:
-                            print("writing "+edfname+"...")
+                            print("writing "+os.path.basename(edfname)+"...")
                         if header is None:
-                            header = highlevel.make_header(patientname=part_match,startdate=datetime(1,1,1))
+                            header = highlevel.make_header(patientname=part_match,startdate=datetime.datetime(1,1,1))
                         if not os.path.isfile(edfname):
                             highlevel.write_edf(edfname,array,signal_headers,header,digital=self._config["ieeg"]["digital"])
                         f = EdfReader(edfname)
-                        eeg_len[f.file_name] = f.samples_in_file(0)
+                        eeg.append(dict(name=f.file_name,nsamples=f.samples_in_file(0),signal_headers=signal_headers,\
+                            file_header=header,data=array))
                         f.close()
-                        print(eeg_len)
+                        #print(eeg[-1])
                     # move the sidecar from input to output
                     #print(file+" ---> "+dst_file_path+new_name)
                     names_list.append(new_name)
@@ -1047,8 +1044,9 @@ class Data2Bids(): #main conversion and file organization program
                 for new_name in names_list:
                     file_path = dst_file_path_list[names_list.index(new_name)]
                     #split any edfs accroding to tsvs
-                    if new_name.endswith(".edf") and any(re.match(file, ".*?" + new_name.split("_ieeg.edf")[0] + 
-                    "_run-"+ self._config["runIndex"]["content"] + "_event.tsv") for file in os.listdir(file_path)): #if edf is not yet split
+                    print(os.listdir(file_path),new_name, new_name.split("_ieeg")[0] + "_run-"+ self._config["runIndex"]["content"][0] + "_event.tsv")
+                    if new_name.endswith("_ieeg") and any(re.match(file, new_name.split("_ieeg")[0] + 
+                    "_run-"+ self._config["runIndex"]["content"][0] + "_event.tsv") for file in os.listdir(file_path)): #if edf is not yet split
                         if self._is_verbose:
                             print("Reading for split... ")
                         [array,signal_headers,header] = highlevel.read_edf(src_file_path,
@@ -1060,7 +1058,7 @@ class Data2Bids(): #main conversion and file organization program
                             if match_tsv:
                                 df = pd.read_csv(file,sep="\t",header=0)
                                 startnums.append(df[self._config["eventFormat.timing"]][0]/30000*signal_headers[0]["sample_rate"])
-
+                        print(startnums)
                         #os.remove(file_path + new_name)        
                         continue
                     # write JSON file for any missing files
