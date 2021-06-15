@@ -146,7 +146,6 @@ class Data2Bids(): #main conversion and file organization program
         self.set_bids_dir(output_dir)
         self.set_DICOM(DICOM_path)
         self.set_multi_echo(multi_echo)
-        self.set_channels(channels)
         self.set_verbosity(verbose)
         self.set_channels(channels)
         
@@ -1019,7 +1018,7 @@ class Data2Bids(): #main conversion and file organization program
                         #record eeg file lengths for automatic appending of concurrent channels
                         #highlevel.drop_channels(edfname,to_keep=headers,verbose=self._is_verbose)
                         if self._is_verbose:
-                            print("writing "+file+"...")
+                            print("writing "+edfname+"...")
                         if header is None:
                             header = highlevel.make_header(patientname=part_match,startdate=datetime(1,1,1))
                         if not os.path.isfile(edfname):

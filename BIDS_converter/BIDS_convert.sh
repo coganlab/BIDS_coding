@@ -1,6 +1,6 @@
 #!/bin/bash
     
-ORIG_DATA_DIR="/home/sbf/Desktop/share/CoganLab"
+ORIG_DATA_DIR="/home/sbf/Desktop/CoganLab"
 SUB_IDS=(D52 D48) 
 TASKS=(Phoneme_sequencing)
 
@@ -60,11 +60,7 @@ for TASK in ${TASKS[@]}
         #event .mat
         find "$ORIG_DATA_DIR/D_Data/$TASK/$SUB_ID" -regex ".*\/mat\/.*[tT]rial[(Info)s].*\.mat" -exec cp -t "$OUTPUT_DIR/$SUB_ID/" {} + 
         #triggers
-<<<<<<< HEAD
-        find "$ORIG_DATA_DIR/D_Data/$TASK/$SUB_ID" -regex ".*[Tt]rigger[0-9]?[0-9]?\.mat$" -exec cp -t "$OUTPUT_DIR/$SUB_ID/" {} +
-=======
         #find "$ORIG_DATA_DIR/D_Data/$TASK/$SUB_ID" -regex ".*[Tt]rigger[0-9]?[0-9]?\.mat$" -exec cp -t "$OUTPUT_DIR/$SUB_ID/" {} +
->>>>>>> e3599de8683abf028dfb992631f660b9df9763e6
         #rename .mat
         find "$OUTPUT_DIR/$SUB_ID" -type f -regex ".*\.mat" | xargs -n 1 basename | xargs -I{} mv "$OUTPUT_DIR/$SUB_ID/{}" "$OUTPUT_DIR/$SUB_ID/${SUB_ID}_{}"
         #rename .dat
