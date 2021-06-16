@@ -971,7 +971,10 @@ class Data2Bids(): #main conversion and file organization program
                                         if fname in mat_list:
                                             mat_list.remove(fname)
                                         df = pd.DataFrame(mat2df(fname))
-                                        for cols in df.columns:ict()
+                                        for cols in df.columns:
+                                            array = np.vstack([array,df[cols]])
+                                            signal_headers.append(highlevel.make_signal_header(os.path.splitext(os.path.basename(fname))[0]
+                                                ,sample_rate=signal_headers[0]["sample_rate"],))
                                     elif len(mat2df(fname)) >= sig_len*0.99 and len(mat2df(fname)) <= sig_len*1.01:
                                         raise BufferError(file + "of size" + sig_len + "is not the same size as" + fname + "of size" + len(mat2df(fname)))
                             #shutil.copy(src_file_path, edfname)
