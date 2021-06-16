@@ -1020,7 +1020,7 @@ class Data2Bids(): #main conversion and file organization program
                         if not os.path.isfile(edfname):
                             highlevel.write_edf(edfname,array,signal_headers,header,digital=self._config["ieeg"]["digital"])
                         f = EdfReader(edfname)
-                        eeg.append(dict(name=f.file_name,nsamples=f.samples_in_file(0),signal_headers=signal_headers,\
+                        eeg.append(dict(name=f.file_name,nsamples=f.samples_in_file(0),signal_headers=signal_headers,
                             file_header=header,data=array))
                         f.close()
                         #print(eeg[-1])

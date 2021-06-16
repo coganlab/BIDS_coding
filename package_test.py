@@ -11,8 +11,8 @@ def test_1():
     os.makedirs("BIDS_converter/samples/BIDS",exist_ok=True)
 
     with tarfile.open("BIDS_converter/test_data.tar.xz") as f:
-        f.extractall(members=[ tarinfo for tarinfo in f.getmembers() if tarinfo,name.startswith("D52/")],
-        path="BIDS_converter/samples")
+        f.extractall(members=[ tarinfo for tarinfo in f.getmembers() 
+            if tarinfo.name.startswith("D52/")],path="BIDS_converter/samples")
 
     Data2Bids(input_dir='BIDS_converter/samples/D52', output_dir='BIDS_converter/samples/BIDS').run()
 
@@ -32,8 +32,8 @@ def test_2():
     os.makedirs("BIDS_converter/samples/BIDS",exist_ok=True)
 
     with tarfile.open("BIDS_converter/test_data.tar.xz") as f:
-        f.extractall(members=[ tarinfo for tarinfo in f.getmembers() if tarinfo,name.startswith("D48/")],
-        path="BIDS_converter/samples")
+        f.extractall(members=[ tarinfo for tarinfo in f.getmembers() 
+            if tarinfo.name.startswith("D48/")],path="BIDS_converter/samples")
 
     Data2Bids(input_dir='BIDS_converter/samples/D48', output_dir='BIDS_converter/samples/BIDS').run()
 
