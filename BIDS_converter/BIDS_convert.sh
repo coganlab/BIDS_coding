@@ -1,6 +1,6 @@
 #!/bin/bash
     
-ORIG_DATA_DIR="/home/sbf/Desktop/share/CoganLab"
+ORIG_DATA_DIR="/home/sbf/Desktop/CoganLab"
 SUB_IDS=(D52 D48) 
 TASKS=(Phoneme_sequencing)
 
