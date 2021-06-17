@@ -10,7 +10,7 @@ def test_1():
 
     os.makedirs("BIDS_converter/samples/BIDS",exist_ok=True)
 
-    with tarfile.open("BIDS_converter/test_data.tar.xz") as f:
+    with tarfile.open("data.tar.xz") as f:
         f.extractall(members=[ tarinfo for tarinfo in f.getmembers() 
             if tarinfo.name.startswith("D52/")],path="BIDS_converter/samples")
 
@@ -31,7 +31,7 @@ def test_2():
 
     os.makedirs("BIDS_converter/samples/BIDS",exist_ok=True)
 
-    with tarfile.open("BIDS_converter/test_data.tar.xz") as f:
+    with tarfile.open("data.tar.xz") as f:
         f.extractall(members=[ tarinfo for tarinfo in f.getmembers() 
             if tarinfo.name.startswith("D48/")],path="BIDS_converter/samples")
 
