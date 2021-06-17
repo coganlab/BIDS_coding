@@ -4,36 +4,54 @@
 from BIDS_converter.data2bids import Data2Bids
 import shutil
 import os
+import tarfile
 
 def test_1():
 
-    os.makedirs("BIDS_converter/samples/BIDS",exist_ok=True)
-    Data2Bids(input_dir='BIDS_converter/samples/D52', output_dir='BIDS_converter/samples/BIDS').run()
+    os.makedirs("Data/Phoneme_Sequencing/BIDS",exist_ok=True)
+
+    print("Unzipping: D52 201213 COGAN_PHONEMESEQUENCE.edf.tar.xz")
+
+    with tarfile.open("Data/Phoneme_Sequencing/eeg_data/D52 201213 COGAN_PHONEMESEQUENCE.edf.tar.xz",mode="r:xz") as f:
+        f.extractall(path="Data/Phoneme_Sequencing/sourcedata/D52")
+
+    Data2Bids(input_dir='Data/Phoneme_Sequencing/sourcedata/D52', output_dir='Data/Phoneme_Sequencing/BIDS',verbose=True).run()
 
     xlist =[]
 
-    for x in os.listdir('BIDS_converter/samples/BIDS/sub-D0052'):
-        #os.close(x)
+    for x in os.listdir('Data/Phoneme_Sequencing/BIDS/sub-D0052'):
         xlist.append(x)
 
-    while os.path.isdir("BIDS_converter/samples/BIDS"):
-        shutil.rmtree("BIDS_converter/samples/BIDS", ignore_errors=True)
+    while os.path.isdir("Data/Phoneme_Sequencing/BIDS"):
+        shutil.rmtree("Data/Phoneme_Sequencing/BIDS", ignore_errors=True)
+    os.remove("Data/Phoneme_Sequencing/sourcedata/D52/D52 201213 COGAN_PHONEMESEQUENCE.edf")
 
     return xlist
 
 def test_2():
 
-    os.makedirs("BIDS_converter/samples/BIDS",exist_ok=True)
+    os.makedirs("Data/Phoneme_Sequencing/BIDS",exist_ok=True)
 
-    Data2Bids(input_dir='BIDS_converter/samples/D48', output_dir='BIDS_converter/samples/BIDS').run()
+    print("Unzipping: D48 200906 Cogan_PhonemeSequence_Session1.edf.tar.xz")
+
+    with tarfile.open("Data/Phoneme_Sequencing/eeg_data/D48 200906 Cogan_PhonemeSequence_Session1.edf.tar.xz",mode="r:xz") as f:
+        f.extractall(path="Data/Phoneme_Sequencing/sourcedata/D48")
+
+    print("Unzipping: D48 200908 Cogan_PhonemeSequence_Session2.edf.tar.xz")
+
+    with tarfile.open("Data/Phoneme_Sequencing/eeg_data/D48 200908 Cogan_PhonemeSequence_Session2.edf.tar.xz",mode="r:xz") as f:
+        f.extractall(path="Data/Phoneme_Sequencing/sourcedata/D48")
+
+    Data2Bids(input_dir='Data/Phoneme_Sequencing/sourcedata/D48', output_dir='Data/Phoneme_Sequencing/BIDS',verbose=True).run()
 
     xlist =[]
 
-    for x in os.listdir('BIDS_converter/samples/BIDS/sub-D0048'):
-        #os.close(x)
+    for x in os.listdir('Data/Phoneme_Sequencing/BIDS/sub-D0048'):
         xlist.append(x)
 
-    while os.path.isdir("BIDS_converter/samples/BIDS"):
-        shutil.rmtree("BIDS_converter/samples/BIDS", ignore_errors=True)
+    while os.path.isdir("Data/Phoneme_Sequencing/BIDS"):
+        shutil.rmtree("Data/Phoneme_Sequencing/BIDS", ignore_errors=True)
+    os.remove("Data/Phoneme_Sequencing/sourcedata/D48/D48 200906 Cogan_PhonemeSequence_Session1.edf")
+    os.remove("Data/Phoneme_Sequencing/sourcedata/D48/D48 200908 Cogan_PhonemeSequence_Session2.edf")
 
     return xlist
