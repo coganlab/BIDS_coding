@@ -35,15 +35,15 @@ jobs:
         flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
         # exit-zero treats all errors as warnings. The GitHub editor is 127 chars wide
         flake8 . --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
+    - name: Download eeg files
+      run:
+        git lfs pull
+        # python -m tarfile -v -e 'Data/Phoneme_Sequencing/eeg_data/D52 201213 COGAN_PHONEMESEQUENCE.edf.tar.xz' 'Data/Phoneme_Sequencing/sourcedata/D52'
+        # python -m tarfile -v -e 'Data/Phoneme_Sequencing/eeg_data/D48 200906 Cogan_PhonemeSequence_Session1.edf.tar.xz' 'Data/Phoneme_Sequencing/sourcedata/D48'
+        # python -m tarfile -v -e 'Data/Phoneme_Sequencing/eeg_data/D48 200908 Cogan_PhonemeSequence_Session2.edf.tar.xz' 'Data/Phoneme_Sequencing/sourcedata/D48'
     - name: Test with pytest
       run: |
-        git lfs pull
-        ls
-        file 'Data/Phoneme_Sequencing/eeg_data/D52 201213 COGAN_PHONEMESEQUENCE.edf.tar.xz'
-        python -m tarfile -v -e 'Data/Phoneme_Sequencing/eeg_data/D52 201213 COGAN_PHONEMESEQUENCE.edf.tar.xz' 'Data/Phoneme_Sequencing/sourcedata/D52'
-        python -m tarfile -v -e 'Data/Phoneme_Sequencing/eeg_data/D48 200906 Cogan_PhonemeSequence_Session1.edf.tar.xz' 'Data/Phoneme_Sequencing/sourcedata/D48'
-        python -m tarfile -v -e 'Data/Phoneme_Sequencing/eeg_data/D48 200908 Cogan_PhonemeSequence_Session2.edf.tar.xz' 'Data/Phoneme_Sequencing/sourcedata/D48'
         pytest package_test.py
-        rm 'Data/Phoneme_Sequencing/sourcedata/D52/D52 201213 COGAN_PHONEMESEQUENCE.edf'
-        rm 'Data/Phoneme_Sequencing/sourcedata/D48/D48 200906 Cogan_PhonemeSequence_Session1.edf'
-        rm 'Data/Phoneme_Sequencing/sourcedata/D48/D48 200908 Cogan_PhonemeSequence_Session2.edf'
+        # rm 'Data/Phoneme_Sequencing/sourcedata/D52/D52 201213 COGAN_PHONEMESEQUENCE.edf'
+        # rm 'Data/Phoneme_Sequencing/sourcedata/D48/D48 200906 Cogan_PhonemeSequence_Session1.edf'
+        # rm 'Data/Phoneme_Sequencing/sourcedata/D48/D48 200908 Cogan_PhonemeSequence_Session2.edf'
