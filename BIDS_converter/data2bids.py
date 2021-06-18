@@ -417,8 +417,10 @@ class Data2Bids(): #main conversion and file organization program
                             echo_match = None,
                             data_type_match = None,
                             task_label_match = None,
-                            run_match = None):
-        
+                            run_match = None,
+                            verbose=None):
+        if verbose is None:
+            verbose = self._is_verbose
         try:
             if re.match("^[^\d]{1,3}",part_match):
                 part_matches = re.split("([^\d]{1,3})",part_match,1)
@@ -437,7 +439,7 @@ class Data2Bids(): #main conversion and file organization program
             dst_file_path = dst_file_path + "/ses-" + sess_match
             new_name = new_name + "_ses-" + sess_match
         except AssertionError:
-            if self._is_verbose:
+            if verbose:
                 print("No session found for %s" %src_file_path)
 
         #check for optional labels
@@ -455,7 +457,7 @@ class Data2Bids(): #main conversion and file organization program
 
             new_name = new_name + "_acq-" + acq_match
         except (AssertionError, KeyError) as e:
-            if self._is_verbose:
+            if verbose:
                 print("no optional labels for %s" %src_file_path)
         try:
             if ce_match is None: 
@@ -464,7 +466,7 @@ class Data2Bids(): #main conversion and file organization program
             new_name = new_name + "_ce-" + ce_match
 
         except (AssertionError, KeyError) as e:
-            if self._is_verbose:
+            if verbose:
                 print("no special contrast labels for %s" %src_file_path)
         
         # Matching the run number
@@ -722,10 +724,9 @@ class Data2Bids(): #main conversion and file organization program
                                'BIDSVersion': self._bids_version}
                     json.dump(data, fst, ensure_ascii=False, indent = 4)
             # now we can scan all files and rearrange them
-            names_list = []
+            names_list_global = []
             tsv_condition_runs = []
             tsv_fso_runs = []
-            dst_file_path_list = []
             d_list = []
             part_match = None
             run_list = []
@@ -735,6 +736,8 @@ class Data2Bids(): #main conversion and file organization program
                 files[:] = [f for f in files if not os.path.join(root,f).startswith(self._bids_dir) and os.path.join(root,f) not in self._ignore] #ignore BIDS directories
                 sample_rate = None
                 eeg = []
+                dst_file_path_list = []
+                names_list = []
                 if not files:
                     continue
                 files.sort()
@@ -857,9 +860,18 @@ class Data2Bids(): #main conversion and file organization program
                     # Matching the participant label to determine if there exists therein delete previously created BIDS subject files
                     try:
                         part_match = self.match_regexp(self._config["partLabel"], file)
-                        if os.path.exists(self._bids_dir + "/sub-" + part_match) and not any("sub-" + part_match in x for x in names_list):
+                        try:
+                            _ = self._config["partLabel"]["fill"]
+                        except KeyError:
+                            raise TypeError
+                        if re.match("^[^\d]{1,3}",part_match):
+                            part_matches = re.split("([^\d]{1,3})",part_match,1)
+                            part_match_z = part_matches[1] + str(int(part_matches[2])).zfill(self._config["partLabel"]["fill"])
+                        else:
+                            part_match_z = str(int(part_match)).zfill(self._config["partLabel"]["fill"])
+                        if os.path.isdir(self._bids_dir + "/sub-" + part_match_z) and not any("sub-" + part_match_z in x for x in names_list_global):
                             print("Deleting old BIDS directory for subject %s" %part_match)
-                            shutil.rmtree(self._bids_dir + "/sub-" + part_match,onerror=self.force_remove)
+                            shutil.rmtree(self._bids_dir + "/sub-" + part_match_z,onerror=self.force_remove)
                     except AssertionError:
                         print("No participant found for %s" %src_file_path)
                         continue
@@ -867,6 +879,8 @@ class Data2Bids(): #main conversion and file organization program
                         shutil.rmtree(self._bids_dir + "/sub-" + part_match,ignore_errors=True) 
                     except TypeError: #problem spot, may miss deleting some files causing them to erroneously carry over
                         shutil.rmtree(self._bids_dir + "/sub-" + part_match,ignore_errors=True) 
+                    except KeyError:
+                        raise KeyError("Participant label pattern must be defined")
 
                     try:
                         (new_name,dst_file_path,run_match,
@@ -1030,6 +1044,7 @@ class Data2Bids(): #main conversion and file organization program
                     # move the sidecar from input to output
                     #print(file+" ---> "+dst_file_path+new_name)
                     names_list.append(new_name)
+                    names_list_global.append(new_name)
                     dst_file_path_list.append(dst_file_path)
                     try:
                         if run_match is not None:
@@ -1046,20 +1061,29 @@ class Data2Bids(): #main conversion and file organization program
                 #check final file set
                 for new_name in names_list:
                     file_path = dst_file_path_list[names_list.index(new_name)]
+                    full_name = file_path+new_name+".edf"
                     #split any edfs accroding to tsvs
-                    print(os.listdir(file_path),new_name, new_name.split("_ieeg")[0] + "_run-"+ self._config["runIndex"]["content"][0] + "_event.tsv")
-                    if new_name.endswith("_ieeg") and any(re.match(file, new_name.split("_ieeg")[0] + 
-                    "_run-"+ self._config["runIndex"]["content"][0] + "_event.tsv") for file in os.listdir(file_path)): #if edf is not yet split
+                    if new_name.endswith("_ieeg") and any(re.match(new_name.split("_ieeg")[0].split("/")[1] + 
+                    "_run-"+ self._config["runIndex"]["content"][0] + "_event.tsv", set_file) for set_file in os.listdir(file_path)): #if edf is not yet split
                         if self._is_verbose:
                             print("Reading for split... ")
-                        [array,signal_headers,header] = highlevel.read_edf(src_file_path,
-                            digital=self._config["ieeg"]["digital"],verbose=self._is_verbose)
+                        #print([i["name"] for i in eeg],full_name,eeg[[i["name"] for i in eeg].index(full_name)])
+                        if full_name in [i["name"] for i in eeg]:
+                            eeg_dict = eeg[[i["name"] for i in eeg].index(full_name)]
+                        else:
+                            print(full_name,[i["name"] for i in eeg])
+                            raise LookupError("This error should not have been raised, was edf file " + full_name + " ever written?"
+                                ,[i["name"] for i in eeg])
+                        #print(eeg_dict)
+                        [array,signal_headers,header] = [eeg_dict["data"],eeg_dict["signal_headers"],eeg_dict["file_header"]]
+                        #highlevel.read_edf(full_name,
+                        #digital=self._config["ieeg"]["digital"],verbose=self._is_verbose)
                         startnums = []
                         for file in os.listdir(file_path):
-                            match_tsv = re.match(file, ".*?" + new_name.split("_ieeg.edf")[0] + "_run-"+"("+ self._config["runIndex"]["content"]
-                            +")" + "_event.tsv")
+                            match_tsv = re.match(file,new_name.split("_ieeg.edf")[0].split("/")[1] 
+                            + "_run-("+ self._config["runIndex"]["content"][0]+")_event.tsv")
                             if match_tsv:
-                                df = pd.read_csv(file,sep="\t",header=0)
+                                df = pd.read_csv(file,sep="\t",header=0) #put the 30000 number in config
                                 startnums.append(df[self._config["eventFormat.timing"]][0]/30000*signal_headers[0]["sample_rate"])
                         print(startnums)
                         #os.remove(file_path + new_name)        
@@ -1167,7 +1191,7 @@ class Data2Bids(): #main conversion and file organization program
                     #fix this to check for data type
                     match_name = match_name + self._config["ieeg"]["content"][0][1]
                     (new_name,dst_file_path,_,_,_,_,_,_,_,_) = self.generate_names(
-                        part_match, match_name, os.path.basename(match_name))
+                        part_match, match_name, os.path.basename(match_name),verbose=False)
                     writedf = df.loc[nindex]
                     if self._is_verbose:
                         print(mat_file,"--->",dst_file_path + new_name.split("ieeg")[0] + "event.tsv")
