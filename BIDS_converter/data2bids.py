@@ -1126,9 +1126,11 @@ class Data2Bids():  # main conversion and file organization program
                         # digital=self._config["ieeg"]["digital"],verbose=self._is_verbose)
                         startnums = []
                         print(signal_headers[0]["sample_rate"])
+                        print(os.listdir(file_path))
                         for file in os.listdir(file_path):
                             match_tsv = re.match(file, new_name.split("_ieeg.edf")[0].split("/")[1]
                                                  + "_run-(" + self._config["runIndex"]["content"][0] + ")_event.tsv")
+                            print(match_tsv)
                             if match_tsv:
                                 print(df[self._config["eventFormat.timing"]][0])
                                 df = pd.read_csv(file, sep="\t", header=0)  # put the 30000 number in config
@@ -1191,7 +1193,8 @@ class Data2Bids():  # main conversion and file organization program
                 if self._config["eventFormat.IDcol"] in df.columns.values.tolist():
                     # print(df[self._config["eventFormat.IDcol"]].unique())
                     if len(df[self._config[
-                        "eventFormat.IDcol"]].unique()) == 1:  # CHANGE this in case literal name doesn't change
+                        "eventFormat.IDcol"]].unique()) == 1:  # CHANGE this in case literal name doesn't
+                        # change
                         is_separate = False
                         print(
                             "Warning: data may have been lost if file ID did not change but the recording session did")
@@ -1199,7 +1202,8 @@ class Data2Bids():  # main conversion and file organization program
                         # fix this as well so it works for all data types and modalities
                         match_name = mat_file.split(os.path.basename(mat_file))[0] + \
                                      df[self._config["eventFormat.IDcol"]][0] + self._config["ieeg"]["content"][0][1]
-                    else:  # this means there was more than one recording session. In this case we will separate each trial block into a separate "run"
+                    else:  # this means there was more than one recording session. In this case we will separate each
+                        # trial block into a separate "run"
                         is_separate = True
                 else:
                     continue
@@ -1262,8 +1266,9 @@ class Data2Bids():  # main conversion and file organization program
             written = True
 
     def convert_1D(self, run_list, d_list, tsv_fso_runs, tsv_condition_runs, names_list, dst_file_path_list):
-        # This section is for converting .1D files to tsv event files. If you have the 1D files that's great, but chances are you have some other
-        # format if this is the case, I recommend https://bids-specification.readthedocs.io/en/stable/04-modality-specific-files/05-task-events.html
+        # This section is for converting .1D files to tsv event files. If you have the 1D files that's great,
+        # but chances are you have some other format if this is the case,I recommend
+        # https://bids-specification.readthedocs.io/en/stable/04-modality-specific-files/05-task-events.html
         # so that you can make BIDS compliant event files
         fields = list(list() for _ in range(max(run_list)))
         categories = list(list() for _ in range(max(run_list)))
@@ -1327,7 +1332,6 @@ class Data2Bids():  # main conversion and file organization program
                 categories[j] = [categories[j] for _, categories[j] in sorted(zip(fields[j], categories[j]))]
                 # TRfields[j] = [TRfields[j] for _,TRfields[j] in sorted(zip(fields[j],TRfields[j]))]
                 fields[j].sort()
-                # print(len(writenames[j]), len(categories[j]), len(fields[j]), len(TRfields[j]), len(tempTRcategories[j]))
                 for i in range(len(writenames[j]) + 1):
                     tsvnames = []
                     if self.multi_echo_check(j + 1):
