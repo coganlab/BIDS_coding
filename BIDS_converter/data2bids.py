@@ -458,33 +458,6 @@ class Data2Bids():  # main conversion and file organization program
             if verbose:
                 print("No session found for %s" % src_file_path)
 
-        # check for optional labels
-        try:
-            if acq_match is None:
-                acq_match = self.match_regexp(self._config["acq"], filename)
-            try:
-                if re.match("^[^\d]{1,3}", acq_match):
-                    acq_matches = re.split("([^\d]{1,3})", acq_match, 1)
-                    acq_match = acq_matches[1] + str(int(acq_matches[2])).zfill(self._config["acq"]["fill"])
-                else:
-                    acq_match = str(int(acq_match)).zfill(self._config["acq"]["fill"])
-            except KeyError:
-                pass
-
-            new_name = new_name + "_acq-" + acq_match
-        except (AssertionError, KeyError) as e:
-            if verbose:
-                print("no optional labels for %s" % src_file_path)
-        try:
-            if ce_match is None:
-                ce_match = self.match_regexp(self._config["ce"]
-                                             , filename)
-            new_name = new_name + "_ce-" + ce_match
-
-        except (AssertionError, KeyError) as e:
-            if verbose:
-                print("no special contrast labels for %s" % src_file_path)
-
         # Matching the run number
         try:
             if run_match is None:
@@ -555,9 +528,6 @@ class Data2Bids():  # main conversion and file organization program
                     print("No anat, func, or ieeg data type found in config file, one of these data types is required")
                     return
 
-        if run_match is not None:
-            new_name = new_name + "_run-" + run_match
-
         # if is an MRI
         if dst_file_path.endswith("/func") or dst_file_path.endswith("/anat"):
             try:
@@ -572,6 +542,36 @@ class Data2Bids():  # main conversion and file organization program
                 new_name = new_name + "_echo-" + echo_match
             except AssertionError:
                 print("No echo found for %s" % src_file_path)
+
+        # check for optional labels
+        try:
+            if acq_match is None:
+                acq_match = self.match_regexp(self._config["acq"], filename)
+            try:
+                if re.match("^[^\d]{1,3}", acq_match):
+                    acq_matches = re.split("([^\d]{1,3})", acq_match, 1)
+                    acq_match = acq_matches[1] + str(int(acq_matches[2])).zfill(self._config["acq"]["fill"])
+                else:
+                    acq_match = str(int(acq_match)).zfill(self._config["acq"]["fill"])
+            except KeyError:
+                pass
+
+            new_name = new_name + "_acq-" + acq_match
+        except (AssertionError, KeyError) as e:
+            if verbose:
+                print("no optional labels for %s" % src_file_path)
+        try:
+            if ce_match is None:
+                ce_match = self.match_regexp(self._config["ce"]
+                                             , filename)
+            new_name = new_name + "_ce-" + ce_match
+
+        except (AssertionError, KeyError) as e:
+            if verbose:
+                print("no special contrast labels for %s" % src_file_path)
+
+        if run_match is not None:
+            new_name = new_name + "_run-" + run_match
 
         # Adding the modality to the new filename
         new_name = new_name + "_" + data_type_match
@@ -1105,10 +1105,11 @@ class Data2Bids():  # main conversion and file organization program
                     full_name = file_path + new_name + ".edf"
                     # split any edfs according to tsvs
                     split = False
-                    if new_name.endswith("_ieeg") and any(re.match(new_name.split("_ieeg")[0].split("/")[1] +
+                    if new_name.endswith("_ieeg") and any(re.match(new_name.split("_ieeg")[0].split("/", 1)[1] +
                                                                    "_run-" + self._config["runIndex"]["content"][
                                                                        0] + "_event.tsv", set_file) for set_file in
                                                           os.listdir(file_path)):  # if edf is not yet split
+
                         split = True
                         if self._is_verbose:
                             print("Reading for split... ")

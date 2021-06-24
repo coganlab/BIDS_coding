@@ -28,9 +28,9 @@
             }
 , "ieeg.task": {"left" : "_"
             , "right" : ".*?"
-            , "content" : [ ["Phoneme_Sequence","PHONEMESEQUENCE"]
-                            ,["Phoneme_Sequence", "PhonemeSequence"]
-                            ,["Phoneme_Sequence", "PhonemeSequencing"]
+            , "content" : [ ["PhonemeSequence","PHONEMESEQUENCE"]
+                            ,["PhonemeSequence", "PhonemeSequence"]
+                            ,["PhonemeSequence", "PhonemeSequencing"]
 ]
     }
 , "ieeg.loc":{"left" : ".*?"
