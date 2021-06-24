@@ -2,10 +2,7 @@
 <project version="4">
   <component name="ProjectModuleManager">
     <modules>
-      <module fileurl="file://$PROJECT_DIR$/.idea/BIDS_coding.iml" filepath="$PROJECT_DIR$/.idea/BIDS_coding.iml" />
-      <module fileurl="file://$PROJECT_DIR$/../../CoganLab/.idea/CoganLab.iml" filepath="$PROJECT_DIR$/../../CoganLab/.idea/CoganLab.iml" />
       <module fileurl="file://$PROJECT_DIR$/../../Workspace/.idea/Workspace.iml" filepath="$PROJECT_DIR$/../../Workspace/.idea/Workspace.iml" />
-      <module fileurl="file://$PROJECT_DIR$/../../workspace/.idea/workspace.iml" filepath="$PROJECT_DIR$/../../workspace/.idea/workspace.iml" />
     </modules>
   </component>
 </project>

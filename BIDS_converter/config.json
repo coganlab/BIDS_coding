@@ -9,7 +9,7 @@
     , "content" : [ ["T1w","T1"]
                     ,["CT","CT"]
 ]
-    }   
+    }
 , "ieeg": {"left" : ".*?"
             , "right" : ".*?"
             , "content" : [   ["ieeg",".edf"]
@@ -38,7 +38,7 @@
     , "content" : [   ["RAS",".txt"]
                     ]
     }
-            
+
 , "sessLabel" : {"left" : "^[0-9]*?"
                 , "right" : "\\.[(edf)(mat)]"
                 , "content" :   ["[0-9]{46}"]
@@ -66,7 +66,7 @@
 , "ce" : {"left" : "_%&#$%"
     , "right" : "_$#^#^"
     , "content" : ["[0-9]{6}"]
-    }    
+    }
 ,"eventFiles" : "([Tt]rial(s|Info).*?\\.mat)"
 ,"eventFormat" : ["Subject", "Trial", "Rec", "Day", "FilenamePrefix", "Start",
     "Auditory", "Go", "StartCode", "AuditoryCode", "GoCode", "Noisy", "NoResponse",
@@ -76,5 +76,7 @@
 ,"eventFormat.IDcol" : "FilenamePrefix"
 ,"eventFormat.Sep" : { "runIndex" : "block",
                              "acq" : "Rec" }
-,"eventFormat.Timing": "Start"
+,"eventFormat.Timing": { "start": "Start",
+                          "end": "ResponseEnd" }
+, "eventFormat.SampleRate": "30000"
 }
