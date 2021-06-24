@@ -1152,13 +1152,13 @@ class Data2Bids():  # main conversion and file organization program
                                                          + matches[i].group(1) + "_ieeg.edf")
                             full_name = os.path.join(file_path, new_name.split("/", 1)[1] + ".edf")
                             if self._is_verbose:
-                                print(full_name + "( Samples [" + str(start) + ":" + str(end) + "] )"
+                                print(full_name + "(Samples[" + str(start) + ":" + str(end) + "])"
                                       + " ---> " + edf_name)
                             highlevel.write_edf(edf_name, new_array, signal_headers, header,
                                                 digital=self._config["ieeg"]["digital"])
                             # dont forget .json files!
                             data = {}
-                            with open(full_name.split(".edf", 1)[0] + ".json", "w") as fst:
+                            with open(edf_name.split(".edf", 1)[0] + ".json", "w") as fst:
                                 json.dump(data, fst)
                         if self._is_verbose:
                             print("Removing: " + full_name)
@@ -1167,8 +1167,9 @@ class Data2Bids():  # main conversion and file organization program
                     # write JSON file for any missing files
                     if file_path.endswith(("/anat", "/func", "/ieeg")):
                         data = {}
-                        with open(file_path + new_name + ".json", "w") as fst:
-                            json.dump(data, fst)
+                        if not split and not os.path.isfile(file_path + new_name + ".json"):
+                            with open(file_path + new_name + ".json", "w") as fst:
+                                json.dump(data, fst)
                 # Output
             if self._is_verbose:
                 tree(self._bids_dir)
