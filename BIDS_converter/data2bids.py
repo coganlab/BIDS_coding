@@ -10,6 +10,8 @@ import shutil
 import json
 import gzip
 import threading
+from typing import Union
+
 import numpy as np
 import nibabel as nib
 import csv
@@ -243,9 +245,9 @@ class Data2Bids():  # main conversion and file organization program
                     runmatch = re.match(r".*run(\d{2}).*", me).group(1)
                     if str(int(runmatch)) not in runlist:
                         runlist.append(str(int(runmatch)))
-                    shutil.copyfile(os.path.join(ddir,"medata",me),os.path.join(sub_dir,me))
-                self.is_multi_echo = True #will trigger even if single echo data is in medata folder. Should still be okay
-            for subdir in subdirs[1:]: #not including parent folder or /medata, run dcm2niix on non me data
+                    shutil.copyfile(os.path.join(ddir, "medata", me), os.path.join(sub_dir, me))
+                self.is_multi_echo = True  # will trigger even if single echo data is in medata folder. Should still be okay
+            for subdir in subdirs[1:]:  # not including parent folder or /medata, run dcm2niix on non me data
                 try:
                     fobj = dicom.read_file(os.path.join(subdir, list(os.walk(subdir))[0][2][0]),
                                            force=True)  # first dicom file of the scan
@@ -1124,12 +1126,14 @@ class Data2Bids():  # main conversion and file organization program
                             if match_tsv:
                                 df = pd.read_csv(file_path + "/" + file, sep="\t",
                                                  header=0)  # put the 30000 number in config
-                                num_list = [round((x / float(self._config["eventFormat.SampleRate"])) * signal_headers[0]["sample_rate"]) for x in
-                                            (df[self._config["eventFormat.Timing"]["start"]][0],
-                                             df[self._config["eventFormat.Timing"]["end"]].iloc[-1])]
+                                num_list = [round(
+                                    (x / float(self._config["eventFormat.SampleRate"])) * signal_headers[0][
+                                        "sample_rate"]) for x in
+                                    (df[self._config["eventFormat.Timing"]["start"]][0],
+                                     df[self._config["eventFormat.Timing"]["end"]].iloc[-1])]
                                 start_nums.append(tuple(num_list))
                                 matches.append(match_tsv)
-                        print(start_nums)
+                        # print(start_nums)
                         for i in range(len(start_nums)):
                             if i == 0:
                                 start = 0
@@ -1141,17 +1145,22 @@ class Data2Bids():  # main conversion and file organization program
                             else:
                                 end = start_nums[i + 1][0]
                             new_array = np.split(array, [start, end], axis=1)[1]
-                            edf_name = os.path.join(file_path,
-                                                    new_name.split("_ieeg")[0].split("/", 1)[1] + "_run-"
-                                                    + matches[i].group(1) + "_ieeg.edf")
-                            new_name = os.path.join(file_path, new_name.split("/", 1)[1] + ".edf")
+                            edf_name: str = os.path.join(file_path,
+                                                         new_name.split("_ieeg")[0].split("/", 1)[1] + "_run-"
+                                                         + matches[i].group(1) + "_ieeg.edf")
+                            full_name = os.path.join(file_path, new_name.split("/", 1)[1] + ".edf")
                             if self._is_verbose:
-                                print(new_name + " ---> " + edf_name)
+                                print(full_name + "( Samples [" + str(start) + ":" + str(end) + "] )"
+                                      + " ---> " + edf_name)
                             highlevel.write_edf(edf_name, new_array, signal_headers, header,
                                                 digital=self._config["ieeg"]["digital"])
+                            # dont forget .json files!
+                            data = {}
+                            with open(full_name.split(".edf", 1)[0] + ".json", "w") as fst:
+                                json.dump(data, fst)
                         if self._is_verbose:
-                            print("Removing: " + new_name)
-                        os.remove(new_name)
+                            print("Removing: " + full_name)
+                        os.remove(full_name)
                         continue
                     # write JSON file for any missing files
                     if file_path.endswith(("/anat", "/func", "/ieeg")):
