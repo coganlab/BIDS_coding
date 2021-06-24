@@ -1121,7 +1121,7 @@ class Data2Bids():  # main conversion and file organization program
                         start_nums = []
                         matches = []
                         for file in os.listdir(file_path):
-                            match_tsv = re.match(new_name.split("_ieeg")[0].split("/")[1] + "_run-(" +
+                            match_tsv = re.match(new_name.split("_ieeg", 1)[0].split("/", 1)[1] + "_run-(" +
                                                  self._config["runIndex"]["content"][0] + ")_event.tsv", file)
                             if match_tsv:
                                 df = pd.read_csv(file_path + "/" + file, sep="\t",
@@ -1143,13 +1143,17 @@ class Data2Bids():  # main conversion and file organization program
                             else:
                                 end = start_nums[i + 1][0]
                             new_array = np.split(array, [start, end], axis=1)[1]
-                            print(new_array.shape)
-                            print(signal_headers)
-                            edf_name = new_name.split("_ieeg")[0].split("/")[1] + "_run-" + matches[i].group(1) + "_ieeg.edf"
+                            edf_name = os.path.join(file_path,
+                                                    new_name.split("_ieeg")[0].split("/", 1)[1] + "_run-"
+                                                    + matches[i].group(1) + "_ieeg.edf")
+                            new_name = os.path.join(file_path, new_name.split("/", 1)[1] + ".edf")
                             if self._is_verbose:
-                                print("Splitting and rewriting edf files...")
-                            highlevel.write_edf(edf_name, new_array, signal_headers, header,digital=True)
-                        os.remove(file_path + new_name)
+                                print(new_name + " ---> " + edf_name)
+                            highlevel.write_edf(edf_name, new_array, signal_headers, header,
+                                                digital=self._config["ieeg"]["digital"])
+                        if self._is_verbose:
+                            print("Removing: " + new_name)
+                        os.remove(new_name)
                         continue
                     # write JSON file for any missing files
                     if file_path.endswith(("/anat", "/func", "/ieeg")):
