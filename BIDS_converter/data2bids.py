@@ -1104,10 +1104,12 @@ class Data2Bids():  # main conversion and file organization program
                     file_path = dst_file_path_list[names_list.index(new_name)]
                     full_name = file_path + new_name + ".edf"
                     # split any edfs according to tsvs
+                    split = False
                     if new_name.endswith("_ieeg") and any(re.match(new_name.split("_ieeg")[0].split("/")[1] +
                                                                    "_run-" + self._config["runIndex"]["content"][
                                                                        0] + "_event.tsv", set_file) for set_file in
                                                           os.listdir(file_path)):  # if edf is not yet split
+                        split = True
                         if self._is_verbose:
                             print("Reading for split... ")
                         if full_name in [i["name"] for i in eeg]:
