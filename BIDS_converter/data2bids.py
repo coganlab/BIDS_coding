@@ -749,8 +749,9 @@ class Data2Bids():  # main conversion and file organization program
             for root, _, files in os.walk(self._data_dir,
                                           topdown=True):  # each loop is a new participant so long as participant is top level
                 files[:] = [f for f in files if
-                            not os.path.join(root, f).startswith(self._bids_dir) and os.path.join(root,
-                                                                                                  f) not in self._ignore]  # ignore BIDS directories
+                            not os.path.join(root,  # ignore BIDS directories
+                                             f).startswith(self._bids_dir) and os.path.join(root,
+                                                                                            f) not in self._ignore]
                 sample_rate = None
                 eeg = []
                 dst_file_path_list = []
@@ -769,8 +770,6 @@ class Data2Bids():  # main conversion and file organization program
                     data_type_match = None
                     new_name = None
 
-                    # if re.match(".*?" + "imaginary" + ".*?" ,file):
-                    #    continue
                     if re.match(".*?" + ".json", file):
                         try:
                             part_match = self.match_regexp(self._config["partLabel"], file)
@@ -790,8 +789,8 @@ class Data2Bids():  # main conversion and file organization program
                             shutil.copy(src_file_path, dst_file_path + new_name + ".json")
                             # finally, if it is a bold experiment, we need to edit the JSON file using DICOM tags
                             if os.path.exists(dst_file_path + new_name + ".json"):
-                                ### https://github.com/nipy/nibabel/issues/712, that is why we take the
-                                ### scanner parameters from the config.json
+                                # https://github.com/nipy/nibabel/issues/712, that is why we take the
+                                # scanner parameters from the config.json
                                 # nib_img = nib.load(src_file_path)
                                 # TR = nib_img.header.get_zooms()[3]
                                 for foldername in os.listdir(str(self._DICOM_path)):
@@ -925,8 +924,8 @@ class Data2Bids():  # main conversion and file organization program
                     # finally, if the file is not nifti
                     if dst_file_path.endswith("/func") or dst_file_path.endswith("/anat"):
                         # we convert it using nibabel
-                        if not any(file.endswith(ext) for ext in [".nii",
-                                                                  ".nii.gz"]):  # check if .nii listed in config file, not if file ends with .nii
+                        if not any(file.endswith(ext) for ext in [".nii", ".nii.gz"]):
+                            # check if .nii listed in config file, not if file ends with .nii
                             # loading the original image
                             nib_img = nib.load(src_file_path)
                             nib_affine = np.array(nib_img.affine)
@@ -974,7 +973,7 @@ class Data2Bids():  # main conversion and file organization program
 
                     elif dst_file_path.endswith("/ieeg"):
                         headers_dict = self.channels[part_match]
-                        edfname = dst_file_path + new_name + ".edf"
+                        edf_name = dst_file_path + new_name + ".edf"
                         header = None
                         d = {}
                         d[str] = []
@@ -1005,7 +1004,6 @@ class Data2Bids():  # main conversion and file organization program
                                     sig_len = f.samples_in_file(0)
                                     if not os.path.isfile(fname):
                                         fname = os.path.join(root, fname)
-                                    # print(mat2df(fname))
                                     if mat2df(fname) is None:
                                         continue
                                     elif len(mat2df(fname)) == sig_len:
@@ -1021,20 +1019,20 @@ class Data2Bids():  # main conversion and file organization program
                                                 , sample_rate=signal_headers[0]["sample_rate"]))
                                     elif sig_len * 0.99 <= len(mat2df(fname)) <= sig_len * 1.01:
                                         raise BufferError(
-                                            file + "of size" + sig_len + "is not the same size as" + fname + "of size" + len(
-                                                mat2df(fname)))
+                                            file + "of size" + sig_len + "is not the same size as" + fname + "of size" +
+                                            len(mat2df(fname)))
                             # shutil.copy(src_file_path, edfname)
                         elif file.endswith(".edf.gz"):
                             with gzip.open(src_file_path, 'rb', self._config["compressLevel"]) as f_in:
-                                with open(edfname, 'wb') as f_out:
+                                with open(edf_name, 'wb') as f_out:
                                     shutil.copyfileobj(f_in, f_out)
-                            f = EdfReader(edfname)
+                            f = EdfReader(edf_name)
                             chn_nums = d[int] + [i for i, x in enumerate(f.getSignalLabels()) if x in headers_dict]
                             chn_nums.sort()
                             f.close()
-                            highlevel.drop_channels(edfname, to_keep=headers_dict, verbose=self._is_verbose)
-                            os.remove(edfname)
-                            os.rename(dst_file_path + new_name + "_dropped.edf", edfname)
+                            highlevel.drop_channels(edf_name, to_keep=headers_dict, verbose=self._is_verbose)
+                            os.remove(edf_name)
+                            os.rename(dst_file_path + new_name + "_dropped.edf", edf_name)
                             [array, signal_headers, _] = highlevel.read_edf(src_file_path, ch_nrs=chn_nums,
                                                                             digital=self._config["ieeg"]["digital"])
                         elif not self._config["ieeg"]["binary?"]:
@@ -1057,28 +1055,29 @@ class Data2Bids():  # main conversion and file organization program
                                                    order='F')  # byte order is Fortran encoding, dont know why
                             except OSError as e:
                                 print(
-                                    "eeg file is either not detailed well enough in config file or file type not yet supported")
+                                    "eeg file is either not detailed well enough in config file or file type not yet "
+                                    "supported")
                                 raise e
                             signal_headers = highlevel.make_signal_headers(headers_dict,
                                                                            sample_rate=sample_rate,
                                                                            physical_max=np.amax(array),
                                                                            physical_min=(np.amin(array)))
-                            if os.path.isfile(edfname):
-                                print("removing " + edfname)
-                                os.remove(edfname)
+                            if os.path.isfile(edf_name):
+                                print("removing " + edf_name)
+                                os.remove(edf_name)
 
                         else:
                             raise FileNotFoundError("{file} header could not be found".format(file=file))
                         # record eeg file lengths for automatic appending of concurrent channels
                         # highlevel.drop_channels(edfname,to_keep=headers,verbose=self._is_verbose)
                         if self._is_verbose:
-                            print("writing " + os.path.basename(edfname) + "...")
+                            print("writing " + os.path.basename(edf_name) + "...")
                         if header is None:
                             header = highlevel.make_header(patientname=part_match, startdate=datetime.datetime(1, 1, 1))
-                        if not os.path.isfile(edfname):
-                            highlevel.write_edf(edfname, array, signal_headers, header,
+                        if not os.path.isfile(edf_name):
+                            highlevel.write_edf(edf_name, array, signal_headers, header,
                                                 digital=self._config["ieeg"]["digital"])
-                        f = EdfReader(edfname)
+                        f = EdfReader(edf_name)
                         eeg.append(dict(name=f.file_name, nsamples=f.samples_in_file(0), signal_headers=signal_headers,
                                         file_header=header, data=array))
                         f.close()
@@ -1104,7 +1103,7 @@ class Data2Bids():  # main conversion and file organization program
                 for new_name in names_list:
                     file_path = dst_file_path_list[names_list.index(new_name)]
                     full_name = file_path + new_name + ".edf"
-                    # split any edfs accroding to tsvs
+                    # split any edfs according to tsvs
                     if new_name.endswith("_ieeg") and any(re.match(new_name.split("_ieeg")[0].split("/")[1] +
                                                                    "_run-" + self._config["runIndex"]["content"][
                                                                        0] + "_event.tsv", set_file) for set_file in
@@ -1115,30 +1114,43 @@ class Data2Bids():  # main conversion and file organization program
                         if full_name in [i["name"] for i in eeg]:
                             eeg_dict = eeg[[i["name"] for i in eeg].index(full_name)]
                         else:
-                            print(full_name, [i["name"] for i in eeg])
                             raise LookupError(
                                 "This error should not have been raised, was edf file " + full_name + " ever written?"
                                 , [i["name"] for i in eeg])
-                        # print(eeg_dict)
                         [array, signal_headers, header] = [eeg_dict["data"], eeg_dict["signal_headers"],
                                                            eeg_dict["file_header"]]
-                        # highlevel.read_edf(full_name,
-                        # digital=self._config["ieeg"]["digital"],verbose=self._is_verbose)
-                        startnums = []
-                        print(signal_headers[0]["sample_rate"])
-                        print(os.listdir(file_path))
+                        start_nums = []
+                        matches = []
                         for file in os.listdir(file_path):
-                            match_tsv = re.match(file, new_name.split("_ieeg.edf")[0].split("/")[1]
-                                                 + "_run-(" + self._config["runIndex"]["content"][0] + ")_event.tsv")
-                            print(match_tsv)
+                            match_tsv = re.match(new_name.split("_ieeg")[0].split("/")[1] + "_run-(" +
+                                                 self._config["runIndex"]["content"][0] + ")_event.tsv", file)
                             if match_tsv:
-                                print(df[self._config["eventFormat.timing"]][0])
-                                df = pd.read_csv(file, sep="\t", header=0)  # put the 30000 number in config
-                                startnums.append(
-                                    (df[self._config["eventFormat.timing"]][0] / 30000) * signal_headers[0][
-                                        "sample_rate"])
-                        print(startnums)
-                        # os.remove(file_path + new_name)
+                                df = pd.read_csv(file_path + "/" + file, sep="\t",
+                                                 header=0)  # put the 30000 number in config
+                                num_list = [round((x / self._config["eventFormat.SampleRate"]) * signal_headers[0]["sample_rate"]) for x in
+                                            (df[self._config["eventFormat.Timing"]["start"]][0],
+                                             df[self._config["eventFormat.Timing"]["end"]].iloc[-1])]
+                                start_nums.append(tuple(num_list))
+                                matches.append(match_tsv)
+                        print(start_nums)
+                        for i in range(len(start_nums)):
+                            if i == 0:
+                                start = 0
+                            else:
+                                start = start_nums[i - 1][1]
+
+                            if i == len(start_nums) - 1:
+                                end = array.shape[1]
+                            else:
+                                end = start_nums[i + 1][0]
+                            new_array = np.split(array, [start, end], axis=1)
+                            print(new_array.shape)
+                            print(signal_headers)
+                            edf_name = new_name.split("_ieeg")[0].split("/")[1] + "_run-" + matches[i].group(1) + "_ieeg.edf"
+                            if self._is_verbose:
+                                print("Splitting and rewriting edf files...")
+                            highlevel.write_edf(edf_name, new_array, signal_headers, header)
+                        os.remove(file_path + new_name)
                         continue
                     # write JSON file for any missing files
                     if file_path.endswith(("/anat", "/func", "/ieeg")):
@@ -1166,9 +1178,9 @@ class Data2Bids():  # main conversion and file organization program
                 if written:
                     df = pd.DataFrame()
                 elif not part_match == self.match_regexp(self._config["partLabel"], mat_file):
-                    bindex = [j not in df.columns.values.tolist() for j in self._config["eventFormat.Sep"]].index(True)
+                    b_index = [j not in df.columns.values.tolist() for j in self._config["eventFormat.Sep"]].index(True)
                     raise FileNotFoundError("{config} variable was not found in {part}'s event files".format(
-                        config=list(self._config["eventFormat.Sep"].values())[bindex], part=part_match))
+                        config=list(self._config["eventFormat.Sep"].values())[b_index], part=part_match))
             try:
                 part_match = self.match_regexp(self._config["partLabel"], mat_file)
             except AssertionError:
@@ -1192,9 +1204,8 @@ class Data2Bids():  # main conversion and file organization program
                 # print(self._config["eventFormat.IDcol"])
                 if self._config["eventFormat.IDcol"] in df.columns.values.tolist():
                     # print(df[self._config["eventFormat.IDcol"]].unique())
-                    if len(df[self._config[
-                        "eventFormat.IDcol"]].unique()) == 1:  # CHANGE this in case literal name doesn't
-                        # change
+                    if len(df[self._config["eventFormat.IDcol"]].unique()) == 1:
+                        # CHANGE this in case literal name doesn't change
                         is_separate = False
                         print(
                             "Warning: data may have been lost if file ID did not change but the recording session did")
