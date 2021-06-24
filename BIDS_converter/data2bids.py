@@ -1110,7 +1110,6 @@ class Data2Bids():  # main conversion and file organization program
                                                           os.listdir(file_path)):  # if edf is not yet split
                         if self._is_verbose:
                             print("Reading for split... ")
-                        # print([i["name"] for i in eeg],full_name,eeg[[i["name"] for i in eeg].index(full_name)])
                         if full_name in [i["name"] for i in eeg]:
                             eeg_dict = eeg[[i["name"] for i in eeg].index(full_name)]
                         else:
@@ -1127,7 +1126,7 @@ class Data2Bids():  # main conversion and file organization program
                             if match_tsv:
                                 df = pd.read_csv(file_path + "/" + file, sep="\t",
                                                  header=0)  # put the 30000 number in config
-                                num_list = [round((x / self._config["eventFormat.SampleRate"]) * signal_headers[0]["sample_rate"]) for x in
+                                num_list = [round((x / float(self._config["eventFormat.SampleRate"])) * signal_headers[0]["sample_rate"]) for x in
                                             (df[self._config["eventFormat.Timing"]["start"]][0],
                                              df[self._config["eventFormat.Timing"]["end"]].iloc[-1])]
                                 start_nums.append(tuple(num_list))
@@ -1143,13 +1142,13 @@ class Data2Bids():  # main conversion and file organization program
                                 end = array.shape[1]
                             else:
                                 end = start_nums[i + 1][0]
-                            new_array = np.split(array, [start, end], axis=1)
+                            new_array = np.split(array, [start, end], axis=1)[1]
                             print(new_array.shape)
                             print(signal_headers)
                             edf_name = new_name.split("_ieeg")[0].split("/")[1] + "_run-" + matches[i].group(1) + "_ieeg.edf"
                             if self._is_verbose:
                                 print("Splitting and rewriting edf files...")
-                            highlevel.write_edf(edf_name, new_array, signal_headers, header)
+                            highlevel.write_edf(edf_name, new_array, signal_headers, header,digital=True)
                         os.remove(file_path + new_name)
                         continue
                     # write JSON file for any missing files
