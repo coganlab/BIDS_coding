@@ -8,7 +8,6 @@ import sys
 import re
 import shutil
 import json
-import subprocess
 import gzip
 import threading
 import numpy as np
@@ -244,10 +243,9 @@ class Data2Bids():  # main conversion and file organization program
                     runmatch = re.match(r".*run(\d{2}).*", me).group(1)
                     if str(int(runmatch)) not in runlist:
                         runlist.append(str(int(runmatch)))
-                    shutil.copyfile(os.path.join(ddir, "medata", me), os.path.join(sub_dir, me))
-                self.is_multi_echo = True  # will trigger even if single echo data is in medata folder. Should still be okay
-
-            for subdir in subdirs[1:]:  # not including parent folder or /medata, run dcm2niix on non me data
+                    shutil.copyfile(os.path.join(ddir,"medata",me),os.path.join(sub_dir,me))
+                self.is_multi_echo = True #will trigger even if single echo data is in medata folder. Should still be okay
+            for subdir in subdirs[1:]: #not including parent folder or /medata, run dcm2niix on non me data
                 try:
                     fobj = dicom.read_file(os.path.join(subdir, list(os.walk(subdir))[0][2][0]),
                                            force=True)  # first dicom file of the scan
