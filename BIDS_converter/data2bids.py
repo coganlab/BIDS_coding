@@ -1018,6 +1018,7 @@ class Data2Bids():  # main conversion and file organization program
 
                     elif dst_file_path.endswith("/ieeg"):
                         remove_src_edf = True
+                        headers_dict = self.channels[part_match]
                         if file.endswith(".edf"):
                             remove_src_edf = False
                         elif file.endswith(".edf.gz"):
@@ -1090,7 +1091,7 @@ class Data2Bids():  # main conversion and file organization program
                                         len(mat2df(fname)))
                         f.close()
                         # read edf and either copy data to BIDS file or save data as dict for writing later
-                        eeg.append(self.read_edf(os.path.splitext(src_file_path)[0] + ".edf", self.channels[part_match],
+                        eeg.append(self.read_edf(os.path.splitext(src_file_path)[0] + ".edf", headers_dict,
                                                  extra_arrays, extra_signal_headers))
                         if remove_src_edf:
                             if self._is_verbose:
@@ -1166,8 +1167,7 @@ class Data2Bids():  # main conversion and file organization program
                                                          + "_ieeg.edf")
                             full_name = os.path.join(file_path, new_name.split("/", 1)[1] + ".edf")
                             if self._is_verbose:
-                                print(full_name + "(Samples[" + str(start) + ":" + str(end) + "])"
-                                      + " ---> " + edf_name)
+                                print(full_name + "(Samples[" + str(start) + ":" + str(end) + "]) ---> " + edf_name)
                             highlevel.write_edf(edf_name, new_array, signal_headers, header,
                                                 digital=self._config["ieeg"]["digital"])
                             # dont forget .json files!
@@ -1225,14 +1225,12 @@ class Data2Bids():  # main conversion and file organization program
             if self._is_verbose:
                 print(df)
             try:
-                # print(self._config["eventFormat.IDcol"])
-                if self._config["eventFormat.IDcol"] in df.columns.values.tolist():
-                    # print(df[self._config["eventFormat.IDcol"]].unique())
-                    if len(df[self._config["eventFormat.IDcol"]].unique()) == 1 and False:
+                if self._config["eventFormat.IDcol"] in df.columns.values.tolist(): # test if edfs should be
+                    # separated by block or not
+                    if len(df[self._config["eventFormat.IDcol"]].unique()) == 1 and False :
                         # CHANGE this in case literal name doesn't change
                         is_separate = False
-                        print(
-                            "Warning: data may have been lost if file ID did not change but the recording session did")
+                        print("Warning: data may have been lost if file ID didn't change but the recording session did")
                         # construct fake orig data name to run through name generator
                         # fix this as well so it works for all data types and modalities
                         match_name = mat_file.split(os.path.basename(mat_file))[0] + \
@@ -1245,9 +1243,8 @@ class Data2Bids():  # main conversion and file organization program
             except KeyError:
                 match_name = mat_file
 
-                # write the tsv from the dataframe
-            # if not changed: #check to see if there is anything new to write
-            #    continue
+            # write the tsv from the dataframe
+            # if not changed: check to see if there is anything new to write
             if is_separate:
                 if not all(j in df.columns.values.tolist() for j in self._config["eventFormat.Sep"].values()):
                     if self._is_verbose:
@@ -1261,7 +1258,7 @@ class Data2Bids():  # main conversion and file organization program
                         jval = self._config["eventFormat.Sep"][j]
                         try:
                             if self._config[j]["repeat"] is False:
-                                try:  # making sure actualy key errors get caught
+                                try:  # making sure actual key errors get caught
                                     if df_unique[jval].iat[i] in df_unique[jval].tolist()[:i]:
                                         df_unique[jval].iat[i] = str(int(max(df_unique[jval].tolist())) + 1)
                                 except KeyError as e:
