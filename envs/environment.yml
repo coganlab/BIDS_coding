@@ -8,9 +8,9 @@ dependencies:
   - nibabel
   - numpy
   - pydicom
-  - bids
   - exrex
   - pyEDFlib
   - pip:
-    - matgrab==0.0.7
+    - matgrab
+    - bids
 prefix: C:\Users\ae166\Anaconda3\envs\BIDS_coding
