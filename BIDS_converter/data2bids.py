@@ -1141,7 +1141,7 @@ class Data2Bids():  # main conversion and file organization program
                         matches = []
                         for file in os.listdir(file_path):
                             match_tsv = re.match(new_name.split("_ieeg", 1)[0].split("/", 1)[1] +
-                                                 "(?:" + "_acq-" + self._config["acq"]["content"][0] + ")?" + "_run-(" +
+                                                 "(?:_acq-" + self._config["acq"]["content"][0] + ")?_run-(" +
                                                  self._config["runIndex"]["content"][0] + ")_event.tsv", file)
                             if match_tsv:
                                 df = pd.read_csv(os.path.join(file_path, file), sep="\t", header=0)
@@ -1155,6 +1155,19 @@ class Data2Bids():  # main conversion and file organization program
                         for i in range(len(start_nums)):
                             if i == 0:
                                 start = 0
+                                practice = os.path.join(file_path, "practice" + new_name.split("_ieeg", 1)[0]
+                                                        + "_ieeg.edf")
+                                if not os.path.isfile(practice) and self._config["split"]["practice"]:
+                                    os.makedirs(os.path.join(file_path, "practice"), exist_ok=True)
+                                    highlevel.write_edf(practice, np.split(array, [0, start_nums[0][0]], axis=1)[1],
+                                                        signal_headers, header, digital=self._config["ieeg"]["digital"])
+                                    if not os.path.isfile(self._bids_dir + "/.bidsignore"):
+                                        with open(self._bids_dir + "/.bidsignore", 'w') as f:
+                                            f.write("*practice*\n")
+                                    else:
+                                        with open(self._bids_dir + "/.bidsignore", "r+") as f:
+                                            if "practice" not in f.read():
+                                                f.write("*practice*\n")
                             else:
                                 start = start_nums[i - 1][1]
 
@@ -1163,6 +1176,7 @@ class Data2Bids():  # main conversion and file organization program
                             else:
                                 end = start_nums[i + 1][0]
                             new_array = np.split(array, [start, end], axis=1)[1]
+                            tsv_name: str = os.path.join(file_path, matches[i].string)
                             edf_name: str = os.path.join(file_path, matches[i].string.split("_event.tsv", 1)[0]
                                                          + "_ieeg.edf")
                             full_name = os.path.join(file_path, new_name.split("/", 1)[1] + ".edf")
@@ -1170,6 +1184,13 @@ class Data2Bids():  # main conversion and file organization program
                                 print(full_name + "(Samples[" + str(start) + ":" + str(end) + "]) ---> " + edf_name)
                             highlevel.write_edf(edf_name, new_array, signal_headers, header,
                                                 digital=self._config["ieeg"]["digital"])
+                            df = pd.read_csv(os.path.join(file_path, matches[i].string), sep="\t", header=0)
+                            os.remove(os.path.join(file_path, matches[i].string))
+                            for col in self._config["eventFormat.Timing"].values():
+                                df[col] = round(pd.to_numeric(df[col], "coerce") - (int(start) /
+                                                                         int(signal_headers[0]["sample_rate"]) *
+                                                                         int(self._config["eventFormat.SampleRate"])))
+                            df.to_csv(os.path.join(file_path, matches[i].string), sep="\t")
                             # dont forget .json files!
                             data = {}
                             with open(edf_name.split(".edf", 1)[0] + ".json", "w") as fst:
@@ -1225,9 +1246,10 @@ class Data2Bids():  # main conversion and file organization program
             if self._is_verbose:
                 print(df)
             try:
-                if self._config["eventFormat.IDcol"] in df.columns.values.tolist(): # test if edfs should be
+                if self._config["eventFormat.IDcol"] in df.columns.values.tolist():  # test if edfs should be
                     # separated by block or not
-                    if len(df[self._config["eventFormat.IDcol"]].unique()) == 1 and False :
+                    if len(df[self._config["eventFormat.IDcol"]].unique()) == 1 and self._config["split"]["Sep"] not \
+                            in ["all", True] or not self._config["split"]["Sep"]:
                         # CHANGE this in case literal name doesn't change
                         is_separate = False
                         print("Warning: data may have been lost if file ID didn't change but the recording session did")

@@ -1,7 +1,7 @@
-{"dataFormat" : [".nii", ".nii.gz", ".gz", ".edf",".edf.gz", ".mgz", ".txt", ".mat",".dat.gz",".dat"]
+{"dataFormat" : [".nii", ".nii.gz", ".gz", ".edf",".edf.gz", ".mgz", ".txt", ".mat"]
 , "compress" : true
 , "compressLevel" : 6
-, "repetitionTimeInSec" : 2
+,  "repetitionTimeInSec" : 2
 , "delayTimeInSec" : [ 0.028, 0.013, 0.026, 0.040]
 , "series" : "odd-interleaved"
 , "anat": {"left" : ".*?"
@@ -79,4 +79,8 @@
 ,"eventFormat.Timing": { "start": "Start",
                           "end": "ResponseEnd" }
 , "eventFormat.SampleRate": "30000"
+, "split": { "Sep": "all",
+            "buffer": 10,
+            "practice": true}
 }
+
