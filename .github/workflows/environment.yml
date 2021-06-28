@@ -1,0 +1,16 @@
+name: BIDS_coding
+channels:
+  - conda-forge
+  - defaults
+dependencies:
+  - scipy
+  - pandas
+  - nibabel
+  - numpy
+  - pydicom
+  - bids
+  - exrex
+  - pyEDFlib
+  - pip:
+    - matgrab==0.0.7
+prefix: C:\Users\ae166\Anaconda3\envs\BIDS_coding
