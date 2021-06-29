@@ -24,6 +24,7 @@ def test_1():
 
     while os.path.isdir("Data/Phoneme_Sequencing/BIDS"):
         shutil.rmtree("Data/Phoneme_Sequencing/BIDS", ignore_errors=True)
+    os.chmod("Data/Phoneme_Sequencing/sourcedata/D52/D52 201213 COGAN_PHONEMESEQUENCE.edf", 0o777)
     os.remove("Data/Phoneme_Sequencing/sourcedata/D52/D52 201213 COGAN_PHONEMESEQUENCE.edf")
 
     return xlist
@@ -51,6 +52,8 @@ def test_2():
 
     while os.path.isdir("Data/Phoneme_Sequencing/BIDS"):
         shutil.rmtree("Data/Phoneme_Sequencing/BIDS", ignore_errors=True)
+    os.chmod("Data/Phoneme_Sequencing/sourcedata/D48/D48 200906 Cogan_PhonemeSequence_Session1.edf", 0o777)
+    os.chmod("Data/Phoneme_Sequencing/sourcedata/D48/D48 200908 Cogan_PhonemeSequence_Session2.edf", 0o777)
     os.remove("Data/Phoneme_Sequencing/sourcedata/D48/D48 200906 Cogan_PhonemeSequence_Session1.edf")
     os.remove("Data/Phoneme_Sequencing/sourcedata/D48/D48 200908 Cogan_PhonemeSequence_Session2.edf")
 

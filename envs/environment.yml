@@ -1,10 +1,7 @@
 name: BIDS_coding
 channels:
-  - conda-forge
   - defaults
 dependencies:
-  - python
-  - anaconda
   - pip
   - pip:
     - -r requirements.txt
