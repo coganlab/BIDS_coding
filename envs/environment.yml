@@ -3,14 +3,9 @@ channels:
   - conda-forge
   - defaults
 dependencies:
-  - scipy
-  - pandas
-  - nibabel
-  - numpy
-  - pydicom
-  - exrex
-  - pyEDFlib
+  - python
+  - anaconda
+  - pip
   - pip:
-    - matgrab
-    - bids
+    - -r requirements.txt
 prefix: C:\Users\ae166\Anaconda3\envs\BIDS_coding
