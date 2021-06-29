@@ -14,13 +14,14 @@ jobs:
         python-version: 3.8
     - name: Install dependencies
       run: |
-        C:\Miniconda\condabin\conda.bat env update --file envs/environment.yml --name base
+        C:\Miniconda\condabin\conda.bat env update --file envs/environment.yml --name base -v
         C:\Miniconda\condabin\conda.bat init powershell
+        C:\Miniconda\condabin\conda.bat install pytest flake8 tqdm
+        C:\Miniconda\condabin\conda.bat update --all
+        C:\Miniconda\condabin\conda.bat clean -a
     - name: Lint with flake8
       run: |
         C:\Miniconda\condabin\conda.bat activate base
-        C:\Miniconda\condabin\conda.bat install flake8
-        C:\Miniconda\condabin\conda.bat install tqdm
         # stop the build if there are Python syntax errors or undefined names
         flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
         # exit-zero treats all errors as warnings. The GitHub editor is 127 chars wide
@@ -31,5 +32,4 @@ jobs:
     - name: Test with pytest
       run: |
         C:\Miniconda\condabin\conda.bat activate base
-        C:\Miniconda\condabin\conda.bat install pytest
-        pytest -v
+        pytest -v package_test.py
