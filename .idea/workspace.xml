@@ -8,7 +8,12 @@
       <change beforePath="$PROJECT_DIR$/.github/workflows/python-package-conda.yml" beforeDir="false" afterPath="$PROJECT_DIR$/.github/workflows/python-package-conda.yml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.github/workflows/python-package.yml" beforeDir="false" afterPath="$PROJECT_DIR$/.github/workflows/python-package.yml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/BIDS_coding.iml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/BIDS_coding.iml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/misc.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/misc.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/modules.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/modules.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/vcs.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/vcs.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/envs/environment.yml" beforeDir="false" afterPath="$PROJECT_DIR$/envs/environment.yml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/package_test.py" beforeDir="false" afterPath="$PROJECT_DIR$/package_test.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -35,6 +40,7 @@
     <setting file="file://$PROJECT_DIR$/.github/workflows/python-package.yml" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/envs/requirements.txt" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/envs/environment.yml" root0="FORCE_HIGHLIGHTING" />
+    <setting file="file://$PROJECT_DIR$/../pyedflib/setup.py" root0="FORCE_HIGHLIGHTING" />
   </component>
   <component name="ProjectId" id="1uJJKmF1K4taUwuMSxVBSi6XtqU" />
   <component name="ProjectLevelVcsManager" settingsEditedManually="true" />
@@ -46,8 +52,8 @@
     <property name="RunOnceActivity.OpenProjectViewOnStart" value="true" />
     <property name="RunOnceActivity.ShowReadmeOnStart" value="true" />
     <property name="last.edited.regexp" value="missing_value_run-missing_value_event.tsv" />
-    <property name="last_opened_file_path" value="$PROJECT_DIR$/envs/requirements.txt" />
-    <property name="settings.editor.selected.configurable" value="com.jetbrains.python.configuration.PyIntegratedToolsModulesConfigurable" />
+    <property name="last_opened_file_path" value="$PROJECT_DIR$/../pyedflib" />
+    <property name="settings.editor.selected.configurable" value="com.jetbrains.python.configuration.PyActiveSdkModuleConfigurable" />
   </component>
   <component name="PyConsoleOptionsProvider">
     <option name="myPythonConsoleState">
