@@ -32,4 +32,4 @@ jobs:
     - name: Test with pytest
       run: |
         C:\Miniconda\condabin\conda.bat activate base
-        pytest -v package_test.py
+        pytest -v package_test.py -k "test_D48"

@@ -6,7 +6,7 @@ import shutil
 import os
 import tarfile
 
-def test_1():
+def test_D52():
 
     os.makedirs("Data/Phoneme_Sequencing/BIDS",exist_ok=True)
 
@@ -29,7 +29,7 @@ def test_1():
 
     return xlist
 
-def test_2():
+def test_D48():
 
     os.makedirs("Data/Phoneme_Sequencing/BIDS",exist_ok=True)
 
