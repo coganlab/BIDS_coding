@@ -33,7 +33,7 @@ jobs:
         python setup.py build
         python setup.py install
         cd ..
-        rmdir -r pyedflib
+        rm -r pyedflib
         if [ -f envs/requirements.txt ]; then pip install -r envs/requirements.txt; fi
 
     - name: Lint with flake8
