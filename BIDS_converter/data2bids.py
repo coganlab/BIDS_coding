@@ -911,13 +911,16 @@ class Data2Bids():  # main conversion and file organization program
                         else:
                             files.append(src_file_path)
                         continue
-                    elif re.match(".*?" + ".1D", file):
+                    elif re.match(".*?" + "\\.1D", file):
                         d_list.append(src_file_path)
                         continue
-                    elif re.match(".*?" + ".mat", file):
+                    elif re.match(".*?" + "\\.mat", file):
                         mat_list.append(src_file_path)
                         continue
                         # if the file doesn't match the extension, we skip it
+                    elif re.match(".*?" + "\\.txt",file):
+                        print(file)
+                        continue
                     elif not any(re.match(".*?" + ext, file) for ext in curr_ext):
                         print("Warning : Skipping %s" % src_file_path)
                         continue
@@ -1202,7 +1205,13 @@ class Data2Bids():  # main conversion and file organization program
                         continue
                     # write JSON file for any missing files
                     if file_path.endswith(("/anat", "/func", "/ieeg")):
-                        data = {}
+
+                        (_, _, _, _,
+                        acq_match, echo_match, sess_match, ce_match,
+                        data_type_match, task_label_match, SeqType) = self.generate_names(os.path.basename(
+                            eeg_dict["name"]),part_match=part_match)
+                        data = dict(TaskName=task_label_match,InstitutionName=self._config["institution"],
+                                    iEEGReference=self._config[])
                         if not split and not os.path.isfile(file_path + new_name + ".json"):
                             with open(file_path + new_name + ".json", "w") as fst:
                                 json.dump(data, fst)

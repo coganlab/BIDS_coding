@@ -4,7 +4,14 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="48805e9b-6305-4dbb-a3eb-2450704f0651" name="Default Changelist" comment="test fix 10" />
+    <list default="true" id="48805e9b-6305-4dbb-a3eb-2450704f0651" name="Default Changelist" comment="test fix 11">
+      <change beforePath="$PROJECT_DIR$/.gitignore" beforeDir="false" afterPath="$PROJECT_DIR$/.gitignore" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/BIDS_coding.iml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/BIDS_coding.iml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/misc.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/misc.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/BIDS_converter/config.json" beforeDir="false" afterPath="$PROJECT_DIR$/BIDS_converter/config.json" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/BIDS_converter/data2bids.py" beforeDir="false" afterPath="$PROJECT_DIR$/BIDS_converter/data2bids.py" afterDir="false" />
+    </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
@@ -25,11 +32,12 @@
     <setting file="file://$PROJECT_DIR$/.github/workflows/Windows_test.yml" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/BIDS_converter/data2bids.py" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/BIDS_converter/config.json" root0="FORCE_HIGHLIGHTING" />
+    <setting file="file://$PROJECT_DIR$/../../workspace/Phoneme_sequencing/D48/D48_elec_locations_RAS.txt" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/package_test.py" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/BIDS_converter/BIDS_convert.sh" root0="FORCE_HIGHLIGHTING" />
+    <setting file="file://$PROJECT_DIR$/.github/workflows/Ubuntu_test.yml" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/envs/requirements.txt" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/envs/environment.yml" root0="FORCE_HIGHLIGHTING" />
-    <setting file="file://$PROJECT_DIR$/../pyedflib/setup.py" root0="FORCE_HIGHLIGHTING" />
   </component>
   <component name="ProjectId" id="1uJJKmF1K4taUwuMSxVBSi6XtqU" />
   <component name="ProjectLevelVcsManager" settingsEditedManually="true" />
@@ -41,17 +49,26 @@
     <property name="RunOnceActivity.OpenProjectViewOnStart" value="true" />
     <property name="RunOnceActivity.ShowReadmeOnStart" value="true" />
     <property name="last.edited.regexp" value="missing_value_run-missing_value_event.tsv" />
-    <property name="last_opened_file_path" value="$PROJECT_DIR$/.github/workflows" />
+    <property name="last_opened_file_path" value="$USER_HOME$/Anaconda3/envs/BIDS_coding/Scripts/pipenv.exe" />
     <property name="settings.editor.selected.configurable" value="com.jetbrains.python.configuration.PyActiveSdkModuleConfigurable" />
   </component>
   <component name="PyConsoleOptionsProvider">
     <option name="myPythonConsoleState">
       <console-settings module-name="BIDS_coding" is-module-sdk="true" working-directory="$PROJECT_DIR$">
+        <envs>
+          <env key="PATH" value="C:\Users\ae166\Anaconda3;C:\Users\ae166\Anaconda3\Library\usr\bin;C:\Users\ae166\Anaconda3\Library\bin;C:\Users\ae166\Anaconda3\Scripts;C:\Users\ae166\Anaconda3\bin;C:\Users\ae166\Anaconda3\condabin;C:\ProgramData\Oracle\Java\javapath;C:\WINDOWS\system32;C:\WINDOWS;C:\WINDOWS\System32\Wbem;C:\WINDOWS\System32\WindowsPowerShell\v1.0;C:\Program Files\MATLAB\R2018b\bin;C:\WINDOWS\System32\OpenSSH;C:\Program Files (x86)\Sennheiser\SenncomSDK;C:\Users\ae166\AppData\Local\Microsoft\WindowsApps;C:\Users\ae166\AppData\Local\Programs\Git LFS;C:\Users\ae166\AppData\Local\Programs\Git\cmd;" />
+        </envs>
         <option name="myUseModuleSdk" value="true" />
         <option name="myModuleName" value="BIDS_coding" />
+        <option name="myEnvs">
+          <map>
+            <entry key="PATH" value="C:\Users\ae166\Anaconda3;C:\Users\ae166\Anaconda3\Library\usr\bin;C:\Users\ae166\Anaconda3\Library\bin;C:\Users\ae166\Anaconda3\Scripts;C:\Users\ae166\Anaconda3\bin;C:\Users\ae166\Anaconda3\condabin;C:\ProgramData\Oracle\Java\javapath;C:\WINDOWS\system32;C:\WINDOWS;C:\WINDOWS\System32\Wbem;C:\WINDOWS\System32\WindowsPowerShell\v1.0;C:\Program Files\MATLAB\R2018b\bin;C:\WINDOWS\System32\OpenSSH;C:\Program Files (x86)\Sennheiser\SenncomSDK;C:\Users\ae166\AppData\Local\Microsoft\WindowsApps;C:\Users\ae166\AppData\Local\Programs\Git LFS;C:\Users\ae166\AppData\Local\Programs\Git\cmd;" />
+          </map>
+        </option>
         <option name="myWorkingDirectory" value="$PROJECT_DIR$" />
       </console-settings>
     </option>
+    <option name="myUseExistingConsole" value="true" />
   </component>
   <component name="RecentsManager">
     <key name="CopyFile.RECENT_KEYS">
@@ -64,7 +81,7 @@
   </component>
   <component name="SpellCheckerSettings" RuntimeDictionaries="0" Folders="0" CustomDictionaries="0" DefaultDictionary="application-level" UseSingleDictionary="true" transferred="true" />
   <component name="SvnConfiguration">
-    <configuration>$USER_HOME$/.subversion</configuration>
+    <configuration>C:\Users\ae166\AppData\Roaming\Subversion</configuration>
   </component>
   <component name="TaskManager">
     <task active="true" id="Default" summary="Default task">
@@ -165,7 +182,14 @@
       <option name="project" value="LOCAL" />
       <updated>1625079748584</updated>
     </task>
-    <option name="localTasksCounter" value="14" />
+    <task id="LOCAL-00014" summary="test fix 11">
+      <created>1625080986672</created>
+      <option name="number" value="00014" />
+      <option name="presentableId" value="LOCAL-00014" />
+      <option name="project" value="LOCAL" />
+      <updated>1625080986672</updated>
+    </task>
+    <option name="localTasksCounter" value="15" />
     <servers />
   </component>
   <component name="Vcs.Log.Tabs.Properties">
@@ -191,6 +215,7 @@
     <MESSAGE value="test fix 8" />
     <MESSAGE value="test fix 9" />
     <MESSAGE value="test fix 10" />
-    <option name="LAST_COMMIT_MESSAGE" value="test fix 10" />
+    <MESSAGE value="test fix 11" />
+    <option name="LAST_COMMIT_MESSAGE" value="test fix 11" />
   </component>
 </project>
