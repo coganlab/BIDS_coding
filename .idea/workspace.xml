@@ -4,9 +4,7 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="48805e9b-6305-4dbb-a3eb-2450704f0651" name="Default Changelist" comment="test fix 9">
-      <change beforePath="$PROJECT_DIR$/.github/workflows/Ubuntu_test.yml" beforeDir="false" afterPath="$PROJECT_DIR$/.github/workflows/Ubuntu_test.yml" afterDir="false" />
-    </list>
+    <list default="true" id="48805e9b-6305-4dbb-a3eb-2450704f0651" name="Default Changelist" comment="test fix 10" />
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
@@ -160,7 +158,14 @@
       <option name="project" value="LOCAL" />
       <updated>1625079389370</updated>
     </task>
-    <option name="localTasksCounter" value="13" />
+    <task id="LOCAL-00013" summary="test fix 10">
+      <created>1625079748584</created>
+      <option name="number" value="00013" />
+      <option name="presentableId" value="LOCAL-00013" />
+      <option name="project" value="LOCAL" />
+      <updated>1625079748584</updated>
+    </task>
+    <option name="localTasksCounter" value="14" />
     <servers />
   </component>
   <component name="Vcs.Log.Tabs.Properties">
@@ -185,6 +190,7 @@
     <MESSAGE value="test fix 7" />
     <MESSAGE value="test fix 8" />
     <MESSAGE value="test fix 9" />
-    <option name="LAST_COMMIT_MESSAGE" value="test fix 9" />
+    <MESSAGE value="test fix 10" />
+    <option name="LAST_COMMIT_MESSAGE" value="test fix 10" />
   </component>
 </project>
