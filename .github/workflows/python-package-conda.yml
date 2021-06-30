@@ -17,7 +17,6 @@ jobs:
         C:\Miniconda\condabin\conda.bat env update --file envs/environment.yml --name base -v
         C:\Miniconda\condabin\conda.bat init powershell
         C:\Miniconda\condabin\conda.bat install pytest flake8 tqdm
-        C:\Miniconda\condabin\conda.bat update --all
         C:\Miniconda\condabin\conda.bat clean -a
     - name: Lint with flake8
       run: |
