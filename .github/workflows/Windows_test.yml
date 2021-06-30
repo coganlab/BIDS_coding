@@ -3,9 +3,10 @@ name: Python Package using Conda
 on: [push]
 
 jobs:
-  build-Windows:
+  build:
+  
     runs-on: ${{ matrix.os }}
-      strategy:
+    strategy:
         matrix:
           os: [ Windows-latest ]
           python-version: [ 3.7, 3.8, 3.9 ]
