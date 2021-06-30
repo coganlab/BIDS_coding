@@ -32,8 +32,8 @@ jobs:
         flake8 . --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
     - name: Download test data
       run: |
-        git lfs pull -X "*D52*"
+        git lfs pull -X "*D48*"
     - name: Test with pytest
       run: |
         C:\Miniconda\condabin\conda.bat activate base
-        pytest -v package_test.py -k "test_D48"
+        #pytest -v package_test.py -k "test_D52"
