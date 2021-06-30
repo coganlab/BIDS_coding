@@ -4,8 +4,9 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="48805e9b-6305-4dbb-a3eb-2450704f0651" name="Default Changelist" comment="test fix 6">
-      <change beforePath="$PROJECT_DIR$/.github/workflows/Ubuntu_test_deprecated.yml" beforeDir="false" afterPath="$PROJECT_DIR$/.github/workflows/Ubuntu_test_deprecated.yml" afterDir="false" />
+    <list default="true" id="48805e9b-6305-4dbb-a3eb-2450704f0651" name="Default Changelist" comment="test fix 7">
+      <change beforePath="$PROJECT_DIR$/.github/workflows/Ubuntu_test.yml" beforeDir="false" afterPath="$PROJECT_DIR$/.github/workflows/Ubuntu_test.yml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -29,7 +30,6 @@
     <setting file="file://$PROJECT_DIR$/BIDS_converter/config.json" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/package_test.py" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/BIDS_converter/BIDS_convert.sh" root0="FORCE_HIGHLIGHTING" />
-    <setting file="file://$PROJECT_DIR$/.github/workflows/Ubuntu_test.yml" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/envs/requirements.txt" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/envs/environment.yml" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/../pyedflib/setup.py" root0="FORCE_HIGHLIGHTING" />
@@ -119,7 +119,21 @@
       <option name="project" value="LOCAL" />
       <updated>1625076086421</updated>
     </task>
-    <option name="localTasksCounter" value="7" />
+    <task id="LOCAL-00007" summary="test fix 6">
+      <created>1625076295005</created>
+      <option name="number" value="00007" />
+      <option name="presentableId" value="LOCAL-00007" />
+      <option name="project" value="LOCAL" />
+      <updated>1625076295005</updated>
+    </task>
+    <task id="LOCAL-00008" summary="test fix 7">
+      <created>1625077180992</created>
+      <option name="number" value="00008" />
+      <option name="presentableId" value="LOCAL-00008" />
+      <option name="project" value="LOCAL" />
+      <updated>1625077180992</updated>
+    </task>
+    <option name="localTasksCounter" value="9" />
     <servers />
   </component>
   <component name="Vcs.Log.Tabs.Properties">
@@ -141,6 +155,7 @@
     <MESSAGE value="test fix 4" />
     <MESSAGE value="test fix 5" />
     <MESSAGE value="test fix 6" />
-    <option name="LAST_COMMIT_MESSAGE" value="test fix 6" />
+    <MESSAGE value="test fix 7" />
+    <option name="LAST_COMMIT_MESSAGE" value="test fix 7" />
   </component>
 </project>
