@@ -10,8 +10,7 @@ import shutil
 import json
 import gzip
 import threading
-from typing import Union
-
+import gc
 import numpy as np
 import nibabel as nib
 import csv
@@ -714,6 +713,9 @@ class Data2Bids():  # main conversion and file organization program
             check_sep = self._config["eventFormat.Sep"]
         except (KeyError, AssertionError) as e:
             check_sep = None
+
+        gc.collect()  # helps with memory
+
         if check_sep:
             # read edf
             if self._is_verbose:
@@ -1188,8 +1190,10 @@ class Data2Bids():  # main conversion and file organization program
                             os.remove(os.path.join(file_path, matches[i].string))
                             for col in self._config["eventFormat.Timing"].values():
                                 df[col] = round(pd.to_numeric(df[col], "coerce") - (int(start) /
-                                                                         int(signal_headers[0]["sample_rate"]) *
-                                                                         int(self._config["eventFormat.SampleRate"])))
+                                                                                    int(signal_headers[0][
+                                                                                            "sample_rate"]) *
+                                                                                    int(self._config[
+                                                                                            "eventFormat.SampleRate"])))
                             df.to_csv(os.path.join(file_path, matches[i].string), sep="\t")
                             # dont forget .json files!
                             data = {}
