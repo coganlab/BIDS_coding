@@ -82,7 +82,6 @@
 , "split": { "Sep": "all",
             "buffer": 10,
             "practice": true},
-  "institution": "Duke University",
-  "iEEG"
+  "institution": "Duke University"
 }
 

@@ -5,9 +5,6 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="48805e9b-6305-4dbb-a3eb-2450704f0651" name="Default Changelist" comment="test fix 11">
-      <change beforePath="$PROJECT_DIR$/.gitignore" beforeDir="false" afterPath="$PROJECT_DIR$/.gitignore" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/BIDS_coding.iml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/BIDS_coding.iml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/misc.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/misc.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/BIDS_converter/config.json" beforeDir="false" afterPath="$PROJECT_DIR$/BIDS_converter/config.json" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/BIDS_converter/data2bids.py" beforeDir="false" afterPath="$PROJECT_DIR$/BIDS_converter/data2bids.py" afterDir="false" />
@@ -189,7 +186,14 @@
       <option name="project" value="LOCAL" />
       <updated>1625080986672</updated>
     </task>
-    <option name="localTasksCounter" value="15" />
+    <task id="LOCAL-00015" summary="test fix 11">
+      <created>1625095473385</created>
+      <option name="number" value="00015" />
+      <option name="presentableId" value="LOCAL-00015" />
+      <option name="project" value="LOCAL" />
+      <updated>1625095473385</updated>
+    </task>
+    <option name="localTasksCounter" value="16" />
     <servers />
   </component>
   <component name="Vcs.Log.Tabs.Properties">

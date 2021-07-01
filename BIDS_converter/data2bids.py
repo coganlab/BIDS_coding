@@ -20,8 +20,11 @@ import pydicom as dicom
 import pandas as pd
 import exrex as ex
 import datetime
+
+import pyedflib
 from pyedflib import highlevel, EdfReader
 from matgrab import mat2df
+from bids import layout
 
 
 def get_parser():  # parses flags at onset of command
@@ -176,9 +179,10 @@ class Data2Bids():  # main conversion and file organization program
                             if name.endswith(".mat") and re.match(".*?" + part_match + ".*?" + name, src):
                                 self.channels[part_match] = self.channels[part_match] + mat2df(src, var).tolist()
                                 try:
-                                    self.sample_rate = mat2df(src, self._config['ieeg']['sampleRate']).iloc[0]
+                                    self.sample_rate[part_match] = mat2df(src, self._config['ieeg']['sampleRate']).iloc[
+                                        0]
                                 except KeyError:
-                                    self.sample_rate = None
+                                    self.sample_rate[part_match] = None
                                 except AttributeError:
                                     raise IndexError(self._config['ieeg']['sampleRate'] + " not found in " + src)
                                 self._ignore.append(src)
@@ -193,7 +197,7 @@ class Data2Bids():  # main conversion and file organization program
                                 raise NotImplementedError(src +
                                                           "\nthis file format does not yet support {ext} files for channel labels".format(
                                                               ext=os.path.splitext(src)[1]))
-        print(self._ignore)
+        # print(self._ignore)
         if isinstance(channels, str) and channels not in channels[part_match]:
             self.channels[part_match] = self.channels[part_match] + [channels]
         elif channels is not None:
@@ -728,8 +732,13 @@ class Data2Bids():  # main conversion and file organization program
             if extra_signal_headers:
                 signal_headers = signal_headers + extra_signal_headers
 
+            # replace trigger channels with trigger label ("DC1")
+            for i in range(len(signal_headers)):
+                if signal_headers[i]["label"] == self._config["ieeg"]["headerData"][part_match]:
+                    signal_headers[i]["label"] = "Trigger"
+
             return dict(name=file_name, bids_name=edf_name, nsamples=array.shape[1], signal_headers=signal_headers,
-                        file_header=header, data=array)
+                        file_header=header, data=array, reader=f)
         elif channels:
             highlevel.drop_channels(file_name, edf_name, channels, verbose=self._is_verbose)
             return None
@@ -918,8 +927,13 @@ class Data2Bids():  # main conversion and file organization program
                         mat_list.append(src_file_path)
                         continue
                         # if the file doesn't match the extension, we skip it
-                    elif re.match(".*?" + "\\.txt",file):
-                        print(file)
+                    elif re.match(".*?" + "\\.txt", file):
+                        df = pd.read_csv(src_file_path, sep=" ")
+                        df.columns = ["name1", "name2", "x", "y", "z", "hemisphere", "del"]
+                        df["name"] = df["name1"] + df["name2"]
+                        df.drop("del")
+                        df.to_csv(self._bids_dir + "/sub-" + part_match_z + "/sub-" + part_match_z +
+                                      "_space-Talairach_electrodes.tsv", sep="\t", header=["name"])
                         continue
                     elif not any(re.match(".*?" + ext, file) for ext in curr_ext):
                         print("Warning : Skipping %s" % src_file_path)
@@ -1035,7 +1049,8 @@ class Data2Bids():  # main conversion and file organization program
                                 "{file} file format not yet supported. If file is binary format, please indicate so "
                                 "and what encoding in the config.json file".format(
                                     file=file))
-                        elif headers_dict and any(".mat" in i for i in files) and self.sample_rate is not None:
+                        elif headers_dict and any(".mat" in i for i in files) and self.sample_rate[
+                            part_match] is not None:
                             # assume has binary encoding
                             try:  # open binary file and write decoded numbers as array where rows = channels
                                 # check if zipped
@@ -1049,7 +1064,7 @@ class Data2Bids():  # main conversion and file organization program
                                 array = np.reshape(data, [len(headers_dict), -1],
                                                    order='F')  # byte order is Fortran encoding, dont know why
                                 signal_headers = highlevel.make_signal_headers(headers_dict,
-                                                                               sample_rate=self.sample_rate,
+                                                                               sample_rate=self.sample_rate[part_match],
                                                                                physical_max=np.amax(array),
                                                                                physical_min=(np.amin(array)))
                                 print("converting binary" + src_file_path + " to edf" + os.path.splitext(src_file_path)[
@@ -1089,7 +1104,7 @@ class Data2Bids():  # main conversion and file organization program
                                         extra_arrays = np.vstack([extra_arrays, df[cols]])
                                         extra_signal_headers.append(highlevel.make_signal_header(
                                             os.path.splitext(os.path.basename(fname))[0]
-                                            , sample_rate=self.sample_rate))
+                                            , sample_rate=self.sample_rate[part_match]))
                                 elif sig_len * 0.99 <= len(mat2df(fname)) <= sig_len * 1.01:
                                     raise BufferError(
                                         file + "of size" + sig_len + "is not the same size as" + fname + "of size" +
@@ -1199,22 +1214,12 @@ class Data2Bids():  # main conversion and file organization program
                                                                                             "eventFormat.SampleRate"])))
                             df.to_csv(os.path.join(file_path, matches[i].string), sep="\t")
                             # dont forget .json files!
-                            data = {}
-                            with open(edf_name.split(".edf", 1)[0] + ".json", "w") as fst:
-                                json.dump(data, fst)
+                            self.write_sidecar(edf_name)
                         continue
                     # write JSON file for any missing files
                     if file_path.endswith(("/anat", "/func", "/ieeg")):
+                        self.write_sidecar(file_path + new_name)
 
-                        (_, _, _, _,
-                        acq_match, echo_match, sess_match, ce_match,
-                        data_type_match, task_label_match, SeqType) = self.generate_names(os.path.basename(
-                            eeg_dict["name"]),part_match=part_match)
-                        data = dict(TaskName=task_label_match,InstitutionName=self._config["institution"],
-                                    iEEGReference=self._config[])
-                        if not split and not os.path.isfile(file_path + new_name + ".json"):
-                            with open(file_path + new_name + ".json", "w") as fst:
-                                json.dump(data, fst)
                 # Output
             if self._is_verbose:
                 tree(self._bids_dir)
@@ -1224,6 +1229,45 @@ class Data2Bids():  # main conversion and file organization program
 
         else:
             print("Warning: No parameters are defined !")
+
+    def write_sidecar(self, full_file):
+
+        if os.path.dirname(full_file).endswith("/ieeg"):
+            if not full_file.endswith(".edf"):
+                full_file = full_file + ".edf"
+            entities = layout.parse_file_entities(full_file)
+            f = EdfReader(full_file)
+            if f.annotations_in_file == 0:
+                description = "n/a"
+            elif f.getPatientAdditional():
+                description = f.getPatientAdditional()
+            elif f.getRecordingAdditional():
+                description = f.getRecordingAdditional()
+            elif any((not i.size == 0) for i in f.readAnnotations()):
+                description = [i for i in f.readAnnotations()]
+                print("description:", description)
+            else:
+                raise SyntaxError(full_file + "was not annotated correctly")
+            signals = [sig for sig in f.getSignalLabels() if "Trigger" not in sig]
+            data = dict(TaskName=entities['task'],
+                        InstitutionName=self._config["institution"],
+                        iEEGReference=description, SamplingFrequency=int(f.getSignalHeader(0)["sample_rate"]),
+                        PowerLineFrequency=60, SoftwareFilters="n/a", ECOGChannelCount=len(signals),
+                        TriggerChannelCount=1, RecordingDuration=f.file_duration)
+
+        elif os.path.dirname(full_file).endswith("/anat"):
+            entities = layout.parse_file_entities(full_file + ".nii.gz")
+            if entities["suffix"] == "CT":
+                data = {}
+            elif entities["suffix"] == "T1w":
+                data = {}
+            else:
+                raise NotImplementedError(full_file + "is not yet accounted for")
+        else:
+            data = {}
+        if not os.path.isfile(os.path.splitext(full_file)[0] + ".json"):
+            with open(os.path.splitext(full_file)[0] + ".json", "w") as fst:
+                json.dump(data, fst)
 
     def mat2tsv(self, mat_files):
         part_match = None
