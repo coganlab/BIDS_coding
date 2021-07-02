@@ -803,7 +803,8 @@ class Data2Bids():  # main conversion and file organization program
             mat_list = []
             passed_list = []
             for root, _, files in os.walk(self._data_dir,
-                                          topdown=True):  # each loop is a new participant so long as participant is top level
+                                          topdown=True):
+                # each loop is a new participant so long as participant is top level
                 files[:] = [f for f in files if
                             not os.path.join(root,  # ignore BIDS directories
                                              f).startswith(self._bids_dir) and os.path.join(root,
@@ -886,7 +887,9 @@ class Data2Bids():  # main conversion and file organization program
                         with open(src_file_path, 'r') as readmetext:
                             for line in readmetext:
                                 regret_words = ["Abort", "NOTE"]
-                                if ". tempAttnAudT" in line:  # these lines could and should be improved by linking config["func.task"] instead of literal strings
+                                if ". tempAttnAudT" in line:
+                                    # these lines could and should be improved by
+                                    # linking config["func.task"] instead of literal strings
                                     prevline = "con"
                                     tsv_condition_runs.append(
                                         re.search(r'\d+', line).group())  # save the first number on the line
@@ -903,7 +906,9 @@ class Data2Bids():  # main conversion and file organization program
                                     prevline = ""
                         if part_match is not None:
                             if not os.path.exists(
-                                    self._bids_dir + "/sub-" + part_match):  # Writing both a particpant-specific and agnostic README. Requires creation of a .bidsignore file for local READMEs
+                                    self._bids_dir + "/sub-" + part_match):
+                                # Writing both a particpant-specific and agnostic README
+                                # Requires creation of a .bidsignore file for local READMEs
                                 os.makedirs(self._bids_dir + "/sub-" + part_match)
                             shutil.copy(src_file_path, self._bids_dir + "/sub-" + part_match + "/README.txt")
                             with open(src_file_path, 'r') as readmetext:
@@ -930,10 +935,11 @@ class Data2Bids():  # main conversion and file organization program
                     elif re.match(".*?" + "\\.txt", file):
                         df = pd.read_csv(src_file_path, sep=" ")
                         df.columns = ["name1", "name2", "x", "y", "z", "hemisphere", "del"]
-                        df["name"] = df["name1"] + df["name2"]
-                        df.drop("del")
+                        df["name"] = df["name1"] + df["name2"].astype(str).str.zfill(2)
+                        df["hemisphere"] = df["hemisphere"] + df["del"]
+                        df = df.drop(columns=["name1", "name2", "del"])
                         df.to_csv(self._bids_dir + "/sub-" + part_match_z + "/sub-" + part_match_z +
-                                      "_space-Talairach_electrodes.tsv", sep="\t", header=["name"])
+                                  "_space-Talairach_electrodes.tsv", sep="\t")
                         continue
                     elif not any(re.match(".*?" + ext, file) for ext in curr_ext):
                         print("Warning : Skipping %s" % src_file_path)
@@ -941,7 +947,8 @@ class Data2Bids():  # main conversion and file organization program
                     if self._is_verbose:
                         print("trying %s" % src_file_path)
 
-                    # Matching the participant label to determine if there exists therein delete previously created BIDS subject files
+                    # Matching the participant label to determine if
+                    # there exists therein delete previously created BIDS subject files
                     try:
                         part_match = self.match_regexp(self._config["partLabel"], file)
                         try:
@@ -1143,7 +1150,7 @@ class Data2Bids():  # main conversion and file organization program
                     if new_name.endswith("_ieeg") and any(re.match(new_name.split("_ieeg")[0].split("/", 1)[1] +
                                                                    "(?:" + "_acq-" + self._config["acq"]["content"][0] +
                                                                    ")?" + "_run-" + self._config["runIndex"]["content"][
-                                                                       0] + "_event.tsv", set_file) for set_file in
+                                                                       0] + "_events.tsv", set_file) for set_file in
                                                           os.listdir(file_path)):  # if edf is not yet split
 
                         split = True
@@ -1162,7 +1169,7 @@ class Data2Bids():  # main conversion and file organization program
                         for file in os.listdir(file_path):
                             match_tsv = re.match(new_name.split("_ieeg", 1)[0].split("/", 1)[1] +
                                                  "(?:_acq-" + self._config["acq"]["content"][0] + ")?_run-(" +
-                                                 self._config["runIndex"]["content"][0] + ")_event.tsv", file)
+                                                 self._config["runIndex"]["content"][0] + ")_events.tsv", file)
                             if match_tsv:
                                 df = pd.read_csv(os.path.join(file_path, file), sep="\t", header=0)
                                 num_list = [round((float(x) / float(self._config["eventFormat.SampleRate"])) *
@@ -1197,7 +1204,7 @@ class Data2Bids():  # main conversion and file organization program
                                 end = start_nums[i + 1][0]
                             new_array = np.split(array, [start, end], axis=1)[1]
                             tsv_name: str = os.path.join(file_path, matches[i].string)
-                            edf_name: str = os.path.join(file_path, matches[i].string.split("_event.tsv", 1)[0]
+                            edf_name: str = os.path.join(file_path, matches[i].string.split("_events.tsv", 1)[0]
                                                          + "_ieeg.edf")
                             full_name = os.path.join(file_path, new_name.split("/", 1)[1] + ".edf")
                             if self._is_verbose:
@@ -1365,13 +1372,13 @@ class Data2Bids():  # main conversion and file organization program
                     (new_name, dst_file_path) = self.generate_names(match_name, verbose=False)[0:2]
                     writedf = df.loc[nindex]
                     if self._is_verbose:
-                        print(mat_file, "--->", dst_file_path + new_name.split("ieeg")[0] + "event.tsv")
-                    writedf.to_csv(dst_file_path + new_name.split("ieeg")[0] + "event.tsv", sep="\t")
+                        print(mat_file, "--->", dst_file_path + new_name.split("ieeg")[0] + "events.tsv")
+                    writedf.to_csv(dst_file_path + new_name.split("ieeg")[0] + "events.tsv", sep="\t")
             else:
                 (new_name, dst_file_path) = self.generate_names(match_name, verbose=False)[0:2]
                 if self._is_verbose:
-                    print(mat_file, "--->", dst_file_path + new_name.split("ieeg")[0] + "event.tsv")
-                df.to_csv(dst_file_path + new_name.split("ieeg")[0] + "event.tsv", sep="\t")
+                    print(mat_file, "--->", dst_file_path + new_name.split("ieeg")[0] + "events.tsv")
+                df.to_csv(dst_file_path + new_name.split("ieeg")[0] + "events.tsv", sep="\t")
             written = True
 
     def convert_1D(self, run_list, d_list, tsv_fso_runs, tsv_condition_runs, names_list, dst_file_path_list):

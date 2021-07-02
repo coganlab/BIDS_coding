@@ -1,8 +1,8 @@
-name: BIDS_coding
+name: myenv2
 channels:
   - defaults
 dependencies:
   - pip
   - pip:
     - -r requirements.txt
-prefix: C:\Users\ae166\Anaconda3\envs\BIDS_coding
+#prefix: C:\Users\ae166\Anaconda3\envs\BIDS_coding
