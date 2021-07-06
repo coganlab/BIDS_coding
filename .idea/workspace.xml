@@ -8,8 +8,8 @@
       <change beforePath="$PROJECT_DIR$/.idea/BIDS_coding.iml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/BIDS_coding.iml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/misc.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/misc.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/BIDS_converter/config.json" beforeDir="false" afterPath="$PROJECT_DIR$/BIDS_converter/config.json" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/BIDS_converter/data2bids.py" beforeDir="false" afterPath="$PROJECT_DIR$/BIDS_converter/data2bids.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/envs/environment.yml" beforeDir="false" afterPath="$PROJECT_DIR$/envs/environment.yml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/envs/requirements.txt" beforeDir="false" afterPath="$PROJECT_DIR$/envs/requirements.txt" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
@@ -27,6 +27,17 @@
       <filtered-out-file-type name="TAG" />
       <filtered-out-file-type name="COMMIT_BY_MESSAGE" />
     </file-type-list>
+  </component>
+  <component name="HighlightingSettingsPerFile">
+    <setting file="file://$PROJECT_DIR$/.github/workflows/Windows_test.yml" root0="FORCE_HIGHLIGHTING" />
+    <setting file="file://$PROJECT_DIR$/BIDS_converter/data2bids.py" root0="FORCE_HIGHLIGHTING" />
+    <setting file="file://$PROJECT_DIR$/BIDS_converter/config.json" root0="FORCE_HIGHLIGHTING" />
+    <setting file="file://$PROJECT_DIR$/../../workspace/Phoneme_sequencing/D48/D48_elec_locations_RAS.txt" root0="FORCE_HIGHLIGHTING" />
+    <setting file="file://$PROJECT_DIR$/package_test.py" root0="FORCE_HIGHLIGHTING" />
+    <setting file="file://$PROJECT_DIR$/BIDS_converter/BIDS_convert.sh" root0="FORCE_HIGHLIGHTING" />
+    <setting file="file://$PROJECT_DIR$/.github/workflows/Ubuntu_test.yml" root0="FORCE_HIGHLIGHTING" />
+    <setting file="file://$PROJECT_DIR$/envs/requirements.txt" root0="FORCE_HIGHLIGHTING" />
+    <setting file="file://$PROJECT_DIR$/envs/environment.yml" root0="FORCE_HIGHLIGHTING" />
   </component>
   <component name="ProjectId" id="1uJJKmF1K4taUwuMSxVBSi6XtqU" />
   <component name="ProjectLevelVcsManager" settingsEditedManually="true" />

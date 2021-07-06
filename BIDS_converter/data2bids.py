@@ -11,6 +11,8 @@ import json
 import gzip
 import threading
 import gc
+from typing import List, Any
+
 import numpy as np
 import nibabel as nib
 import csv
@@ -20,8 +22,6 @@ import pydicom as dicom
 import pandas as pd
 import exrex as ex
 import datetime
-
-import pyedflib
 from pyedflib import highlevel, EdfReader
 from matgrab import mat2df
 from bids import layout
@@ -144,6 +144,8 @@ class Data2Bids():  # main conversion and file organization program
         self._dataset_name = None
         self._data_types = {"anat": False, "func": False, "ieeg": False}
 
+        self.names_list_global: list[str] = []
+
         self.set_overwrite(overwrite)
         self.set_data_dir(input_dir, DICOM_path)
         self.set_config_path(config)
@@ -169,6 +171,14 @@ class Data2Bids():  # main conversion and file organization program
                     if not part_match == self.match_regexp(self._config["partLabel"], file):
                         part_match = self.match_regexp(self._config["partLabel"], file)
                         self.channels[part_match] = []
+                    part_match_z = self.part_check(part_match)[1]
+                    for name, var in self._config["ieeg"]["channels"].items():
+                        name = os.path.join(root, name)
+                        print(name, var)
+                        df = mat2df(name, var)
+                    task_label_match = self.generate_names(src, part_match=part_match, verbose=False)[-2]
+                    df.to_csv(self._bids_dir + "sub-" + part_match_z + "/sub-" + part_match_z + "_task" +
+                              task_label_match + "_channels.tsv", sep="\t" )
                     for name, var in headers_dict.items():
                         if name == part_match:
                             if isinstance(var, str):
@@ -746,6 +756,44 @@ class Data2Bids():  # main conversion and file organization program
             shutil.copy(file_name, edf_name)
             return None
 
+    def part_check(self, part_match=None, filename=None):
+        # Matching the participant label to determine if
+        # there exists therein delete previously created BIDS subject files
+
+        assert part_match or filename
+
+        part_match_z = None
+
+        if filename:
+
+            try:
+                part_match = self.match_regexp(self._config["partLabel"], filename)
+            except AssertionError:
+                print("No participant found for %s" %filename)
+            except KeyError as e:
+                print("Participant label pattern must be defined")
+                raise e
+
+        try:
+            if re.match("^[^\d]{1,3}", part_match):
+                part_matches = re.split("([^\d]{1,3})", part_match, 1)
+                part_match_z = part_matches[1] + str(int(part_matches[2])).zfill(
+                    self._config["partLabel"]["fill"])
+            else:
+                part_match_z = str(int(part_match)).zfill(self._config["partLabel"]["fill"])
+            if os.path.isdir(self._bids_dir + "/sub-" + part_match_z) and not any(
+                    "sub-" + part_match_z in x for x in self.names_list_global):
+                print("Deleting old BIDS directory for subject %s" % part_match)
+                shutil.rmtree(self._bids_dir + "/sub-" + part_match_z, onerror=self.force_remove)
+        except OSError:  # problem spot, may miss deleting some files causing them to erroneously carry over
+            shutil.rmtree(self._bids_dir + "/sub-" + part_match, ignore_errors=True)
+        except TypeError:  # problem spot, may miss deleting some files causing them to erroneously carry over
+            shutil.rmtree(self._bids_dir + "/sub-" + part_match, ignore_errors=True)
+
+        self.names_list_global.append("sub-" + part_match_z)
+
+        return part_match, part_match_z
+
     def run(self):  # main function
 
         # First we check that every parameters are configured
@@ -794,7 +842,6 @@ class Data2Bids():  # main conversion and file organization program
                             'BIDSVersion': self._bids_version}
                     json.dump(data, fst, ensure_ascii=False, indent=4)
             # now we can scan all files and rearrange them
-            names_list_global = []
             tsv_condition_runs = []
             tsv_fso_runs = []
             d_list = []
@@ -939,7 +986,7 @@ class Data2Bids():  # main conversion and file organization program
                         df["hemisphere"] = df["hemisphere"] + df["del"]
                         df = df.drop(columns=["name1", "name2", "del"])
                         df.to_csv(self._bids_dir + "/sub-" + part_match_z + "/sub-" + part_match_z +
-                                  "_space-Talairach_electrodes.tsv", sep="\t")
+                                  "_space-Talairach_electrodes.tsv", sep="\t", index=False)
                         continue
                     elif not any(re.match(".*?" + ext, file) for ext in curr_ext):
                         print("Warning : Skipping %s" % src_file_path)
@@ -947,34 +994,7 @@ class Data2Bids():  # main conversion and file organization program
                     if self._is_verbose:
                         print("trying %s" % src_file_path)
 
-                    # Matching the participant label to determine if
-                    # there exists therein delete previously created BIDS subject files
-                    try:
-                        part_match = self.match_regexp(self._config["partLabel"], file)
-                        try:
-                            _ = self._config["partLabel"]["fill"]
-                        except KeyError:
-                            raise TypeError
-                        if re.match("^[^\d]{1,3}", part_match):
-                            part_matches = re.split("([^\d]{1,3})", part_match, 1)
-                            part_match_z = part_matches[1] + str(int(part_matches[2])).zfill(
-                                self._config["partLabel"]["fill"])
-                        else:
-                            part_match_z = str(int(part_match)).zfill(self._config["partLabel"]["fill"])
-                        if os.path.isdir(self._bids_dir + "/sub-" + part_match_z) and not any(
-                                "sub-" + part_match_z in x for x in names_list_global):
-                            print("Deleting old BIDS directory for subject %s" % part_match)
-                            shutil.rmtree(self._bids_dir + "/sub-" + part_match_z, onerror=self.force_remove)
-                    except AssertionError:
-                        print("No participant found for %s" % src_file_path)
-                        continue
-                    except OSError:  # problem spot, may miss deleting some files causing them to erroneously carry over
-                        shutil.rmtree(self._bids_dir + "/sub-" + part_match, ignore_errors=True)
-                    except TypeError:  # problem spot, may miss deleting some files causing them to erroneously carry over
-                        shutil.rmtree(self._bids_dir + "/sub-" + part_match, ignore_errors=True)
-                    except KeyError:
-                        raise KeyError("Participant label pattern must be defined")
-
+                    part_match, part_match_z = self.part_check(filename=file)
                     try:
                         (new_name, dst_file_path, part_match, run_match,
                          acq_match, echo_match, sess_match, ce_match,
@@ -1127,7 +1147,7 @@ class Data2Bids():  # main conversion and file organization program
 
                     # move the sidecar from input to output
                     names_list.append(new_name)
-                    names_list_global.append(new_name)
+                    self.names_list_global.append(new_name)
                     dst_file_path_list.append(dst_file_path)
                     try:
                         if run_match is not None:
@@ -1373,12 +1393,12 @@ class Data2Bids():  # main conversion and file organization program
                     writedf = df.loc[nindex]
                     if self._is_verbose:
                         print(mat_file, "--->", dst_file_path + new_name.split("ieeg")[0] + "events.tsv")
-                    writedf.to_csv(dst_file_path + new_name.split("ieeg")[0] + "events.tsv", sep="\t")
+                    writedf.to_csv(dst_file_path + new_name.split("ieeg")[0] + "events.tsv", sep="\t", index=False)
             else:
                 (new_name, dst_file_path) = self.generate_names(match_name, verbose=False)[0:2]
                 if self._is_verbose:
                     print(mat_file, "--->", dst_file_path + new_name.split("ieeg")[0] + "events.tsv")
-                df.to_csv(dst_file_path + new_name.split("ieeg")[0] + "events.tsv", sep="\t")
+                df.to_csv(dst_file_path + new_name.split("ieeg")[0] + "events.tsv", sep="\t", index=False)
             written = True
 
     def convert_1D(self, run_list, d_list, tsv_fso_runs, tsv_condition_runs, names_list, dst_file_path_list):
