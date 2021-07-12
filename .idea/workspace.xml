@@ -4,7 +4,13 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="48805e9b-6305-4dbb-a3eb-2450704f0651" name="Default Changelist" comment="test fix 10" />
+    <list default="true" id="48805e9b-6305-4dbb-a3eb-2450704f0651" name="Default Changelist" comment="working on json and tsvs 2">
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/BIDS_converter/data2bids.py" beforeDir="false" afterPath="$PROJECT_DIR$/BIDS_converter/data2bids.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/envs/environment.yml" beforeDir="false" afterPath="$PROJECT_DIR$/envs/environment.yml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/envs/requirements.txt" beforeDir="false" afterPath="$PROJECT_DIR$/envs/requirements.txt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/package_test.py" beforeDir="false" afterPath="$PROJECT_DIR$/package_test.py" afterDir="false" />
+    </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
@@ -25,11 +31,13 @@
     <setting file="file://$PROJECT_DIR$/.github/workflows/Windows_test.yml" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/BIDS_converter/data2bids.py" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/BIDS_converter/config.json" root0="FORCE_HIGHLIGHTING" />
+    <setting file="file://$PROJECT_DIR$/../../workspace/Phoneme_sequencing/D48/D48_elec_locations_RAS.txt" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/package_test.py" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/BIDS_converter/BIDS_convert.sh" root0="FORCE_HIGHLIGHTING" />
+    <setting file="file://$PROJECT_DIR$/preprocess.py" root0="FORCE_HIGHLIGHTING" />
+    <setting file="file://$PROJECT_DIR$/.github/workflows/Ubuntu_test.yml" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/envs/requirements.txt" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/envs/environment.yml" root0="FORCE_HIGHLIGHTING" />
-    <setting file="file://$PROJECT_DIR$/../pyedflib/setup.py" root0="FORCE_HIGHLIGHTING" />
   </component>
   <component name="ProjectId" id="1uJJKmF1K4taUwuMSxVBSi6XtqU" />
   <component name="ProjectLevelVcsManager" settingsEditedManually="true" />
@@ -40,31 +48,76 @@
   <component name="PropertiesComponent">
     <property name="RunOnceActivity.OpenProjectViewOnStart" value="true" />
     <property name="RunOnceActivity.ShowReadmeOnStart" value="true" />
-    <property name="last.edited.regexp" value="missing_value_run-missing_value_event.tsv" />
-    <property name="last_opened_file_path" value="$PROJECT_DIR$/.github/workflows" />
-    <property name="settings.editor.selected.configurable" value="com.jetbrains.python.configuration.PyActiveSdkModuleConfigurable" />
+    <property name="last_opened_file_path" value="$PROJECT_DIR$/../matgrab" />
+    <property name="settings.editor.selected.configurable" value="PyConsoleConfigurable.Python Console" />
   </component>
   <component name="PyConsoleOptionsProvider">
     <option name="myPythonConsoleState">
       <console-settings module-name="BIDS_coding" is-module-sdk="true" working-directory="$PROJECT_DIR$">
+        <envs>
+          <env key="PATH" value="C:\Users\ae166\Anaconda3;C:\Users\ae166\Anaconda3\Library\mingw-w64\bin;C:\Users\ae166\Anaconda3\Library\usr\bin;C:\Users\ae166\Anaconda3\Library\bin;C:\Users\ae166\Anaconda3\Scripts;C:\Users\ae166\Anaconda3\bin;C:\Users\ae166\Anaconda3\c ondabin;C:\ProgramData\Oracle\Java\javapath;C:\WINDOWS\system32;C:\WINDOWS;C:\WINDOWS\System32\Wbem;C:\WINDOWS\System32\WindowsPowerShell\v1.0;C:\Program Files\MATLAB\R2018b\bin;C:\WINDOWS\System32\OpenSSH;C:\Program Files (x86)\Sennheise r\SenncomSDK;C:\Users\ae166\AppData\Local\Microsoft\WindowsApps;C:\Users\ae166\AppData\Local\Programs\Git LFS;C:\Users\ae166\AppData\Local\Programs\Git\cmd;C:\Users\ae166\AppData\Local\Programs\Microsoft VS Code\bin " />
+        </envs>
         <option name="myUseModuleSdk" value="true" />
         <option name="myModuleName" value="BIDS_coding" />
+        <option name="myEnvs">
+          <map>
+            <entry key="PATH" value="C:\Users\ae166\Anaconda3;C:\Users\ae166\Anaconda3\Library\mingw-w64\bin;C:\Users\ae166\Anaconda3\Library\usr\bin;C:\Users\ae166\Anaconda3\Library\bin;C:\Users\ae166\Anaconda3\Scripts;C:\Users\ae166\Anaconda3\bin;C:\Users\ae166\Anaconda3\c ondabin;C:\ProgramData\Oracle\Java\javapath;C:\WINDOWS\system32;C:\WINDOWS;C:\WINDOWS\System32\Wbem;C:\WINDOWS\System32\WindowsPowerShell\v1.0;C:\Program Files\MATLAB\R2018b\bin;C:\WINDOWS\System32\OpenSSH;C:\Program Files (x86)\Sennheise r\SenncomSDK;C:\Users\ae166\AppData\Local\Microsoft\WindowsApps;C:\Users\ae166\AppData\Local\Programs\Git LFS;C:\Users\ae166\AppData\Local\Programs\Git\cmd;C:\Users\ae166\AppData\Local\Programs\Microsoft VS Code\bin " />
+          </map>
+        </option>
         <option name="myWorkingDirectory" value="$PROJECT_DIR$" />
       </console-settings>
     </option>
   </component>
-  <component name="RecentsManager">
-    <key name="CopyFile.RECENT_KEYS">
-      <recent name="C:\Users\ae166\share\git\BIDS_coding\.github\workflows" />
-    </key>
-    <key name="MoveFile.RECENT_KEYS">
-      <recent name="C:\Users\ae166\share\git\BIDS_coding\envs" />
-      <recent name="C:\Users\ae166\share\git\BIDS_coding\.github\workflows" />
-    </key>
+  <component name="RunManager" selected="Python tests.pytest in package_test.py">
+    <configuration name="Bids_coding" type="PythonConfigurationType" factoryName="Python">
+      <module name="BIDS_coding" />
+      <option name="INTERPRETER_OPTIONS" value="" />
+      <option name="PARENT_ENVS" value="true" />
+      <envs>
+        <env name="PYTHONUNBUFFERED" value="1" />
+        <env name="PATH" value="C:\Users\ae166\Anaconda3;C:\Users\ae166\Anaconda3\Library\mingw-w64\bin;C:\Users\ae166\Anaconda3\Library\usr\bin;C:\Users\ae166\Anaconda3\Library\bin;C:\Users\ae166\Anaconda3\Scripts;C:\Users\ae166\Anaconda3\bin;C:\Users\ae166\Anaconda3\c ondabin;C:\ProgramData\Oracle\Java\javapath;C:\WINDOWS\system32;C:\WINDOWS;C:\WINDOWS\System32\Wbem;C:\WINDOWS\System32\WindowsPowerShell\v1.0;C:\Program Files\MATLAB\R2018b\bin;C:\WINDOWS\System32\OpenSSH;C:\Program Files (x86)\Sennheise r\SenncomSDK;C:\Users\ae166\AppData\Local\Microsoft\WindowsApps;C:\Users\ae166\AppData\Local\Programs\Git LFS;C:\Users\ae166\AppData\Local\Programs\Git\cmd;C:\Users\ae166\AppData\Local\Programs\Microsoft VS Code\bin " />
+      </envs>
+      <option name="SDK_HOME" value="C:\Users\ae166\Anaconda3\envs\BIDS_coding\python.exe" />
+      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$" />
+      <option name="IS_MODULE_SDK" value="false" />
+      <option name="ADD_CONTENT_ROOTS" value="true" />
+      <option name="ADD_SOURCE_ROOTS" value="true" />
+      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/package_test.py" />
+      <option name="PARAMETERS" value="" />
+      <option name="SHOW_COMMAND_LINE" value="false" />
+      <option name="EMULATE_TERMINAL" value="false" />
+      <option name="MODULE_MODE" value="false" />
+      <option name="REDIRECT_INPUT" value="false" />
+      <option name="INPUT_FILE" value="" />
+      <method v="2" />
+    </configuration>
+    <configuration name="pytest in package_test.py" type="tests" factoryName="py.test" nameIsGenerated="true">
+      <module name="BIDS_coding" />
+      <option name="INTERPRETER_OPTIONS" value="" />
+      <option name="PARENT_ENVS" value="true" />
+      <envs>
+        <env name="PATH" value="C:\Users\ae166\Anaconda3;C:\Users\ae166\Anaconda3\Library\mingw-w64\bin;C:\Users\ae166\Anaconda3\Library\usr\bin;C:\Users\ae166\Anaconda3\Library\bin;C:\Users\ae166\Anaconda3\Scripts;C:\Users\ae166\Anaconda3\bin;C:\Users\ae166\Anaconda3\c ondabin;C:\ProgramData\Oracle\Java\javapath;C:\WINDOWS\system32;C:\WINDOWS;C:\WINDOWS\System32\Wbem;C:\WINDOWS\System32\WindowsPowerShell\v1.0;C:\Program Files\MATLAB\R2018b\bin;C:\WINDOWS\System32\OpenSSH;C:\Program Files (x86)\Sennheise r\SenncomSDK;C:\Users\ae166\AppData\Local\Microsoft\WindowsApps;C:\Users\ae166\AppData\Local\Programs\Git LFS;C:\Users\ae166\AppData\Local\Programs\Git\cmd;C:\Users\ae166\AppData\Local\Programs\Microsoft VS Code\bin " />
+      </envs>
+      <option name="SDK_HOME" value="" />
+      <option name="WORKING_DIRECTORY" value="" />
+      <option name="IS_MODULE_SDK" value="true" />
+      <option name="ADD_CONTENT_ROOTS" value="true" />
+      <option name="ADD_SOURCE_ROOTS" value="true" />
+      <option name="_new_keywords" value="&quot;&quot;" />
+      <option name="_new_parameters" value="&quot;&quot;" />
+      <option name="_new_additionalArguments" value="&quot;&quot;" />
+      <option name="_new_target" value="&quot;$PROJECT_DIR$/package_test.py&quot;" />
+      <option name="_new_targetType" value="&quot;PATH&quot;" />
+      <method v="2" />
+    </configuration>
+    <list>
+      <item itemvalue="Python.Bids_coding" />
+      <item itemvalue="Python tests.pytest in package_test.py" />
+    </list>
   </component>
   <component name="SpellCheckerSettings" RuntimeDictionaries="0" Folders="0" CustomDictionaries="0" DefaultDictionary="application-level" UseSingleDictionary="true" transferred="true" />
   <component name="SvnConfiguration">
-    <configuration>$USER_HOME$/.subversion</configuration>
+    <configuration>C:\Users\Jakda\AppData\Roaming\Subversion</configuration>
   </component>
   <component name="TaskManager">
     <task active="true" id="Default" summary="Default task">
@@ -74,98 +127,14 @@
       <option name="presentableId" value="Default" />
       <updated>1624377698423</updated>
     </task>
-    <task id="LOCAL-00001" summary="test fix 4">
-      <created>1625072532921</created>
+    <task id="LOCAL-00001" summary="working on json and tsvs 2">
+      <created>1625604326922</created>
       <option name="number" value="00001" />
       <option name="presentableId" value="LOCAL-00001" />
       <option name="project" value="LOCAL" />
-      <updated>1625072532921</updated>
+      <updated>1625604326922</updated>
     </task>
-    <task id="LOCAL-00002" summary="test fix 5">
-      <created>1625073078200</created>
-      <option name="number" value="00002" />
-      <option name="presentableId" value="LOCAL-00002" />
-      <option name="project" value="LOCAL" />
-      <updated>1625073078200</updated>
-    </task>
-    <task id="LOCAL-00003" summary="test fix 6">
-      <created>1625074484268</created>
-      <option name="number" value="00003" />
-      <option name="presentableId" value="LOCAL-00003" />
-      <option name="project" value="LOCAL" />
-      <updated>1625074484268</updated>
-    </task>
-    <task id="LOCAL-00004" summary="test fix 6">
-      <created>1625075294036</created>
-      <option name="number" value="00004" />
-      <option name="presentableId" value="LOCAL-00004" />
-      <option name="project" value="LOCAL" />
-      <updated>1625075294036</updated>
-    </task>
-    <task id="LOCAL-00005" summary="test fix 6">
-      <created>1625075750754</created>
-      <option name="number" value="00005" />
-      <option name="presentableId" value="LOCAL-00005" />
-      <option name="project" value="LOCAL" />
-      <updated>1625075750754</updated>
-    </task>
-    <task id="LOCAL-00006" summary="test fix 6">
-      <created>1625076086421</created>
-      <option name="number" value="00006" />
-      <option name="presentableId" value="LOCAL-00006" />
-      <option name="project" value="LOCAL" />
-      <updated>1625076086421</updated>
-    </task>
-    <task id="LOCAL-00007" summary="test fix 6">
-      <created>1625076295005</created>
-      <option name="number" value="00007" />
-      <option name="presentableId" value="LOCAL-00007" />
-      <option name="project" value="LOCAL" />
-      <updated>1625076295005</updated>
-    </task>
-    <task id="LOCAL-00008" summary="test fix 7">
-      <created>1625077180992</created>
-      <option name="number" value="00008" />
-      <option name="presentableId" value="LOCAL-00008" />
-      <option name="project" value="LOCAL" />
-      <updated>1625077180992</updated>
-    </task>
-    <task id="LOCAL-00009" summary="test fix 7">
-      <created>1625078163844</created>
-      <option name="number" value="00009" />
-      <option name="presentableId" value="LOCAL-00009" />
-      <option name="project" value="LOCAL" />
-      <updated>1625078163844</updated>
-    </task>
-    <task id="LOCAL-00010" summary="test fix 8">
-      <created>1625078335093</created>
-      <option name="number" value="00010" />
-      <option name="presentableId" value="LOCAL-00010" />
-      <option name="project" value="LOCAL" />
-      <updated>1625078335093</updated>
-    </task>
-    <task id="LOCAL-00011" summary="test fix 9">
-      <created>1625078976973</created>
-      <option name="number" value="00011" />
-      <option name="presentableId" value="LOCAL-00011" />
-      <option name="project" value="LOCAL" />
-      <updated>1625078976973</updated>
-    </task>
-    <task id="LOCAL-00012" summary="test fix 9">
-      <created>1625079389370</created>
-      <option name="number" value="00012" />
-      <option name="presentableId" value="LOCAL-00012" />
-      <option name="project" value="LOCAL" />
-      <updated>1625079389370</updated>
-    </task>
-    <task id="LOCAL-00013" summary="test fix 10">
-      <created>1625079748584</created>
-      <option name="number" value="00013" />
-      <option name="presentableId" value="LOCAL-00013" />
-      <option name="project" value="LOCAL" />
-      <updated>1625079748584</updated>
-    </task>
-    <option name="localTasksCounter" value="14" />
+    <option name="localTasksCounter" value="2" />
     <servers />
   </component>
   <component name="Vcs.Log.Tabs.Properties">
@@ -184,13 +153,7 @@
     <ignored-roots>
       <path value="$PROJECT_DIR$" />
     </ignored-roots>
-    <MESSAGE value="test fix 4" />
-    <MESSAGE value="test fix 5" />
-    <MESSAGE value="test fix 6" />
-    <MESSAGE value="test fix 7" />
-    <MESSAGE value="test fix 8" />
-    <MESSAGE value="test fix 9" />
-    <MESSAGE value="test fix 10" />
-    <option name="LAST_COMMIT_MESSAGE" value="test fix 10" />
+    <MESSAGE value="working on json and tsvs 2" />
+    <option name="LAST_COMMIT_MESSAGE" value="working on json and tsvs 2" />
   </component>
 </project>

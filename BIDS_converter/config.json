@@ -23,6 +23,7 @@
                             , "D52": "DC1"
                             , "D48": "DC1"
                         }
+            , "channels": {"experiment.mat":  "channels"}
             , "sampleRate": "recording.sample_rate"
             , "digital": true
             }
@@ -78,9 +79,10 @@
                              "acq" : "Rec" }
 ,"eventFormat.Timing": { "start": "Start",
                           "end": "ResponseEnd" }
-, "eventFormat.SampleRate": "30000"
+, "eventFormat.SampleRate": 30000
 , "split": { "Sep": "all",
             "buffer": 10,
-            "practice": true}
+            "practice": true},
+  "institution": "Duke University"
 }
 
