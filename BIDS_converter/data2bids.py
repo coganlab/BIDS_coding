@@ -12,7 +12,6 @@ import gzip
 import threading
 import gc
 from typing import List, Any
-
 import numpy as np
 import nibabel as nib
 import csv
