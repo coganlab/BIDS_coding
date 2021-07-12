@@ -4,13 +4,12 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="48805e9b-6305-4dbb-a3eb-2450704f0651" name="Default Changelist" comment="">
-      <change beforePath="$PROJECT_DIR$/.idea/BIDS_coding.iml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/BIDS_coding.iml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/misc.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/misc.xml" afterDir="false" />
+    <list default="true" id="48805e9b-6305-4dbb-a3eb-2450704f0651" name="Default Changelist" comment="working on json and tsvs 2">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/BIDS_converter/config.json" beforeDir="false" afterPath="$PROJECT_DIR$/BIDS_converter/config.json" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/BIDS_converter/data2bids.py" beforeDir="false" afterPath="$PROJECT_DIR$/BIDS_converter/data2bids.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/envs/environment.yml" beforeDir="false" afterPath="$PROJECT_DIR$/envs/environment.yml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/envs/requirements.txt" beforeDir="false" afterPath="$PROJECT_DIR$/envs/requirements.txt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/package_test.py" beforeDir="false" afterPath="$PROJECT_DIR$/package_test.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -35,6 +34,7 @@
     <setting file="file://$PROJECT_DIR$/../../workspace/Phoneme_sequencing/D48/D48_elec_locations_RAS.txt" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/package_test.py" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/BIDS_converter/BIDS_convert.sh" root0="FORCE_HIGHLIGHTING" />
+    <setting file="file://$PROJECT_DIR$/preprocess.py" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/.github/workflows/Ubuntu_test.yml" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/envs/requirements.txt" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/envs/environment.yml" root0="FORCE_HIGHLIGHTING" />
@@ -48,17 +48,72 @@
   <component name="PropertiesComponent">
     <property name="RunOnceActivity.OpenProjectViewOnStart" value="true" />
     <property name="RunOnceActivity.ShowReadmeOnStart" value="true" />
-    <property name="last_opened_file_path" value="$PROJECT_DIR$/../../Workspace" />
-    <property name="settings.editor.selected.configurable" value="com.jetbrains.python.configuration.PyIntegratedToolsModulesConfigurable" />
+    <property name="last_opened_file_path" value="$PROJECT_DIR$/../matgrab" />
+    <property name="settings.editor.selected.configurable" value="PyConsoleConfigurable.Python Console" />
   </component>
   <component name="PyConsoleOptionsProvider">
     <option name="myPythonConsoleState">
       <console-settings module-name="BIDS_coding" is-module-sdk="true" working-directory="$PROJECT_DIR$">
+        <envs>
+          <env key="PATH" value="C:\Users\ae166\Anaconda3;C:\Users\ae166\Anaconda3\Library\mingw-w64\bin;C:\Users\ae166\Anaconda3\Library\usr\bin;C:\Users\ae166\Anaconda3\Library\bin;C:\Users\ae166\Anaconda3\Scripts;C:\Users\ae166\Anaconda3\bin;C:\Users\ae166\Anaconda3\c ondabin;C:\ProgramData\Oracle\Java\javapath;C:\WINDOWS\system32;C:\WINDOWS;C:\WINDOWS\System32\Wbem;C:\WINDOWS\System32\WindowsPowerShell\v1.0;C:\Program Files\MATLAB\R2018b\bin;C:\WINDOWS\System32\OpenSSH;C:\Program Files (x86)\Sennheise r\SenncomSDK;C:\Users\ae166\AppData\Local\Microsoft\WindowsApps;C:\Users\ae166\AppData\Local\Programs\Git LFS;C:\Users\ae166\AppData\Local\Programs\Git\cmd;C:\Users\ae166\AppData\Local\Programs\Microsoft VS Code\bin " />
+        </envs>
         <option name="myUseModuleSdk" value="true" />
         <option name="myModuleName" value="BIDS_coding" />
+        <option name="myEnvs">
+          <map>
+            <entry key="PATH" value="C:\Users\ae166\Anaconda3;C:\Users\ae166\Anaconda3\Library\mingw-w64\bin;C:\Users\ae166\Anaconda3\Library\usr\bin;C:\Users\ae166\Anaconda3\Library\bin;C:\Users\ae166\Anaconda3\Scripts;C:\Users\ae166\Anaconda3\bin;C:\Users\ae166\Anaconda3\c ondabin;C:\ProgramData\Oracle\Java\javapath;C:\WINDOWS\system32;C:\WINDOWS;C:\WINDOWS\System32\Wbem;C:\WINDOWS\System32\WindowsPowerShell\v1.0;C:\Program Files\MATLAB\R2018b\bin;C:\WINDOWS\System32\OpenSSH;C:\Program Files (x86)\Sennheise r\SenncomSDK;C:\Users\ae166\AppData\Local\Microsoft\WindowsApps;C:\Users\ae166\AppData\Local\Programs\Git LFS;C:\Users\ae166\AppData\Local\Programs\Git\cmd;C:\Users\ae166\AppData\Local\Programs\Microsoft VS Code\bin " />
+          </map>
+        </option>
         <option name="myWorkingDirectory" value="$PROJECT_DIR$" />
       </console-settings>
     </option>
+  </component>
+  <component name="RunManager" selected="Python tests.pytest in package_test.py">
+    <configuration name="Bids_coding" type="PythonConfigurationType" factoryName="Python">
+      <module name="BIDS_coding" />
+      <option name="INTERPRETER_OPTIONS" value="" />
+      <option name="PARENT_ENVS" value="true" />
+      <envs>
+        <env name="PYTHONUNBUFFERED" value="1" />
+        <env name="PATH" value="C:\Users\ae166\Anaconda3;C:\Users\ae166\Anaconda3\Library\mingw-w64\bin;C:\Users\ae166\Anaconda3\Library\usr\bin;C:\Users\ae166\Anaconda3\Library\bin;C:\Users\ae166\Anaconda3\Scripts;C:\Users\ae166\Anaconda3\bin;C:\Users\ae166\Anaconda3\c ondabin;C:\ProgramData\Oracle\Java\javapath;C:\WINDOWS\system32;C:\WINDOWS;C:\WINDOWS\System32\Wbem;C:\WINDOWS\System32\WindowsPowerShell\v1.0;C:\Program Files\MATLAB\R2018b\bin;C:\WINDOWS\System32\OpenSSH;C:\Program Files (x86)\Sennheise r\SenncomSDK;C:\Users\ae166\AppData\Local\Microsoft\WindowsApps;C:\Users\ae166\AppData\Local\Programs\Git LFS;C:\Users\ae166\AppData\Local\Programs\Git\cmd;C:\Users\ae166\AppData\Local\Programs\Microsoft VS Code\bin " />
+      </envs>
+      <option name="SDK_HOME" value="C:\Users\ae166\Anaconda3\envs\BIDS_coding\python.exe" />
+      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$" />
+      <option name="IS_MODULE_SDK" value="false" />
+      <option name="ADD_CONTENT_ROOTS" value="true" />
+      <option name="ADD_SOURCE_ROOTS" value="true" />
+      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/package_test.py" />
+      <option name="PARAMETERS" value="" />
+      <option name="SHOW_COMMAND_LINE" value="false" />
+      <option name="EMULATE_TERMINAL" value="false" />
+      <option name="MODULE_MODE" value="false" />
+      <option name="REDIRECT_INPUT" value="false" />
+      <option name="INPUT_FILE" value="" />
+      <method v="2" />
+    </configuration>
+    <configuration name="pytest in package_test.py" type="tests" factoryName="py.test" nameIsGenerated="true">
+      <module name="BIDS_coding" />
+      <option name="INTERPRETER_OPTIONS" value="" />
+      <option name="PARENT_ENVS" value="true" />
+      <envs>
+        <env name="PATH" value="C:\Users\ae166\Anaconda3;C:\Users\ae166\Anaconda3\Library\mingw-w64\bin;C:\Users\ae166\Anaconda3\Library\usr\bin;C:\Users\ae166\Anaconda3\Library\bin;C:\Users\ae166\Anaconda3\Scripts;C:\Users\ae166\Anaconda3\bin;C:\Users\ae166\Anaconda3\c ondabin;C:\ProgramData\Oracle\Java\javapath;C:\WINDOWS\system32;C:\WINDOWS;C:\WINDOWS\System32\Wbem;C:\WINDOWS\System32\WindowsPowerShell\v1.0;C:\Program Files\MATLAB\R2018b\bin;C:\WINDOWS\System32\OpenSSH;C:\Program Files (x86)\Sennheise r\SenncomSDK;C:\Users\ae166\AppData\Local\Microsoft\WindowsApps;C:\Users\ae166\AppData\Local\Programs\Git LFS;C:\Users\ae166\AppData\Local\Programs\Git\cmd;C:\Users\ae166\AppData\Local\Programs\Microsoft VS Code\bin " />
+      </envs>
+      <option name="SDK_HOME" value="" />
+      <option name="WORKING_DIRECTORY" value="" />
+      <option name="IS_MODULE_SDK" value="true" />
+      <option name="ADD_CONTENT_ROOTS" value="true" />
+      <option name="ADD_SOURCE_ROOTS" value="true" />
+      <option name="_new_keywords" value="&quot;&quot;" />
+      <option name="_new_parameters" value="&quot;&quot;" />
+      <option name="_new_additionalArguments" value="&quot;&quot;" />
+      <option name="_new_target" value="&quot;$PROJECT_DIR$/package_test.py&quot;" />
+      <option name="_new_targetType" value="&quot;PATH&quot;" />
+      <method v="2" />
+    </configuration>
+    <list>
+      <item itemvalue="Python.Bids_coding" />
+      <item itemvalue="Python tests.pytest in package_test.py" />
+    </list>
   </component>
   <component name="SpellCheckerSettings" RuntimeDictionaries="0" Folders="0" CustomDictionaries="0" DefaultDictionary="application-level" UseSingleDictionary="true" transferred="true" />
   <component name="SvnConfiguration">
@@ -72,6 +127,14 @@
       <option name="presentableId" value="Default" />
       <updated>1624377698423</updated>
     </task>
+    <task id="LOCAL-00001" summary="working on json and tsvs 2">
+      <created>1625604326922</created>
+      <option name="number" value="00001" />
+      <option name="presentableId" value="LOCAL-00001" />
+      <option name="project" value="LOCAL" />
+      <updated>1625604326922</updated>
+    </task>
+    <option name="localTasksCounter" value="2" />
     <servers />
   </component>
   <component name="Vcs.Log.Tabs.Properties">
@@ -90,5 +153,7 @@
     <ignored-roots>
       <path value="$PROJECT_DIR$" />
     </ignored-roots>
+    <MESSAGE value="working on json and tsvs 2" />
+    <option name="LAST_COMMIT_MESSAGE" value="working on json and tsvs 2" />
   </component>
 </project>

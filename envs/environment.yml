@@ -1,4 +1,4 @@
-name: myenv2
+name: BIDS_coding
 channels:
   - defaults
 dependencies:

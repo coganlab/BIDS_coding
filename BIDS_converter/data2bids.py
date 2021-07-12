@@ -164,21 +164,32 @@ class Data2Bids():  # main conversion and file organization program
         self.sample_rate = {}
         self._ignore = []
         part_match = None
+        task_label_match = None
         if self._data_dir:
             for root, _, files in os.walk(self._data_dir):
-                for file in files:
+                while files:
+                    file = files.pop(0)
                     src = os.path.join(root, file)
                     if not part_match == self.match_regexp(self._config["partLabel"], file):
                         part_match = self.match_regexp(self._config["partLabel"], file)
                         self.channels[part_match] = []
                     part_match_z = self.part_check(part_match)[1]
+                    df = None
                     for name, var in self._config["ieeg"]["channels"].items():
-                        name = os.path.join(root, name)
-                        print(name, var)
-                        df = mat2df(name, var)
-                    task_label_match = self.generate_names(src, part_match=part_match, verbose=False)[-2]
-                    df.to_csv(self._bids_dir + "sub-" + part_match_z + "/sub-" + part_match_z + "_task" +
-                              task_label_match + "_channels.tsv", sep="\t" )
+                        if name in src:
+                            df = mat2df(src, var)
+                    name_gen = self.generate_names(src, part_match=part_match, verbose=False)
+                    if name_gen is not None and name_gen[-2] is not None:
+                        task_label_match = name_gen[-2]
+                    if df is None:
+                        continue
+                    elif task_label_match is None:
+                        files.append(file)
+                        continue
+                    filename = os.path.join(self._bids_dir, "sub-" + part_match_z, "sub-" + part_match_z + "_task-" +
+                                            task_label_match + "_channels.tsv")
+                    os.mkdir(os.path.dirname(filename))
+                    df.to_csv(filename, sep="\t", index=False)
                     for name, var in headers_dict.items():
                         if name == part_match:
                             if isinstance(var, str):
@@ -769,7 +780,7 @@ class Data2Bids():  # main conversion and file organization program
             try:
                 part_match = self.match_regexp(self._config["partLabel"], filename)
             except AssertionError:
-                print("No participant found for %s" %filename)
+                print("No participant found for %s" % filename)
             except KeyError as e:
                 print("Participant label pattern must be defined")
                 raise e
@@ -1110,8 +1121,7 @@ class Data2Bids():  # main conversion and file organization program
                         extra_arrays = []
                         extra_signal_headers = []
                         if any(len(mat2df(os.path.join(root, fname))) == f.samples_in_file(0) for fname in
-                               [i for i in files if i.endswith(
-                                   ".mat")]) or any(
+                               [i for i in files if i.endswith(".mat")]) or any(
                             len(mat2df(os.path.join(root, fname))) == f.samples_in_file(0) for fname in [
                                 i for i in mat_list if i.endswith(".mat")]):
 
