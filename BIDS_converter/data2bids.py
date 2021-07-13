@@ -11,7 +11,7 @@ import json
 import gzip
 import threading
 import gc
-from typing import List, Any
+from typing import List, Any, Union
 import numpy as np
 import nibabel as nib
 import csv
@@ -21,6 +21,7 @@ import pydicom as dicom
 import pandas as pd
 import exrex as ex
 import datetime
+import wave
 from pyedflib import highlevel, EdfReader
 from matgrab import mat2df
 from bids import layout
@@ -734,7 +735,7 @@ class Data2Bids():  # main conversion and file organization program
         chn_nums.sort()
 
         try:
-            check_sep = self._config["eventFormat.Sep"]
+            check_sep = self._config["eventFormat"]["Sep"]
         except (KeyError, AssertionError) as e:
             check_sep = None
 
@@ -1201,10 +1202,10 @@ class Data2Bids():  # main conversion and file organization program
                                                  self._config["runIndex"]["content"][0] + ")_events.tsv", file)
                             if match_tsv:
                                 df = pd.read_csv(os.path.join(file_path, file), sep="\t", header=0)
-                                num_list = [round((float(x) / float(self._config["eventFormat.SampleRate"])) *
+                                num_list = [round((float(x) / float(self._config["eventFormat"]["SampleRate"])) *
                                                   signal_headers[0]["sample_rate"]) for x in (
-                                                df[self._config["eventFormat.Timing"]["start"]][0],
-                                                df[self._config["eventFormat.Timing"]["end"]].iloc[-1])]
+                                                df[self._config["eventFormat"]["Timing"]["start"]][0],
+                                                df[self._config["eventFormat"]["Timing"]["end"]].iloc[-1])]
                                 start_nums.append(tuple(num_list))
                                 matches.append(match_tsv)
                         # print(start_nums)
@@ -1242,12 +1243,13 @@ class Data2Bids():  # main conversion and file organization program
                                                 digital=self._config["ieeg"]["digital"])
                             df = pd.read_csv(os.path.join(file_path, matches[i].string), sep="\t", header=0)
                             os.remove(os.path.join(file_path, matches[i].string))
-                            for col in self._config["eventFormat.Timing"].values():
+                            for col in self._config["eventFormat"]["Timing"].values():
                                 df[col] = round(pd.to_numeric(df[col], "coerce") - (int(start) /
                                                                                     int(signal_headers[0][
                                                                                             "sample_rate"]) *
                                                                                     int(self._config[
-                                                                                            "eventFormat.SampleRate"])))
+                                                                                            "eventFormat"]["SampleRate"]
+                                                                                        )))
                             df.to_csv(os.path.join(file_path, matches[i].string), sep="\t")
                             # dont forget .json files!
                             self.write_sidecar(edf_name)
@@ -1305,6 +1307,45 @@ class Data2Bids():  # main conversion and file organization program
             with open(os.path.splitext(full_file)[0] + ".json", "w") as fst:
                 json.dump(data, fst)
 
+    def frame2bids(self, df: pd.DataFrame, events: Union[dict, list[dict]], data_sample_rate=None, stim_file_dir=None):
+        new_df = None
+        if isinstance(events, dict):
+            events = list(events)
+        for event in events:
+            temp_df = pd.DataFrame()
+            for key, value in event.items():
+                if " " not in value and value not in df.columns:
+                    df[value] = value
+                temp_df[key] = df.eval(value)
+            if "duration" not in temp_df.columns:
+                if "stim_file" in temp_df.columns:
+                    temp = []
+                    for fname in temp_df["stim_file"].iteritems():
+                        if fname.endswith(".wav"):
+                            if stim_file_dir is not None:
+                                fname = os.path.join(stim_file_dir,fname)
+                            with wave.open(fname, 'r') as f:
+                                frames = f.getnframes()
+                                rate = f.getframerate()
+                                duration = frames / float(rate)
+                        else:
+                            raise NotImplementedError("current build only supports .wav stim files")
+                        temp.append(duration)
+                    temp_df["duration"] = temp
+                else:
+                    raise LookupError("duration of event or copy of ")
+            if new_df is None:
+                new_df = temp_df
+            else:
+                new_df = new_df.append(temp_df, ignore_index=True, sort=False)
+
+        new_df["sample"] = new_df["onset"] / self._config["eventFormat"]["SampleRate"] * data_sample_rate
+        new_df["onset"] = new_df["onset"] / self._config["eventFormat"]["SampleRate"]
+        new_df["duration"] = new_df["duration"] / self._config["eventFormat"]["SampleRate"]
+
+        return new_df
+
+
     def mat2tsv(self, mat_files):
         part_match = None
         written = True
@@ -1316,15 +1357,16 @@ class Data2Bids():  # main conversion and file organization program
                 if written:
                     df = pd.DataFrame()
                 elif not part_match == self.match_regexp(self._config["partLabel"], mat_file):
-                    b_index = [j not in df.columns.values.tolist() for j in self._config["eventFormat.Sep"]].index(True)
+                    b_index = [j not in df.columns.values.tolist() for j in self._config["eventFormat"]["Sep"]].index(
+                        True)
                     raise FileNotFoundError("{config} variable was not found in {part}'s event files".format(
-                        config=list(self._config["eventFormat.Sep"].values())[b_index], part=part_match))
+                        config=list(self._config["eventFormat"]["Sep"].values())[b_index], part=part_match))
             try:
                 part_match = self.match_regexp(self._config["partLabel"], mat_file)
             except AssertionError:
                 raise SyntaxError("file: {filename} has no matching {config}\n".format(filename=mat_file, config=
                 self._config["content"][:][0]))
-            df_new = mat2df(mat_file, self._config["eventFormat"])
+            df_new = mat2df(mat_file, self._config["eventFormat"]["Labels"])
             # check to see if new data is introduced. If not then keep searching
             if isinstance(df_new, pd.Series):
                 df_new = pd.DataFrame(df_new)
@@ -1339,9 +1381,9 @@ class Data2Bids():  # main conversion and file organization program
             if self._is_verbose:
                 print(df)
             try:
-                if self._config["eventFormat.IDcol"] in df.columns.values.tolist():  # test if edfs should be
+                if self._config["eventFormat"]["IDcol"] in df.columns.values.tolist():  # test if edfs should be
                     # separated by block or not
-                    if len(df[self._config["eventFormat.IDcol"]].unique()) == 1 and self._config["split"]["Sep"] not \
+                    if len(df[self._config["eventFormat"]["IDcol"]].unique()) == 1 and self._config["split"]["Sep"] not \
                             in ["all", True] or not self._config["split"]["Sep"]:
                         # CHANGE this in case literal name doesn't change
                         is_separate = False
@@ -1349,7 +1391,7 @@ class Data2Bids():  # main conversion and file organization program
                         # construct fake orig data name to run through name generator
                         # fix this as well so it works for all data types and modalities
                         match_name = mat_file.split(os.path.basename(mat_file))[0] + \
-                                     df[self._config["eventFormat.IDcol"]][0] + self._config["ieeg"]["content"][0][1]
+                                     df[self._config["eventFormat"]["IDcol"]][0] + self._config["ieeg"]["content"][0][1]
                     else:  # this means there was more than one recording session. In this case we will separate each
                         # trial block into a separate "run"
                         is_separate = True
@@ -1361,16 +1403,16 @@ class Data2Bids():  # main conversion and file organization program
             # write the tsv from the dataframe
             # if not changed: check to see if there is anything new to write
             if is_separate:
-                if not all(j in df.columns.values.tolist() for j in self._config["eventFormat.Sep"].values()):
+                if not all(j in df.columns.values.tolist() for j in self._config["eventFormat"]["Sep"].values()):
                     if self._is_verbose:
                         print(mat_file)
                     continue
 
                 # make sure numbers do not repeat when not wanted
-                df_unique = df.filter(self._config["eventFormat.Sep"].values()).drop_duplicates()
+                df_unique = df.filter(self._config["eventFormat"]["Sep"].values()).drop_duplicates()
                 for i in range(df_unique.shape[0])[1:]:
-                    for j in self._config["eventFormat.Sep"].keys():
-                        jval = self._config["eventFormat.Sep"][j]
+                    for j in self._config["eventFormat"]["Sep"].keys():
+                        jval = self._config["eventFormat"]["Sep"][j]
                         try:
                             if self._config[j]["repeat"] is False:
                                 try:  # making sure actual key errors get caught
@@ -1384,16 +1426,16 @@ class Data2Bids():  # main conversion and file organization program
                             continue
 
                 tupelist = list(
-                    df.filter(self._config["eventFormat.Sep"].values()).drop_duplicates().itertuples(index=False))
+                    df.filter(self._config["eventFormat"]["Sep"].values()).drop_duplicates().itertuples(index=False))
                 for i in range(len(tupelist)):  # iterate through every block
                     nindex = (df.where(
-                        df.filter(self._config["eventFormat.Sep"].values()) == tupelist[i]) == df).filter(
-                        self._config["eventFormat.Sep"].values()).all(axis=1)
+                        df.filter(self._config["eventFormat"]["Sep"].values()) == tupelist[i]) == df).filter(
+                        self._config["eventFormat"]["Sep"].values()).all(axis=1)
                     match_name = mat_file.split(os.path.basename(mat_file))[0] + str(
-                        df[self._config["eventFormat.IDcol"]][nindex].iloc[0])
-                    for k in self._config["eventFormat.Sep"].keys():
+                        df[self._config["eventFormat"]["IDcol"]][nindex].iloc[0])
+                    for k in self._config["eventFormat"]["Sep"].keys():
                         if k in self._config.keys():
-                            data = str(df_unique[self._config["eventFormat.Sep"][k]].iloc[i])
+                            data = str(df_unique[self._config["eventFormat"]["Sep"][k]].iloc[i])
                             match_name = match_name + self.gen_match_regexp(self._config[k], data)
 
                     # fix this to check for data type

@@ -69,17 +69,22 @@
     , "content" : ["[0-9]{6}"]
     }
 ,"eventFiles" : "([Tt]rial(s|Info).*?\\.mat)"
-,"eventFormat" : ["Subject", "Trial", "Rec", "Day", "FilenamePrefix", "Start",
+,"eventFormat" : {"Labels": ["Subject", "Trial", "Rec", "Day", "FilenamePrefix", "Start",
     "Auditory", "Go", "StartCode", "AuditoryCode", "GoCode", "Noisy", "NoResponse",
     "ResponseStart","ResponseEnd","cue", "sound", "go", "cueTime", "block", "cueStart",
      "Trigger", "cueEnd", "audioStart", "audioAlignedTrigger", "delStart", "delEnd",
       "goStart", "goEnd", "respStart", "respEnd", "isiStart", "isiEnd", "tCaptureStart"]
-,"eventFormat.IDcol" : "FilenamePrefix"
-,"eventFormat.Sep" : { "runIndex" : "block",
+                ,"IDcol" : "FilenamePrefix"
+                ,"Sep" : { "runIndex" : "block",
                              "acq" : "Rec" }
-,"eventFormat.Timing": { "start": "Start",
+                ,"Timing": { "start": "Start",
                           "end": "ResponseEnd" }
-, "eventFormat.SampleRate": 30000
+                ,"SampleRate": 30000
+                ,"Events" : [{"onset": "Start","duration": "(cueStart - cueEnd) * 30", "trial_num": "Trial","trial_type": "cue"},
+                             {"onset": "Auditory", "stim_file": "sound", "trial_num": "Trial", "trial_type": "Audio"},
+                             {"onset": "Go", "duration":  "(goStart - goEnd) * 30", "trial_num": "Trial", "trial_type": "go"},
+                             {"onset": "ResponseStart", "duration": "ResponseStart - ResponseEnd", "trial_num": "Trial","trial_type": "Response"}]
+        }
 , "split": { "Sep": "all",
             "buffer": 10,
             "practice": true},
