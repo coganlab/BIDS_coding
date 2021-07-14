@@ -167,6 +167,9 @@ class Data2Bids():  # main conversion and file organization program
         task_label_match = None
         if self._data_dir:
             for root, _, files in os.walk(self._data_dir):
+                files[:] = [f for f in files if
+                            not os.path.join(root,  # ignore BIDS directories and stimuli
+                                             f).startswith(self._bids_dir) and ".wav" not in os.path.join(root,f)]
                 while files:
                     file = files.pop(0)
                     src = os.path.join(root, file)
@@ -1250,7 +1253,10 @@ class Data2Bids():  # main conversion and file organization program
                                                                                     int(self._config[
                                                                                             "eventFormat"]["SampleRate"]
                                                                                         )))
-                            df.to_csv(os.path.join(file_path, matches[i].string), sep="\t")
+                            df_new = self.frame2bids(df, self._config["eventFormat"]["Events"],
+                                                     self._config["eventFormat"]["SampleRate"],
+                                                     os.path.join(self._data_dir, "stimuli"))
+                            df_new.to_csv(os.path.join(file_path, matches[i].string), sep="\t")
                             # dont forget .json files!
                             self.write_sidecar(edf_name)
                         continue
