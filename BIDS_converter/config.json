@@ -80,10 +80,10 @@
                 ,"Timing": { "start": "Start",
                           "end": "ResponseEnd" }
                 ,"SampleRate": 30000
-                ,"Events" : [{"onset": "Start","duration": "(cueStart - cueEnd) * 30", "trial_num": "Trial","trial_type": "cue"},
+                ,"Events" : [{"onset": "Start","duration": "(cueEnd - cueStart) * 30", "trial_num": "Trial","trial_type": "cue"},
                              {"onset": "Auditory", "stim_file": "sound", "trial_num": "Trial", "trial_type": "Audio"},
-                             {"onset": "Go", "duration":  "(goStart - goEnd) * 30", "trial_num": "Trial", "trial_type": "go"},
-                             {"onset": "ResponseStart", "duration": "ResponseStart - ResponseEnd", "trial_num": "Trial","trial_type": "Response"}]
+                             {"onset": "Go", "duration":  "(goEnd - goStart) * 30", "trial_num": "Trial", "trial_type": "go"},
+                             {"onset": "ResponseStart", "duration": "ResponseEnd - ResponseStart", "trial_num": "Trial","trial_type": "Response"}]
         }
 , "split": { "Sep": "all",
             "buffer": 10,

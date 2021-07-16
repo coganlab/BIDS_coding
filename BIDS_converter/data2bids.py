@@ -11,7 +11,7 @@ import json
 import gzip
 import threading
 import gc
-from typing import List, Any, Union
+from typing import Union
 import numpy as np
 import nibabel as nib
 import csv
@@ -21,10 +21,10 @@ import pydicom as dicom
 import pandas as pd
 import exrex as ex
 import datetime
-import wave
 from pyedflib import highlevel, EdfReader
 from matgrab import mat2df
 from bids import layout
+from scipy.io import wavfile
 
 
 def get_parser():  # parses flags at onset of command
@@ -143,8 +143,7 @@ class Data2Bids():  # main conversion and file organization program
         self._bids_version = "1.6.0"
         self._dataset_name = None
         self._data_types = {"anat": False, "func": False, "ieeg": False}
-
-        self.names_list_global: list[str] = []
+        self._ignore = []
 
         self.set_overwrite(overwrite)
         self.set_data_dir(input_dir, DICOM_path)
@@ -162,14 +161,12 @@ class Data2Bids():  # main conversion and file organization program
             headers_dict = None
         self.channels = {}
         self.sample_rate = {}
-        self._ignore = []
         part_match = None
         task_label_match = None
         if self._data_dir:
             for root, _, files in os.walk(self._data_dir):
-                files[:] = [f for f in files if
-                            not os.path.join(root,  # ignore BIDS directories and stimuli
-                                             f).startswith(self._bids_dir) and ".wav" not in os.path.join(root,f)]
+                # ignore BIDS directories and stimuli
+                files[:] = [f for f in files if os.path.join(root, f) not in self._ignore]
                 while files:
                     file = files.pop(0)
                     src = os.path.join(root, file)
@@ -376,6 +373,15 @@ class Data2Bids():  # main conversion and file organization program
             self.force_remove(newdir)
             os.mkdir(newdir)
         self._bids_dir = newdir
+        self._ignore.append(newdir)
+
+        # check for stimuli
+        stim_path = os.path.join(self._data_dir, "stimuli")
+        if os.path.isdir(stim_path):
+            os.mkdir(os.path.join(self._bids_dir, "stimuli"))
+            for stim in os.listdir(stim_path):
+                shutil.copy(os.path.join(stim_path, stim), os.path.join(self._bids_dir, "stimuli", stim))
+                self._ignore.append(os.path.join(stim_path, stim))
 
     def get_bids_version(self):
         return self._bids_version
@@ -554,7 +560,8 @@ class Data2Bids():  # main conversion and file organization program
                         print("No task found for %s" % src_file_path)
                         return
                 except AssertionError:
-                    print("No anat, func, or ieeg data type found for %s" % src_file_path)
+                    if verbose:
+                        print("No anat, func, or ieeg data type found for %s" % src_file_path)
                     return
                 except KeyError:
                     print("No anat, func, or ieeg data type found in config file, one of these data types is required")
@@ -565,15 +572,18 @@ class Data2Bids():  # main conversion and file organization program
             try:
                 SeqType = str(self.match_regexp(self._config["pulseSequenceType"], filename, subtype=True))
             except AssertionError:
-                print("No pulse sequence found for %s" % src_file_path)
+                if verbose:
+                    print("No pulse sequence found for %s" % src_file_path)
             except KeyError:
-                print("pulse sequence not listed for %s, will look for in file header" % src_file_path)
+                if verbose:
+                    print("pulse sequence not listed for %s, will look for in file header" % src_file_path)
             try:
                 if echo_match is None:
                     echo_match = self.match_regexp(self._config["echo"], filename)
                 new_name = new_name + "_echo-" + echo_match
             except AssertionError:
-                print("No echo found for %s" % src_file_path)
+                if verbose:
+                    print("No echo found for %s" % src_file_path)
 
         # check for optional labels
         try:
@@ -776,8 +786,6 @@ class Data2Bids():  # main conversion and file organization program
 
         assert part_match or filename
 
-        part_match_z = None
-
         if filename:
 
             try:
@@ -788,23 +796,11 @@ class Data2Bids():  # main conversion and file organization program
                 print("Participant label pattern must be defined")
                 raise e
 
-        try:
-            if re.match("^[^\d]{1,3}", part_match):
-                part_matches = re.split("([^\d]{1,3})", part_match, 1)
-                part_match_z = part_matches[1] + str(int(part_matches[2])).zfill(
-                    self._config["partLabel"]["fill"])
-            else:
-                part_match_z = str(int(part_match)).zfill(self._config["partLabel"]["fill"])
-            if os.path.isdir(self._bids_dir + "/sub-" + part_match_z) and not any(
-                    "sub-" + part_match_z in x for x in self.names_list_global):
-                print("Deleting old BIDS directory for subject %s" % part_match)
-                shutil.rmtree(self._bids_dir + "/sub-" + part_match_z, onerror=self.force_remove)
-        except OSError:  # problem spot, may miss deleting some files causing them to erroneously carry over
-            shutil.rmtree(self._bids_dir + "/sub-" + part_match, ignore_errors=True)
-        except TypeError:  # problem spot, may miss deleting some files causing them to erroneously carry over
-            shutil.rmtree(self._bids_dir + "/sub-" + part_match, ignore_errors=True)
-
-        self.names_list_global.append("sub-" + part_match_z)
+        if re.match("^[^\d]{1,3}", part_match):
+            part_matches = re.split("([^\d]{1,3})", part_match, 1)
+            part_match_z = part_matches[1] + str(int(part_matches[2])).zfill(self._config["partLabel"]["fill"])
+        else:
+            part_match_z = str(int(part_match)).zfill(self._config["partLabel"]["fill"])
 
         return part_match, part_match_z
 
@@ -856,13 +852,7 @@ class Data2Bids():  # main conversion and file organization program
                             'BIDSVersion': self._bids_version}
                     json.dump(data, fst, ensure_ascii=False, indent=4)
             # now we can scan all files and rearrange them
-            tsv_condition_runs = []
-            tsv_fso_runs = []
-            d_list = []
             part_match = None
-            run_list = []
-            mat_list = []
-            passed_list = []
             for root, _, files in os.walk(self._data_dir,
                                           topdown=True):
                 # each loop is a new participant so long as participant is top level
@@ -873,6 +863,11 @@ class Data2Bids():  # main conversion and file organization program
                 eeg = []
                 dst_file_path_list = []
                 names_list = []
+                mat_list = []
+                run_list = []
+                tsv_condition_runs = []
+                tsv_fso_runs = []
+                d_list = []
                 if not files:
                     continue
                 files.sort()
@@ -1160,7 +1155,6 @@ class Data2Bids():  # main conversion and file organization program
 
                     # move the sidecar from input to output
                     names_list.append(new_name)
-                    self.names_list_global.append(new_name)
                     dst_file_path_list.append(dst_file_path)
                     try:
                         if run_match is not None:
@@ -1246,17 +1240,12 @@ class Data2Bids():  # main conversion and file organization program
                                                 digital=self._config["ieeg"]["digital"])
                             df = pd.read_csv(os.path.join(file_path, matches[i].string), sep="\t", header=0)
                             os.remove(os.path.join(file_path, matches[i].string))
-                            for col in self._config["eventFormat"]["Timing"].values():
-                                df[col] = round(pd.to_numeric(df[col], "coerce") - (int(start) /
-                                                                                    int(signal_headers[0][
-                                                                                            "sample_rate"]) *
-                                                                                    int(self._config[
-                                                                                            "eventFormat"]["SampleRate"]
-                                                                                        )))
+                            # all column manipulation and math in frame2bids
                             df_new = self.frame2bids(df, self._config["eventFormat"]["Events"],
-                                                     self._config["eventFormat"]["SampleRate"],
-                                                     os.path.join(self._data_dir, "stimuli"))
-                            df_new.to_csv(os.path.join(file_path, matches[i].string), sep="\t")
+                                                     self.sample_rate[part_match],
+                                                     os.path.join(self._data_dir, "stimuli"), start)
+                            df_new.to_csv(os.path.join(file_path, matches[i].string), sep="\t", index=False,
+                                          na_rep="n/a")
                             # dont forget .json files!
                             self.write_sidecar(edf_name)
                         continue
@@ -1313,27 +1302,36 @@ class Data2Bids():  # main conversion and file organization program
             with open(os.path.splitext(full_file)[0] + ".json", "w") as fst:
                 json.dump(data, fst)
 
-    def frame2bids(self, df: pd.DataFrame, events: Union[dict, list[dict]], data_sample_rate=None, stim_file_dir=None):
+    def frame2bids(self, df: pd.DataFrame, events: Union[dict, list[dict]], data_sample_rate=None, stim_file_dir=None,
+                   start_at=0):
         new_df = None
         if isinstance(events, dict):
             events = list(events)
         for event in events:
             temp_df = pd.DataFrame()
             for key, value in event.items():
-                if " " not in value and value not in df.columns:
-                    df[value] = value
-                temp_df[key] = df.eval(value)
+                print(key, value)
+                if not re.match("[\w\d]+[ +\-/*%]+[\w\d]+", value) and value not in df.columns:
+                    temp_df[key] = value
+                else:
+                    try:
+                        temp_df[key] = df.eval(value)  # pandas eval is the backend equation interpreter
+                    except TypeError as e:
+                        if re.match("[\w\d]+[ +\-/*%]+[\w\d]+", value):  # if evaluating a math expression
+                            for name in [i for i in re.split("[ +\-/*%]", value) if i != '']:
+                                df[name] = pd.to_numeric(df[name], errors="coerce")
+                            temp_df[key] = df.eval(value)
+                        else:
+                            raise e
             if "duration" not in temp_df.columns:
                 if "stim_file" in temp_df.columns:
                     temp = []
-                    for fname in temp_df["stim_file"].iteritems():
+                    for _, fname in temp_df["stim_file"].iteritems():
                         if fname.endswith(".wav"):
                             if stim_file_dir is not None:
-                                fname = os.path.join(stim_file_dir,fname)
-                            with wave.open(fname, 'r') as f:
-                                frames = f.getnframes()
-                                rate = f.getframerate()
-                                duration = frames / float(rate)
+                                fname = os.path.join(stim_file_dir, fname)
+                            frames, data = wavfile.read(fname)
+                            duration = data.size / frames * self._config["eventFormat"]["SampleRate"]
                         else:
                             raise NotImplementedError("current build only supports .wav stim files")
                         temp.append(duration)
@@ -1345,12 +1343,26 @@ class Data2Bids():  # main conversion and file organization program
             else:
                 new_df = new_df.append(temp_df, ignore_index=True, sort=False)
 
-        new_df["sample"] = new_df["onset"] / self._config["eventFormat"]["SampleRate"] * data_sample_rate
-        new_df["onset"] = new_df["onset"] / self._config["eventFormat"]["SampleRate"]
-        new_df["duration"] = new_df["duration"] / self._config["eventFormat"]["SampleRate"]
+        if data_sample_rate is None:
+            # onset is timing of even onset (in seconds)
+            new_df["onset"] = new_df["sample"] / self._config["eventFormat"]["SampleRate"]
+        else:
+            # sample is in exact sample of event onset (at eeg sample rate)
+            new_df["sample"] = (new_df["onset"] / self._config["eventFormat"][
+                "SampleRate"] * data_sample_rate) - start_at
+            print(new_df["onset"] / self._config["eventFormat"]["SampleRate"])
+            print(start_at)
+            # onset is timing of even onset (in seconds)
+            new_df["onset"] = new_df["sample"] / data_sample_rate
+            new_df["sample"] = new_df["sample"].round().astype(int)
+            print(new_df["onset"])
+        # duration is duration of event (in seconds)
+        new_df["duration"] = new_df["duration"].astype(float) / self._config["eventFormat"]["SampleRate"]
 
-        return new_df
+        if self._is_verbose:
+            print(new_df.sort_values("onset"))
 
+        return new_df.sort_values("onset")
 
     def mat2tsv(self, mat_files):
         part_match = None
