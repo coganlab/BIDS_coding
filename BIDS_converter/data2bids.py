@@ -1287,15 +1287,16 @@ class Data2Bids:  # main conversion and file organization program
                                 print(full_name + "(Samples[" + str(start) + ":" + str(end) + "]) ---> " + edf_name)
                             highlevel.write_edf(edf_name, new_array, signal_headers, header,
                                                 digital=self._config["ieeg"]["digital"])
-                            df = pd.read_csv(os.path.join(file_path, matches[i].string), sep="\t", header=0)
-                            os.remove(os.path.join(file_path, matches[i].string))
+                            df = pd.read_csv(tsv_name, sep="\t", header=0)
+                            os.remove(tsv_name)
                             # all column manipulation and math in frame2bids
                             df_new = self.frame2bids(df, self._config["eventFormat"]["Events"],
                                                      self.sample_rate[part_match], start)
-                            df_new.to_csv(os.path.join(file_path, matches[i].string), sep="\t", index=False,
+                            df_new.to_csv(tsv_name, sep="\t", index=False,
                                           na_rep="n/a")
                             # dont forget .json files!
                             self.write_sidecar(edf_name)
+                            #self.write_sidecar(tsv_name)
                         continue
                     # write JSON file for any missing files
                     if file_path.endswith(("/anat", "/func", "/ieeg")):
