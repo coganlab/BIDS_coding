@@ -171,7 +171,7 @@ class Data2Bids:  # main conversion and file organization program
             else:
                 self.stim_dir = None
                 return
-            os.mkdir(os.path.join(self._bids_dir, "stimuli"))
+        os.mkdir(os.path.join(self._bids_dir, "stimuli"))
         for item in os.listdir(dir):
             self._ignore.append(os.path.join(dir, item))
             shutil.copy(os.path.join(dir, item), os.path.join(self._bids_dir, "stimuli", item))
@@ -1361,7 +1361,6 @@ class Data2Bids:  # main conversion and file organization program
             event_order += 1
             temp_df = pd.DataFrame()
             for key, value in event.items():
-                print(key, value)
                 if not re.match(r"[\w\d()_]+[ +\-/*%]+[\w\d()_]+", value) and value not in df.columns:
                     temp_df[key] = value
                 else:
@@ -1372,7 +1371,6 @@ class Data2Bids:  # main conversion and file organization program
                         print("Warning: empty cells detected, converting to numeric with NaNs")
                         if re.match(r"[\w\d()_]+[ +\-/*%]+[\w\d()_]+", value):  # if evaluating a math expression
                             for name in [i for i in re.split(r"[ +\-/*%]", value) if i != '']:
-                                print("name: " + name)
                                 df[name] = pd.to_numeric(df[name], errors="coerce")
                             temp_df[key] = df.eval(value)
                         else:
