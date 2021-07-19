@@ -21,6 +21,7 @@ import pydicom as dicom
 import pandas as pd
 import exrex as ex
 import datetime
+import stat
 from pyedflib import highlevel, EdfReader
 from matgrab import mat2df
 from bids import layout
@@ -121,6 +122,14 @@ def get_parser():  # parses flags at onset of command
     )
 
     parser.add_argument(
+        "-s"
+        , "--stim_dir"
+        , required=False
+        , default=None
+        , help="directory containing stimuli files",
+    )
+
+    parser.add_argument(
         "-v"
         , "--verbose"
         , required=False
@@ -128,13 +137,13 @@ def get_parser():  # parses flags at onset of command
         , help="verbosity",
     )
 
-    return (parser)
+    return parser
 
 
-class Data2Bids():  # main conversion and file organization program
+class Data2Bids:  # main conversion and file organization program
 
-    def __init__(self, input_dir=None, config=None, output_dir=None,
-                 DICOM_path=None, multi_echo=None, overwrite=False, channels=None, verbose=False):
+    def __init__(self, input_dir=None, config=None, output_dir=None, DICOM_path=None, multi_echo=None, overwrite=False,
+                 stim_dir=None, channels=None, verbose=False):
         # sets the .self globalization for self variables
         self._input_dir = None
         self._config_path = None
@@ -152,7 +161,21 @@ class Data2Bids():  # main conversion and file organization program
         self.set_DICOM(DICOM_path)
         self.set_multi_echo(multi_echo)
         self.set_verbosity(verbose)
+        self.set_stim_dir(stim_dir)
         self.set_channels(channels)
+
+    def set_stim_dir(self, dir):
+        if dir is None:
+            if "stimuli" in os.listdir(self._data_dir):
+                dir = os.path.join(self._data_dir, "stimuli")
+            else:
+                self.stim_dir = None
+                return
+            os.mkdir(os.path.join(self._bids_dir, "stimuli"))
+        for item in os.listdir(dir):
+            self._ignore.append(os.path.join(dir, item))
+            shutil.copy(os.path.join(dir, item), os.path.join(self._bids_dir, "stimuli", item))
+        self.stim_dir = dir
 
     def set_channels(self, channels):
         try:
@@ -216,7 +239,8 @@ class Data2Bids():  # main conversion and file organization program
                             elif name.endswith(tuple(self._config['dataFormat'])) and re.match(
                                     ".*?" + part_match + ".*?" + name, src):
                                 raise NotImplementedError(src +
-                                                          "\nthis file format does not yet support {ext} files for channel labels".format(
+                                                          "\nthis file format does not yet support {ext} files for "
+                                                          "channel labels".format(
                                                               ext=os.path.splitext(src)[1]))
         # print(self._ignore)
         if isinstance(channels, str) and channels not in channels[part_match]:
@@ -289,11 +313,11 @@ class Data2Bids():  # main conversion and file organization program
                     # output = proc.stdout.read()
                     outs, errs = proc.communicate()
                     prefix = re.match(".*/sub-{SUB_NUM}/(run{SCAN_NUM}".format(SUB_NUM=sub_num,
-                                                                               SCAN_NUM=scan_num) + "[^ \(\"\\n\.]*).*",
+                                                                               SCAN_NUM=scan_num) + r"[^ \(\"\\n\.]*).*",
                                       str(outs)).group(1)
                     for file in os.listdir(sub_dir):
-                        mefile = re.match("run{SCAN_NUM}(\.e\d\d)\.nii".format(SCAN_NUM=scan_num), file)
-                        if re.match("run{SCAN_NUM}\.e\d\d.nii".format(SCAN_NUM=scan_num), file):
+                        mefile = re.match(r"run{SCAN_NUM}(\.e\d\d)\.nii".format(SCAN_NUM=scan_num), file)
+                        if re.match(r"run{SCAN_NUM}\.e\d\d.nii".format(SCAN_NUM=scan_num), file):
                             shutil.move(os.path.join(sub_dir, file),
                                         os.path.join(sub_dir, prefix + mefile.group(1) + ".nii"))
                             shutil.copy(os.path.join(sub_dir, prefix + ".json"),
@@ -375,13 +399,8 @@ class Data2Bids():  # main conversion and file organization program
         self._bids_dir = newdir
         self._ignore.append(newdir)
 
-        # check for stimuli
-        stim_path = os.path.join(self._data_dir, "stimuli")
-        if os.path.isdir(stim_path):
-            os.mkdir(os.path.join(self._bids_dir, "stimuli"))
-            for stim in os.listdir(stim_path):
-                shutil.copy(os.path.join(stim_path, stim), os.path.join(self._bids_dir, "stimuli", stim))
-                self._ignore.append(os.path.join(stim_path, stim))
+        # as of BIDS ver 1.6.0, CT is not a part of BIDS, so check for CT files and add to .bidsignore
+        self.bidsignore("*_CT.*")
 
     def get_bids_version(self):
         return self._bids_version
@@ -476,8 +495,8 @@ class Data2Bids():  # main conversion and file organization program
         if verbose is None:
             verbose = self._is_verbose
         try:
-            if re.match("^[^\d]{1,3}", part_match):
-                part_matches = re.split("([^\d]{1,3})", part_match, 1)
+            if re.match(r"^[^\d]{1,3}", part_match):
+                part_matches = re.split(r"([^\d]{1,3})", part_match, 1)
                 part_match_z = part_matches[1] + str(int(part_matches[2])).zfill(self._config["partLabel"]["fill"])
             else:
                 part_match_z = str(int(part_match)).zfill(self._config["partLabel"]["fill"])
@@ -501,8 +520,8 @@ class Data2Bids():  # main conversion and file organization program
             if run_match is None:
                 run_match = self.match_regexp(self._config["runIndex"], filename)
             try:
-                if re.match("^[^\d]{1,3}", run_match):
-                    run_matches = re.split("([^\d]{1,3})", run_match, 1)
+                if re.match(r"^[^\d]{1,3}", run_match):
+                    run_matches = re.split(r"([^\d]{1,3})", run_match, 1)
                     run_match = run_matches[1] + str(int(run_matches[2])).zfill(self._config["runIndex"]["fill"])
                 else:
                     run_match = str(int(run_match)).zfill(self._config["runIndex"]["fill"])
@@ -590,8 +609,8 @@ class Data2Bids():  # main conversion and file organization program
             if acq_match is None:
                 acq_match = self.match_regexp(self._config["acq"], filename)
             try:
-                if re.match("^[^\d]{1,3}", acq_match):
-                    acq_matches = re.split("([^\d]{1,3})", acq_match, 1)
+                if re.match(r"^[^\d]{1,3}", acq_match):
+                    acq_matches = re.split(r"([^\d]{1,3})", acq_match, 1)
                     acq_match = acq_matches[1] + str(int(acq_matches[2])).zfill(self._config["acq"]["fill"])
                 else:
                     acq_match = str(int(acq_match)).zfill(self._config["acq"]["fill"])
@@ -715,14 +734,37 @@ class Data2Bids():  # main conversion and file organization program
         raise TypeError
 
     def force_remove(self, mypath):
-
-        if os.path.isfile(mypath):
-            os.remove(mypath)
-        try:
-            if os.path.isdir(mypath):
-                self.delete_folder(Path(mypath))
-        except OSError:
-            shutil.rmtree(mypath, ignore_errors=True)
+        x = 0
+        e = None
+        while os.path.isfile(mypath) or os.path.isdir(mypath):
+            x += 1
+            if os.path.isfile(mypath):
+                os.remove(mypath)
+            try:
+                if os.path.isdir(mypath):
+                    self.delete_folder(Path(mypath))
+            except OSError:
+                try:
+                    shutil.rmtree(mypath)
+                except PermissionError:
+                    for root, dirs, files in os.walk(mypath, topdown=False):
+                        for file in files:
+                            fullfile = os.path.join(root, file)
+                            os.chmod(fullfile, stat.S_IWUSR)
+                            os.remove(fullfile)
+                        for dir in dirs:
+                            try:
+                                self.delete_folder(os.path.join(root, dir))
+                            except AttributeError:
+                                os.rmdir(os.path.join(root, dir))
+                    shutil.rmtree(mypath, ignore_errors=True)
+                except Exception as e:
+                    shutil.rmtree(mypath, ignore_errors=True)
+            if x >= 1000:
+                if e is not None:
+                    raise RuntimeError(mypath + " could not remove all files or directories because of " + e)
+                else:
+                    raise
 
     def delete_folder(self, pth):
         for sub in pth.iterdir():
@@ -796,13 +838,22 @@ class Data2Bids():  # main conversion and file organization program
                 print("Participant label pattern must be defined")
                 raise e
 
-        if re.match("^[^\d]{1,3}", part_match):
-            part_matches = re.split("([^\d]{1,3})", part_match, 1)
+        if re.match(r"^[^\d]{1,3}", part_match):
+            part_matches = re.split(r"([^\d]{1,3})", part_match, 1)
             part_match_z = part_matches[1] + str(int(part_matches[2])).zfill(self._config["partLabel"]["fill"])
         else:
             part_match_z = str(int(part_match)).zfill(self._config["partLabel"]["fill"])
 
         return part_match, part_match_z
+
+    def bidsignore(self, string: str):
+        if not os.path.isfile(self._bids_dir + "/.bidsignore"):
+            with open(self._bids_dir + "/.bidsignore", 'w') as f:
+                f.write(string + "\n")
+        else:
+            with open(self._bids_dir + "/.bidsignore", "r+") as f:
+                if string not in f.read():
+                    f.write(string + "\n")
 
     def run(self):  # main function
 
@@ -1215,13 +1266,7 @@ class Data2Bids():  # main conversion and file organization program
                                     os.makedirs(os.path.join(file_path, "practice"), exist_ok=True)
                                     highlevel.write_edf(practice, np.split(array, [0, start_nums[0][0]], axis=1)[1],
                                                         signal_headers, header, digital=self._config["ieeg"]["digital"])
-                                    if not os.path.isfile(self._bids_dir + "/.bidsignore"):
-                                        with open(self._bids_dir + "/.bidsignore", 'w') as f:
-                                            f.write("*practice*\n")
-                                    else:
-                                        with open(self._bids_dir + "/.bidsignore", "r+") as f:
-                                            if "practice" not in f.read():
-                                                f.write("*practice*\n")
+                                    self.bidsignore("*practice*")
                             else:
                                 start = start_nums[i - 1][1]
 
@@ -1307,62 +1352,72 @@ class Data2Bids():  # main conversion and file organization program
         new_df = None
         if isinstance(events, dict):
             events = list(events)
+        event_order = 0
         for event in events:
+            event_order += 1
             temp_df = pd.DataFrame()
             for key, value in event.items():
                 print(key, value)
-                if not re.match("[\w\d]+[ +\-/*%]+[\w\d]+", value) and value not in df.columns:
+                if not re.match(r"[\w\d()_]+[ +\-/*%]+[\w\d()_]+", value) and value not in df.columns:
                     temp_df[key] = value
                 else:
                     try:
                         temp_df[key] = df.eval(value)  # pandas eval is the backend equation interpreter
+                        # print(df.eval(value))
                     except TypeError as e:
-                        if re.match("[\w\d]+[ +\-/*%]+[\w\d]+", value):  # if evaluating a math expression
-                            for name in [i for i in re.split("[ +\-/*%]", value) if i != '']:
+                        print("Warning: empty cells detected, converting to numeric with NaNs")
+                        if re.match(r"[\w\d()_]+[ +\-/*%]+[\w\d()_]+", value):  # if evaluating a math expression
+                            for name in [i for i in re.split(r"[ +\-/*%]", value) if i != '']:
+                                print("name: " + name)
                                 df[name] = pd.to_numeric(df[name], errors="coerce")
                             temp_df[key] = df.eval(value)
                         else:
                             raise e
+            if "trial_num" not in temp_df.columns:
+                temp_df["trial_num"] = [1 + i for i in list(range(temp_df.shape[0]))]
             if "duration" not in temp_df.columns:
                 if "stim_file" in temp_df.columns:
                     temp = []
                     for _, fname in temp_df["stim_file"].iteritems():
                         if fname.endswith(".wav"):
-                            if stim_file_dir is not None:
-                                fname = os.path.join(stim_file_dir, fname)
+                            if self.stim_dir is not None:
+                                fname = os.path.join(self.stim_dir, fname)
                             frames, data = wavfile.read(fname)
-                            duration = data.size / frames * self._config["eventFormat"]["SampleRate"]
+                            duration = (data.size / frames) * self._config["eventFormat"]["SampleRate"]
                         else:
                             raise NotImplementedError("current build only supports .wav stim files")
                         temp.append(duration)
                     temp_df["duration"] = temp
                 else:
-                    raise LookupError("duration of event or copy of ")
+                    raise LookupError("duration of event or copy of audio file required but not found in " +
+                                      self._config_path)
+            temp_df["event_order"] = event_order
             if new_df is None:
                 new_df = temp_df
             else:
                 new_df = new_df.append(temp_df, ignore_index=True, sort=False)
-
+        print(new_df)
+        for name in ["onset", "duration"]:
+            if not (pd.api.types.is_float_dtype(new_df[name]) or pd.api.types.is_integer_dtype(new_df[name])):
+                new_df[name] = pd.to_numeric(new_df[name], errors="coerce")
         if data_sample_rate is None:
             # onset is timing of even onset (in seconds)
-            new_df["onset"] = new_df["sample"] / self._config["eventFormat"]["SampleRate"]
+            new_df["onset"] = new_df["onset"] / self._config["eventFormat"]["SampleRate"]
         else:
             # sample is in exact sample of event onset (at eeg sample rate)
             new_df["sample"] = (new_df["onset"] / self._config["eventFormat"][
                 "SampleRate"] * data_sample_rate) - start_at
-            print(new_df["onset"] / self._config["eventFormat"]["SampleRate"])
-            print(start_at)
             # onset is timing of even onset (in seconds)
             new_df["onset"] = new_df["sample"] / data_sample_rate
-            new_df["sample"] = new_df["sample"].round().astype(int)
-            print(new_df["onset"])
+            # round sample to nearest frame
+            new_df["sample"] = pd.to_numeric(new_df["sample"].round(), errors="coerce", downcast="integer")
         # duration is duration of event (in seconds)
-        new_df["duration"] = new_df["duration"].astype(float) / self._config["eventFormat"]["SampleRate"]
+        new_df["duration"] = new_df["duration"] / self._config["eventFormat"]["SampleRate"]
 
         if self._is_verbose:
-            print(new_df.sort_values("onset"))
+            print(new_df.sort_values(["trial_num", "event_order"]).drop(columns="event_order"))
 
-        return new_df.sort_values("onset")
+        return new_df.sort_values(["trial_num", "event_order"]).drop(columns="event_order")
 
     def mat2tsv(self, mat_files):
         part_match = None
