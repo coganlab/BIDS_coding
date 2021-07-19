@@ -5,7 +5,7 @@
       <excludeFolder url="file://$MODULE_DIR$/.pytest_cache" />
       <excludeFolder url="file://$MODULE_DIR$/BIDS_converter/.pytest_cache" />
     </content>
-    <orderEntry type="jdk" jdkName="Python 3.9 (BIDS_coding)" jdkType="Python SDK" />
+    <orderEntry type="jdk" jdkName="Python 3.8 (BIDS_coding)" jdkType="Python SDK" />
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="module" module-name="pyedflib" />
     <orderEntry type="module" module-name="Workspace" />

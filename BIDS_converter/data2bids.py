@@ -11,7 +11,7 @@ import json
 import gzip
 import threading
 import gc
-from typing import Union
+from typing import Union, List
 import numpy as np
 import nibabel as nib
 import csv
@@ -1291,8 +1291,7 @@ class Data2Bids:  # main conversion and file organization program
                             os.remove(os.path.join(file_path, matches[i].string))
                             # all column manipulation and math in frame2bids
                             df_new = self.frame2bids(df, self._config["eventFormat"]["Events"],
-                                                     self.sample_rate[part_match],
-                                                     os.path.join(self._data_dir, "stimuli"), start)
+                                                     self.sample_rate[part_match], start)
                             df_new.to_csv(os.path.join(file_path, matches[i].string), sep="\t", index=False,
                                           na_rep="n/a")
                             # dont forget .json files!
@@ -1351,8 +1350,8 @@ class Data2Bids:  # main conversion and file organization program
             with open(os.path.splitext(full_file)[0] + ".json", "w") as fst:
                 json.dump(data, fst)
 
-    def frame2bids(self, df: pd.DataFrame, events: Union[dict, list[dict]], data_sample_rate=None, stim_file_dir=None,
-                   start_at=0):
+    def frame2bids(self, df: pd.DataFrame, events: Union[dict, List[dict]], data_sample_rate=None,
+                   start_at=0) -> pd.DataFrame:
         new_df = None
         if isinstance(events, dict):
             events = list(events)
@@ -1400,7 +1399,6 @@ class Data2Bids:  # main conversion and file organization program
                 new_df = temp_df
             else:
                 new_df = new_df.append(temp_df, ignore_index=True, sort=False)
-        print(new_df)
         for name in ["onset", "duration"]:
             if not (pd.api.types.is_float_dtype(new_df[name]) or pd.api.types.is_integer_dtype(new_df[name])):
                 new_df[name] = pd.to_numeric(new_df[name], errors="coerce")
