@@ -1,16 +1,16 @@
-#!/bin/bash
+##!/bin/bash
     
-ORIG_DATA_DIR="/home/sbf/Desktop/share/CoganLab"
+ORIG_DATA_DIR="C:/Users/ae166/share/CoganLab"
 SUB_IDS=(D52 D48) 
 TASKS=(Phoneme_sequencing)
 
 #declare -l mylist[30]
 
 #BIDS_DIR="$OUTPUT_DIR/$TASK/BIDS"
-for TASK in ${TASKS[@]}
+for TASK in "${TASKS[@]}"
  do
 
-    OUTPUT_DIR="/home/sbf/Desktop/Workspace/sourcedata/$TASK"
+    OUTPUT_DIR="C:/Users/ae166/share/workspace/sourcedata/$TASK"
     BIDS_DIR="$OUTPUT_DIR/../../$TASK/BIDS"
     ZIP=false
     
@@ -19,8 +19,10 @@ for TASK in ${TASKS[@]}
         rm -rf $BIDS_DIR
     fi
     mkdir -p $BIDS_DIR
+    mkdir -p "$BIDS_DIR/stimuli"
+    cp -R "$ORIG_DATA_DIR/task_stimuli/$TASK/." "$BIDS_DIR/stimuli/"
 
-    for SUB_ID in ${SUB_IDS[@]}
+    for SUB_ID in "${SUB_IDS[@]}"
     do 
         #bring wanted files to work space
         #IDSPLIT=( $(grep -Eo '[^[:digit:]]+|[[:digit:]]+' <<<"SUB_ID") )
@@ -65,7 +67,6 @@ for TASK in ${TASKS[@]}
         find "$OUTPUT_DIR/$SUB_ID" -type f -regex ".*\.mat" | xargs -n 1 basename | xargs -I{} mv "$OUTPUT_DIR/$SUB_ID/{}" "$OUTPUT_DIR/$SUB_ID/${SUB_ID}_{}"
         #rename .dat
         #find "$OUTPUT_DIR/$SUB_ID" -type f -regex "\.mat" | xargs -n 1 basename | xargs -I{} mv "$OUTPUT_DIR/$SUB_ID/{}" "$OUTPUT_DIR/$SUB_ID/${SUB_ID}_{}"
-        
         #the big bad python code to convert the renamed files to BIDS
         #requires numpy, nibabel, and pathlib modules
         python3 data2bids.py -c config.json -i "$OUTPUT_DIR/$SUB_ID" -o $BIDS_DIR -v || { echo "BIDS conversion for $SUB_ID failed, trying next subject" ; continue; }
