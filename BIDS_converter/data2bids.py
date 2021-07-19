@@ -248,7 +248,7 @@ class Data2Bids:  # main conversion and file organization program
         elif channels is not None:
             self.channels[part_match] = self.channels[part_match] + [c for c in channels if
                                                                      c not in self.channels[part_match]]
-        if self._is_verbose:
+        if self._is_verbose and self.channels is not None:
             print("Channels for participant " + part_match + " are")
             print(self.channels[part_match])
             for i in self._ignore:
