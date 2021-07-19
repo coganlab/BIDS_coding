@@ -4,62 +4,7 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="48805e9b-6305-4dbb-a3eb-2450704f0651" name="Default Changelist" comment="added windows script and implemented events">
-      <change afterPath="$PROJECT_DIR$/Data/Phoneme_Sequencing/sourcedata/stimuli/abae.wav" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/Data/Phoneme_Sequencing/sourcedata/stimuli/abi.wav" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/Data/Phoneme_Sequencing/sourcedata/stimuli/aeba.wav" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/Data/Phoneme_Sequencing/sourcedata/stimuli/aebi.wav" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/Data/Phoneme_Sequencing/sourcedata/stimuli/aebu.wav" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/Data/Phoneme_Sequencing/sourcedata/stimuli/aega.wav" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/Data/Phoneme_Sequencing/sourcedata/stimuli/aeka.wav" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/Data/Phoneme_Sequencing/sourcedata/stimuli/aepi.wav" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/Data/Phoneme_Sequencing/sourcedata/stimuli/aka.wav" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/Data/Phoneme_Sequencing/sourcedata/stimuli/aku.wav" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/Data/Phoneme_Sequencing/sourcedata/stimuli/ava.wav" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/Data/Phoneme_Sequencing/sourcedata/stimuli/avae.wav" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/Data/Phoneme_Sequencing/sourcedata/stimuli/bab.wav" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/Data/Phoneme_Sequencing/sourcedata/stimuli/baek.wav" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/Data/Phoneme_Sequencing/sourcedata/stimuli/bak.wav" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/Data/Phoneme_Sequencing/sourcedata/stimuli/bup.wav" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/Data/Phoneme_Sequencing/sourcedata/stimuli/gab.wav" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/Data/Phoneme_Sequencing/sourcedata/stimuli/gaeb.wav" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/Data/Phoneme_Sequencing/sourcedata/stimuli/gaev.wav" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/Data/Phoneme_Sequencing/sourcedata/stimuli/gak.wav" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/Data/Phoneme_Sequencing/sourcedata/stimuli/gav.wav" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/Data/Phoneme_Sequencing/sourcedata/stimuli/gig.wav" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/Data/Phoneme_Sequencing/sourcedata/stimuli/gip.wav" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/Data/Phoneme_Sequencing/sourcedata/stimuli/gub.wav" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/Data/Phoneme_Sequencing/sourcedata/stimuli/ibu.wav" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/Data/Phoneme_Sequencing/sourcedata/stimuli/ika.wav" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/Data/Phoneme_Sequencing/sourcedata/stimuli/ikae.wav" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/Data/Phoneme_Sequencing/sourcedata/stimuli/ipu.wav" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/Data/Phoneme_Sequencing/sourcedata/stimuli/iva.wav" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/Data/Phoneme_Sequencing/sourcedata/stimuli/ivu.wav" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/Data/Phoneme_Sequencing/sourcedata/stimuli/kab.wav" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/Data/Phoneme_Sequencing/sourcedata/stimuli/kaeg.wav" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/Data/Phoneme_Sequencing/sourcedata/stimuli/kub.wav" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/Data/Phoneme_Sequencing/sourcedata/stimuli/kug.wav" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/Data/Phoneme_Sequencing/sourcedata/stimuli/paek.wav" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/Data/Phoneme_Sequencing/sourcedata/stimuli/paep.wav" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/Data/Phoneme_Sequencing/sourcedata/stimuli/paev.wav" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/Data/Phoneme_Sequencing/sourcedata/stimuli/puk.wav" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/Data/Phoneme_Sequencing/sourcedata/stimuli/pup.wav" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/Data/Phoneme_Sequencing/sourcedata/stimuli/uba.wav" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/Data/Phoneme_Sequencing/sourcedata/stimuli/uga.wav" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/Data/Phoneme_Sequencing/sourcedata/stimuli/ugae.wav" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/Data/Phoneme_Sequencing/sourcedata/stimuli/ukae.wav" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/Data/Phoneme_Sequencing/sourcedata/stimuli/upi.wav" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/Data/Phoneme_Sequencing/sourcedata/stimuli/upu.wav" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/Data/Phoneme_Sequencing/sourcedata/stimuli/uvae.wav" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/Data/Phoneme_Sequencing/sourcedata/stimuli/uvi.wav" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/Data/Phoneme_Sequencing/sourcedata/stimuli/vaeg.wav" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/Data/Phoneme_Sequencing/sourcedata/stimuli/vaek.wav" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/Data/Phoneme_Sequencing/sourcedata/stimuli/vip.wav" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/Data/Phoneme_Sequencing/sourcedata/stimuli/vug.wav" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/Data/Phoneme_Sequencing/sourcedata/stimuli/vuk.wav" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/BIDS_coding.iml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/BIDS_coding.iml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/misc.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/misc.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+    <list default="true" id="48805e9b-6305-4dbb-a3eb-2450704f0651" name="Default Changelist" comment="fixed channels verb">
       <change beforePath="$PROJECT_DIR$/BIDS_converter/data2bids.py" beforeDir="false" afterPath="$PROJECT_DIR$/BIDS_converter/data2bids.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
@@ -239,7 +184,21 @@
       <option name="project" value="LOCAL" />
       <updated>1626288065337</updated>
     </task>
-    <option name="localTasksCounter" value="5" />
+    <task id="LOCAL-00005" summary="Finished events.tsv and added stimuli">
+      <created>1626658945145</created>
+      <option name="number" value="00005" />
+      <option name="presentableId" value="LOCAL-00005" />
+      <option name="project" value="LOCAL" />
+      <updated>1626658945145</updated>
+    </task>
+    <task id="LOCAL-00006" summary="fixed channels verb">
+      <created>1626659218134</created>
+      <option name="number" value="00006" />
+      <option name="presentableId" value="LOCAL-00006" />
+      <option name="project" value="LOCAL" />
+      <updated>1626659218134</updated>
+    </task>
+    <option name="localTasksCounter" value="7" />
     <servers />
   </component>
   <component name="Vcs.Log.Tabs.Properties">
@@ -261,6 +220,8 @@
     <MESSAGE value="working on json and tsvs 2" />
     <MESSAGE value="working on events" />
     <MESSAGE value="added windows script and implemented events" />
-    <option name="LAST_COMMIT_MESSAGE" value="added windows script and implemented events" />
+    <MESSAGE value="Finished events.tsv and added stimuli" />
+    <MESSAGE value="fixed channels verb" />
+    <option name="LAST_COMMIT_MESSAGE" value="fixed channels verb" />
   </component>
 </project>

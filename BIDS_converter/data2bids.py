@@ -904,6 +904,7 @@ class Data2Bids:  # main conversion and file organization program
                     json.dump(data, fst, ensure_ascii=False, indent=4)
             # now we can scan all files and rearrange them
             part_match = None
+            part_match_z = None
             for root, _, files in os.walk(self._data_dir,
                                           topdown=True):
                 # each loop is a new participant so long as participant is top level
@@ -1040,6 +1041,9 @@ class Data2Bids:  # main conversion and file organization program
                         continue
                         # if the file doesn't match the extension, we skip it
                     elif re.match(".*?" + "\\.txt", file):
+                        if part_match_z is None:
+                            files.append(file)
+                            continue
                         df = pd.read_csv(src_file_path, sep=" ")
                         df.columns = ["name1", "name2", "x", "y", "z", "hemisphere", "del"]
                         df["name"] = df["name1"] + df["name2"].astype(str).str.zfill(2)
