@@ -11,7 +11,7 @@ import json
 import gzip
 import threading
 import gc
-from typing import Union, List
+from typing import Union
 import numpy as np
 import nibabel as nib
 import csv
@@ -171,7 +171,7 @@ class Data2Bids:  # main conversion and file organization program
             else:
                 self.stim_dir = None
                 return
-        os.mkdir(os.path.join(self._bids_dir, "stimuli"))
+            os.mkdir(os.path.join(self._bids_dir, "stimuli"))
         for item in os.listdir(dir):
             self._ignore.append(os.path.join(dir, item))
             shutil.copy(os.path.join(dir, item), os.path.join(self._bids_dir, "stimuli", item))
@@ -448,18 +448,11 @@ class Data2Bids:  # main conversion and file organization program
         if not match_found:
             raise AssertionError(
                 "{newname} doesn't match config criteria {given}".format(newname=data, given=config_regexp["content"]))
-        # if config_regexp["left"].startswith("[(") and config_regexp["left"].endswith(")]"):
-        #    left = ex.getone(config_regexp["left"].lstrip("[").rstrip("]"))
-        # else:
         left = ex.getone(config_regexp["left"])
-        # if config_regexp["right"].startswith("[(") and config_regexp["right"].endswith(")]"):
-        #    right = ex.getone(config_regexp["right"].lstrip("[").rstrip("]"))
-        # else:
         right = ex.getone(config_regexp["right"])
         newname = left + data + right
 
         try:
-            # print(self.match_regexp(config_regexp,newname,subtype=subtype))
             if data == self.match_regexp(config_regexp, newname, subtype=subtype):
                 return newname
             else:
@@ -902,6 +895,13 @@ class Data2Bids:  # main conversion and file organization program
                     data = {'Name': self._dataset_name,
                             'BIDSVersion': self._bids_version}
                     json.dump(data, fst, ensure_ascii=False, indent=4)
+
+            # add a README file
+            if not os.path.exists(self._bids_dir + "/README"):
+                with open(self._bids_dir + "/README", 'w') as fst:
+                    data = ""
+                    fst.write(data)
+
             # now we can scan all files and rearrange them
             part_match = None
             part_match_z = None
@@ -1291,12 +1291,13 @@ class Data2Bids:  # main conversion and file organization program
                             os.remove(tsv_name)
                             # all column manipulation and math in frame2bids
                             df_new = self.frame2bids(df, self._config["eventFormat"]["Events"],
-                                                     self.sample_rate[part_match], start)
+                                                     self.sample_rate[part_match],
+                                                     os.path.join(self._data_dir, "stimuli"), start)
                             df_new.to_csv(tsv_name, sep="\t", index=False,
                                           na_rep="n/a")
                             # dont forget .json files!
                             self.write_sidecar(edf_name)
-                            #self.write_sidecar(tsv_name)
+                            self.write_sidecar(tsv_name)
                         continue
                     # write JSON file for any missing files
                     if file_path.endswith(("/anat", "/func", "/ieeg")):
@@ -1315,7 +1316,11 @@ class Data2Bids:  # main conversion and file organization program
     def write_sidecar(self, full_file):
 
         if os.path.dirname(full_file).endswith("/ieeg"):
-            if not full_file.endswith(".edf"):
+            if full_file.endswith("events.tsv"):
+                df = pd.read_csv(full_file)
+
+                return
+            elif not full_file.endswith(".edf"):
                 full_file = full_file + ".edf"
             entities = layout.parse_file_entities(full_file)
             f = EdfReader(full_file)
@@ -1351,8 +1356,8 @@ class Data2Bids:  # main conversion and file organization program
             with open(os.path.splitext(full_file)[0] + ".json", "w") as fst:
                 json.dump(data, fst)
 
-    def frame2bids(self, df: pd.DataFrame, events: Union[dict, List[dict]], data_sample_rate=None,
-                   start_at=0) -> pd.DataFrame:
+    def frame2bids(self, df: pd.DataFrame, events: Union[dict, list[dict]], data_sample_rate=None, stim_file_dir=None,
+                   start_at=0):
         new_df = None
         if isinstance(events, dict):
             events = list(events)
@@ -1361,6 +1366,7 @@ class Data2Bids:  # main conversion and file organization program
             event_order += 1
             temp_df = pd.DataFrame()
             for key, value in event.items():
+                print(key, value)
                 if not re.match(r"[\w\d()_]+[ +\-/*%]+[\w\d()_]+", value) and value not in df.columns:
                     temp_df[key] = value
                 else:
@@ -1371,6 +1377,7 @@ class Data2Bids:  # main conversion and file organization program
                         print("Warning: empty cells detected, converting to numeric with NaNs")
                         if re.match(r"[\w\d()_]+[ +\-/*%]+[\w\d()_]+", value):  # if evaluating a math expression
                             for name in [i for i in re.split(r"[ +\-/*%]", value) if i != '']:
+                                print("name: " + name)
                                 df[name] = pd.to_numeric(df[name], errors="coerce")
                             temp_df[key] = df.eval(value)
                         else:
@@ -1398,6 +1405,7 @@ class Data2Bids:  # main conversion and file organization program
                 new_df = temp_df
             else:
                 new_df = new_df.append(temp_df, ignore_index=True, sort=False)
+        print(new_df)
         for name in ["onset", "duration"]:
             if not (pd.api.types.is_float_dtype(new_df[name]) or pd.api.types.is_integer_dtype(new_df[name])):
                 new_df[name] = pd.to_numeric(new_df[name], errors="coerce")
@@ -1614,7 +1622,7 @@ class Data2Bids:  # main conversion and file organization program
                                     [fields[j][i - 1], duration, categories[j][i - 1]])  # ,TRfields[j][i-1]])
 
 
-class DisplayablePath():  # this code simply creates a tree visual to explain the BIDS file organization
+class DisplayablePath:  # this code simply creates a tree visual to explain the BIDS file organization
     display_filename_prefix_middle = '├──'
     display_filename_prefix_last = '└──'
     display_parent_prefix_middle = '    '
@@ -1725,7 +1733,6 @@ def rot_z(alpha):
 
 def main():
     args = get_parser().parse_args()
-    # print(args)
     data2bids = Data2Bids(**vars(args))
     data2bids.run()
 
