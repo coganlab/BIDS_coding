@@ -19,7 +19,7 @@ def test_D52():
         f.extractall(path="Data/Phoneme_Sequencing/sourcedata/D52")
     try:
         Data2Bids(input_dir='Data/Phoneme_Sequencing/sourcedata/D52', output_dir='Data/Phoneme_Sequencing/BIDS',
-                  overwrite=True, verbose=True).run()
+                  stim_dir="Data/Phoneme_Sequencing/sourcedata/stimuli", overwrite=True, verbose=True).run()
         files = [x for x in os.listdir('Data/Phoneme_Sequencing/BIDS/sub-D0052')]
     except Exception as e:
         error = e
@@ -55,7 +55,7 @@ def test_D48():
     try:
 
         Data2Bids(input_dir='Data/Phoneme_Sequencing/sourcedata/D48', output_dir='Data/Phoneme_Sequencing/BIDS',
-                  overwrite=True, verbose=True).run()
+                  stim_dir="Data/Phoneme_Sequencing/sourcedata/stimuli", overwrite=True, verbose=True).run()
         files = [x for x in os.listdir('Data/Phoneme_Sequencing/BIDS/sub-D0048')]
     except Exception as e:
         error = e
