@@ -69,10 +69,10 @@
     , "content" : ["[0-9]{6}"]
     }
 ,"eventFiles" : "([Tt]rial(s|Info).*?\\.mat)"
-,"eventFormat" : {"Labels": ["Subject", "Trial", "Rec", "Day", "FilenamePrefix", "Start",
-    "Auditory", "Go", "StartCode", "AuditoryCode", "GoCode", "Noisy", "NoResponse",
+,"eventFormat" : {"Labels": ["Subject", "Trial", "Rec", "FilenamePrefix", "Start",
+    "Auditory", "Go", "AuditoryCode", "GoCode", "Noisy", "NoResponse",
     "ResponseStart","ResponseEnd","cue", "sound", "go", "cueTime", "block", "cueStart",
-     "Trigger", "cueEnd", "audioStart", "audioAlignedTrigger", "delStart", "delEnd",
+     "Trigger", "cueEnd", "audioStart", "delStart", "delEnd",
       "goStart", "goEnd", "respStart", "respEnd", "isiStart", "isiEnd", "tCaptureStart"]
                 ,"IDcol" : "FilenamePrefix"
                 ,"Sep" : { "runIndex" : "block",
