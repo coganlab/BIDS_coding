@@ -1,6 +1,6 @@
 ##!/bin/bash
-    
-ORIG_DATA_DIR="C:/Users/ae166/share/CoganLab"
+
+ORIG_DATA_DIR="$HOME/Desktop/sf_Box_Sync/CoganLab"
 SUB_IDS=(D52 D48) 
 TASKS=(Phoneme_sequencing)
 
@@ -10,7 +10,7 @@ TASKS=(Phoneme_sequencing)
 for TASK in "${TASKS[@]}"
  do
 
-    OUTPUT_DIR="C:/Users/ae166/share/workspace/sourcedata/$TASK"
+    OUTPUT_DIR="$HOME/Desktop/sf_host/Workspace/sourcedata/$TASK"
     BIDS_DIR="$OUTPUT_DIR/../../$TASK/BIDS"
     ZIP=false
     
@@ -39,7 +39,7 @@ for TASK in "${TASKS[@]}"
         #electrode locations .txt
         find "$ORIG_DATA_DIR/../ECoG_Recon/$SUB_ID/elec_recon" -name "${SUB_ID}_elec_locations_RAS.txt" -type f -exec cp {} "$OUTPUT_DIR/$SUB_ID/" \;
         #T1 MRI file .mgz
-        find "$ORIG_DATA_DIR/ECoG_Recon_Full/$SUB_ID/mri" -name "orig.mgz" -type f -exec cp {} "$OUTPUT_DIR/$SUB_ID/${SUB_ID}_T1w.mgz" \; | head -1
+        find "$ORIG_DATA_DIR/ECoG_Recon_Full/$SUB_ID/elec_recon" -name "T1.nii.gz" -type f -exec cp {} "$OUTPUT_DIR/$SUB_ID/${SUB_ID}_T1w.nii.gz" \; | head -1
 
         #eeg files
         if ! find "$ORIG_DATA_DIR/D_Data/$TASK/$SUB_ID" -regex ".*\.edf" -exec false {} +  ; then #search for edf files
@@ -69,7 +69,7 @@ for TASK in "${TASKS[@]}"
         #find "$OUTPUT_DIR/$SUB_ID" -type f -regex "\.mat" | xargs -n 1 basename | xargs -I{} mv "$OUTPUT_DIR/$SUB_ID/{}" "$OUTPUT_DIR/$SUB_ID/${SUB_ID}_{}"
         #the big bad python code to convert the renamed files to BIDS
         #requires numpy, nibabel, and pathlib modules
-        python3 data2bids.py -c config.json -i "$OUTPUT_DIR/$SUB_ID" -o $BIDS_DIR -v || { echo "BIDS conversion for $SUB_ID failed, trying next subject" ; continue; }
+        python3 data2bids.py -c config.json -i "$OUTPUT_DIR/$SUB_ID" -o $BIDS_DIR -v -ow|| { echo "BIDS conversion for $SUB_ID failed, trying next subject" ; continue; }
 
         [[ $RAN_SUBS =~ (^| )$SUB_ID( |$) ]] || RAN_SUBS+=${SUB_ID}" "
         [[ $RAN_TASKS =~ (^| )$TASK( |$) ]] || RAN_TASKS+=${TASK}" "
