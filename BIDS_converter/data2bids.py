@@ -11,7 +11,7 @@ import json
 import gzip
 import threading
 import gc
-from typing import Union
+from typing import Union, List
 import numpy as np
 import nibabel as nib
 import csv
@@ -26,6 +26,7 @@ from pyedflib import highlevel, EdfReader
 from matgrab import mat2df
 from bids import layout
 from scipy.io import wavfile
+from numba import jit
 
 
 def get_parser():  # parses flags at onset of command
@@ -1356,7 +1357,7 @@ class Data2Bids:  # main conversion and file organization program
             with open(os.path.splitext(full_file)[0] + ".json", "w") as fst:
                 json.dump(data, fst)
 
-    def frame2bids(self, df: pd.DataFrame, events: Union[dict, list[dict]], data_sample_rate=None, stim_file_dir=None,
+    def frame2bids(self, df: pd.DataFrame, events: Union[dict, List[dict]], data_sample_rate=None, stim_file_dir=None,
                    start_at=0):
         new_df = None
         if isinstance(events, dict):
@@ -1713,18 +1714,21 @@ def tree(path):
         print(path_to_display.displayable())
 
 
+@jit
 def rot_x(alpha):
     return np.array([[1, 0, 0]
                         , [0, np.cos(alpha), np.sin(alpha)]
                         , [0, -np.sin(alpha), np.cos(alpha)]])
 
 
+@jit
 def rot_y(alpha):
     return np.array([[np.cos(alpha), 0, -np.sin(alpha)]
                         , [0, 1, 0]
                         , [np.sin(alpha), 0, np.cos(alpha)]])
 
 
+@jit
 def rot_z(alpha):
     return np.array([[np.cos(alpha), np.sin(alpha), 0]
                         , [-np.sin(alpha), np.cos(alpha), 0]

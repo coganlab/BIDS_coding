@@ -1,4 +1,4 @@
-##!/bin/bash
+#!/bin/bash
 
 ORIG_DATA_DIR="$HOME/Desktop/sf_Box_Sync/CoganLab"
 SUB_IDS=(D52 D48) 
@@ -19,8 +19,9 @@ for TASK in "${TASKS[@]}"
         rm -rf $BIDS_DIR
     fi
     mkdir -p $BIDS_DIR
-    mkdir -p "$BIDS_DIR/stimuli"
-    cp -R "$ORIG_DATA_DIR/task_stimuli/$TASK/." "$BIDS_DIR/stimuli/"
+    mkdir -p "$OUTPUT_DIR/stimuli"
+    TASKLOWER=$(echo $TASK | tr '[:upper:]' '[:lower:]')
+    cp -R "$ORIG_DATA_DIR/task_stimuli/$TASKLOWER/." "$BIDS_DIR/stimuli/"
 
     for SUB_ID in "${SUB_IDS[@]}"
     do 
@@ -69,7 +70,7 @@ for TASK in "${TASKS[@]}"
         #find "$OUTPUT_DIR/$SUB_ID" -type f -regex "\.mat" | xargs -n 1 basename | xargs -I{} mv "$OUTPUT_DIR/$SUB_ID/{}" "$OUTPUT_DIR/$SUB_ID/${SUB_ID}_{}"
         #the big bad python code to convert the renamed files to BIDS
         #requires numpy, nibabel, and pathlib modules
-        python3 data2bids.py -c config.json -i "$OUTPUT_DIR/$SUB_ID" -o $BIDS_DIR -v -ow|| { echo "BIDS conversion for $SUB_ID failed, trying next subject" ; continue; }
+        #python3 data2bids.py -c config.json -i "$OUTPUT_DIR/$SUB_ID" -o $BIDS_DIR -v || { echo "BIDS conversion for $SUB_ID failed, trying next subject" ; continue; }
 
         [[ $RAN_SUBS =~ (^| )$SUB_ID( |$) ]] || RAN_SUBS+=${SUB_ID}" "
         [[ $RAN_TASKS =~ (^| )$TASK( |$) ]] || RAN_TASKS+=${TASK}" "

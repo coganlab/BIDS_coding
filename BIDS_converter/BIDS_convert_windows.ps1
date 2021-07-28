@@ -1,8 +1,8 @@
 #!/bin/bash
-    
-ORIG_DATA_DIR="C:\\Users\\ae166\\Box\\CoganLab"
+
+ORIG_DATA_DIR="$HOME/Box Sync/CoganLab"
 SUB_IDS=(D52 D48) 
-TASKS=(phoneme_sequencing)
+TASKS=(Phoneme_sequencing)
 
 #declare -l mylist[30]
 
@@ -10,7 +10,7 @@ TASKS=(phoneme_sequencing)
 for TASK in "${TASKS[@]}"
  do
 
-    OUTPUT_DIR="C:\\Users\\ae166\\share\\workspace\\sourcedata\\$TASK"
+    OUTPUT_DIR="$HOME\\Linux_files\\Workspace\\sourcedata\\$TASK"
     BIDS_DIR="$OUTPUT_DIR\\..\\..\\$TASK\\BIDS"
     ZIP=false
     
@@ -19,7 +19,7 @@ for TASK in "${TASKS[@]}"
         rm -rf $BIDS_DIR
     fi
     mkdir -p $BIDS_DIR
-    mkdir -p "$BIDS_DIR\\stimuli"
+    mkdir -p "$BIDS_DIR/stimuli"
     cp -R "$ORIG_DATA_DIR\\task_stimuli\\$TASK\\." "$BIDS_DIR\\stimuli\\"
 
     for SUB_ID in "${SUB_IDS[@]}"

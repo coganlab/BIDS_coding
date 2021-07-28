@@ -4,11 +4,13 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="48805e9b-6305-4dbb-a3eb-2450704f0651" name="Default Changelist" comment="Testing data fix">
-      <change beforePath="$PROJECT_DIR$/.idea/BIDS_coding.iml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/BIDS_coding.iml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/misc.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/misc.xml" afterDir="false" />
+    <list default="true" id="48805e9b-6305-4dbb-a3eb-2450704f0651" name="Default Changelist" comment="shell fix">
+      <change afterPath="$PROJECT_DIR$/.idea/codeStyles/codeStyleConfig.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/BIDS_converter/BIDS_convert.sh" beforeDir="false" afterPath="$PROJECT_DIR$/BIDS_converter/BIDS_convert.sh" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/BIDS_converter/BIDS_convert_windows.sh" beforeDir="false" afterPath="$PROJECT_DIR$/BIDS_converter/BIDS_convert_windows.ps1" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/BIDS_converter/data2bids.py" beforeDir="false" afterPath="$PROJECT_DIR$/BIDS_converter/data2bids.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/envs/requirements.txt" beforeDir="false" afterPath="$PROJECT_DIR$/envs/requirements.txt" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -52,17 +54,18 @@
   <component name="PropertiesComponent">
     <property name="RunOnceActivity.OpenProjectViewOnStart" value="true" />
     <property name="RunOnceActivity.ShowReadmeOnStart" value="true" />
+    <property name="SHARE_PROJECT_CONFIGURATION_FILES" value="true" />
     <property name="last.edited.regexp" value="(goEnd - goStart) * 30" />
     <property name="last_opened_file_path" value="$PROJECT_DIR$" />
     <property name="settings.editor.selected.configurable" value="com.jetbrains.python.configuration.PyActiveSdkModuleConfigurable" />
   </component>
   <component name="PyConsoleOptionsProvider">
     <option name="myPythonConsoleState">
-      <console-settings module-name="BIDS_coding" is-module-sdk="true" working-directory="$PROJECT_DIR$">
+      <console-settings module-name="BIDS_coding" sdk-home="C:\Users\Jakda\.conda\envs\BIDS_coding\python.exe" working-directory="$PROJECT_DIR$">
         <envs>
           <env key="PATH" value="C:\Users\ae166\Anaconda3;C:\Users\ae166\Anaconda3\Library\mingw-w64\bin;C:\Users\ae166\Anaconda3\Library\usr\bin;C:\Users\ae166\Anaconda3\Library\bin;C:\Users\ae166\Anaconda3\Scripts;C:\Users\ae166\Anaconda3\bin;C:\Users\ae166\Anaconda3\c ondabin;C:\ProgramData\Oracle\Java\javapath;C:\WINDOWS\system32;C:\WINDOWS;C:\WINDOWS\System32\Wbem;C:\WINDOWS\System32\WindowsPowerShell\v1.0;C:\Program Files\MATLAB\R2018b\bin;C:\WINDOWS\System32\OpenSSH;C:\Program Files (x86)\Sennheise r\SenncomSDK;C:\Users\ae166\AppData\Local\Microsoft\WindowsApps;C:\Users\ae166\AppData\Local\Programs\Git LFS;C:\Users\ae166\AppData\Local\Programs\Git\cmd;C:\Users\ae166\AppData\Local\Programs\Microsoft VS Code\bin " />
         </envs>
-        <option name="myUseModuleSdk" value="true" />
+        <option name="mySdkHome" value="C:\Users\Jakda\.conda\envs\BIDS_coding\python.exe" />
         <option name="myModuleName" value="BIDS_coding" />
         <option name="myEnvs">
           <map>
@@ -107,17 +110,32 @@
       <option name="INPUT_FILE" value="" />
       <method v="2" />
     </configuration>
-    <configuration name="BIDS_convert" type="ShConfigurationType">
+    <configuration name="BIDS_convert" type="ShConfigurationType" activateToolWindowBeforeRun="false">
       <option name="SCRIPT_TEXT" value="" />
       <option name="INDEPENDENT_SCRIPT_PATH" value="false" />
-      <option name="SCRIPT_PATH" value="$PROJECT_DIR$/BIDS_converter/BIDS_convert_windows.sh" />
+      <option name="SCRIPT_PATH" value="$PROJECT_DIR$/BIDS_converter/BIDS_convert_windows.ps1" />
       <option name="SCRIPT_OPTIONS" value="" />
       <option name="INDEPENDENT_SCRIPT_WORKING_DIRECTORY" value="false" />
       <option name="SCRIPT_WORKING_DIRECTORY" value="$PROJECT_DIR$/BIDS_converter" />
-      <option name="INDEPENDENT_INTERPRETER_PATH" value="true" />
-      <option name="INTERPRETER_PATH" value="" />
+      <option name="INDEPENDENT_INTERPRETER_PATH" value="false" />
+      <option name="INTERPRETER_PATH" value="$PROJECT_DIR$/../../../../../Windows/System32/WindowsPowerShell/v1.0/powershell.exe" />
+      <option name="INTERPRETER_OPTIONS" value="-ExecutionPolicy Bypass -File" />
+      <option name="EXECUTE_IN_TERMINAL" value="true" />
+      <option name="EXECUTE_SCRIPT_FILE" value="true" />
+      <envs />
+      <method v="2" />
+    </configuration>
+    <configuration name="init" type="ShConfigurationType">
+      <option name="SCRIPT_TEXT" value="" />
+      <option name="INDEPENDENT_SCRIPT_PATH" value="false" />
+      <option name="SCRIPT_PATH" value="$PROJECT_DIR$/BIDS_converter/shell_init.sh" />
+      <option name="SCRIPT_OPTIONS" value="" />
+      <option name="INDEPENDENT_SCRIPT_WORKING_DIRECTORY" value="true" />
+      <option name="SCRIPT_WORKING_DIRECTORY" value="$PROJECT_DIR$" />
+      <option name="INDEPENDENT_INTERPRETER_PATH" value="false" />
+      <option name="INTERPRETER_PATH" value="$PROJECT_DIR$/../../../../../Windows/System32/WindowsPowerShell/v1.0/powershell.exe" />
       <option name="INTERPRETER_OPTIONS" value="" />
-      <option name="EXECUTE_IN_TERMINAL" value="false" />
+      <option name="EXECUTE_IN_TERMINAL" value="true" />
       <option name="EXECUTE_SCRIPT_FILE" value="true" />
       <envs />
       <method v="2" />
@@ -144,6 +162,7 @@
     <list>
       <item itemvalue="Python.Bids_coding" />
       <item itemvalue="Shell Script.BIDS_convert" />
+      <item itemvalue="Shell Script.init" />
       <item itemvalue="Python tests.pytest in package_test.py" />
     </list>
   </component>
@@ -215,8 +234,20 @@
       <option name="project" value="LOCAL" />
       <updated>1626967077458</updated>
     </task>
-    <option name="localTasksCounter" value="9" />
+    <task id="LOCAL-00009" summary="shell fix">
+      <created>1627329231491</created>
+      <option name="number" value="00009" />
+      <option name="presentableId" value="LOCAL-00009" />
+      <option name="project" value="LOCAL" />
+      <updated>1627329231491</updated>
+    </task>
+    <option name="localTasksCounter" value="10" />
     <servers />
+  </component>
+  <component name="TerminalProjectNonSharedOptionsProvider">
+    <envs>
+      <env key="PYTHONPATH" value="C:\ProgramData\Anaconda3" />
+    </envs>
   </component>
   <component name="Vcs.Log.Tabs.Properties">
     <option name="TAB_STATES">
@@ -241,6 +272,18 @@
     <MESSAGE value="fixed channels verb" />
     <MESSAGE value="fix flake issue" />
     <MESSAGE value="Testing data fix" />
-    <option name="LAST_COMMIT_MESSAGE" value="Testing data fix" />
+    <MESSAGE value="shell fix" />
+    <option name="LAST_COMMIT_MESSAGE" value="shell fix" />
+  </component>
+  <component name="XDebuggerManager">
+    <breakpoint-manager>
+      <breakpoints>
+        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
+          <url>file://$PROJECT_DIR$/BIDS_converter/data2bids.py</url>
+          <line>4</line>
+          <option name="timeStamp" value="1" />
+        </line-breakpoint>
+      </breakpoints>
+    </breakpoint-manager>
   </component>
 </project>
