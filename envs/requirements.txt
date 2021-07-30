@@ -9,3 +9,4 @@ exrex >=0.10.5
 pyEDFlib >= 0.1.22
 matgrab >= 0.0.8
 typing >= 3.7.4
+numba >= 0.53.1

@@ -2,31 +2,25 @@
 # -*- coding: utf-8 -*-
 
 
-import os
 import argparse
-import sys
-import re
-import shutil
-import json
-import gzip
-import threading
-import gc
-from typing import Union, List
-import numpy as np
-import nibabel as nib
 import csv
-import subprocess
-from pathlib import Path
-import pydicom as dicom
-import pandas as pd
-import exrex as ex
 import datetime
-import stat
-from pyedflib import highlevel, EdfReader
-from matgrab import mat2df
+import gc
+import gzip
+import json
+import subprocess
+import sys
+from typing import Union, List
+
+import nibabel as nib
+import pandas as pd
+import pydicom as dicom
 from bids import layout
+from matgrab import mat2df
+from pyedflib import highlevel
 from scipy.io import wavfile
-from numba import jit
+
+from utils import *
 
 
 def get_parser():  # parses flags at onset of command
@@ -167,16 +161,21 @@ class Data2Bids:  # main conversion and file organization program
 
     def set_stim_dir(self, dir):
         if dir is None:
-            if "stimuli" in os.listdir(self._data_dir):
+            print(os.listdir(self._data_dir))
+            if "stimuli" in os.listdir(self._data_dir):  # data2bids can be called at the parent folder
                 dir = os.path.join(self._data_dir, "stimuli")
+            elif "stimuli" in os.listdir(os.path.dirname(self._data_dir)):  # or subject folder level
+                dir = os.path.join(os.path.dirname(self._data_dir), "stimuli")
             else:
                 self.stim_dir = None
                 return
-            os.mkdir(os.path.join(self._bids_dir, "stimuli"))
+            if not os.path.isdir(os.path.join(self._bids_dir, "stimuli")):
+                os.mkdir(os.path.join(self._bids_dir, "stimuli"))
         for item in os.listdir(dir):
             self._ignore.append(os.path.join(dir, item))
             shutil.copy(os.path.join(dir, item), os.path.join(self._bids_dir, "stimuli", item))
         self.stim_dir = dir
+        print(self.stim_dir)
 
     def set_channels(self, channels):
         try:
@@ -194,8 +193,9 @@ class Data2Bids:  # main conversion and file organization program
                 while files:
                     file = files.pop(0)
                     src = os.path.join(root, file)
-                    if not part_match == self.match_regexp(self._config["partLabel"], file):
-                        part_match = self.match_regexp(self._config["partLabel"], file)
+                    if not part_match == match_regexp(self._config["partLabel"], file):
+                        print(file)
+                        part_match = match_regexp(self._config["partLabel"], file)
                         self.channels[part_match] = []
                     part_match_z = self.part_check(part_match)[1]
                     df = None
@@ -295,7 +295,8 @@ class Data2Bids:  # main conversion and file organization program
                     if str(int(runmatch)) not in runlist:
                         runlist.append(str(int(runmatch)))
                     shutil.copyfile(os.path.join(ddir, "medata", me), os.path.join(sub_dir, me))
-                self.is_multi_echo = True  # will trigger even if single echo data is in medata folder. Should still be okay
+                self.is_multi_echo = True  # will trigger even if single echo data is in medata folder. Should still
+                # be okay
             for subdir in subdirs[1:]:  # not including parent folder or /medata, run dcm2niix on non me data
                 try:
                     fobj = dicom.read_file(os.path.join(subdir, list(os.walk(subdir))[0][2][0]),
@@ -395,7 +396,7 @@ class Data2Bids:  # main conversion and file organization program
         if not os.path.isdir(newdir):
             os.mkdir(newdir)
         elif self._is_overwrite:
-            self.force_remove(newdir)
+            force_remove(newdir)
             os.mkdir(newdir)
         self._bids_dir = newdir
         self._ignore.append(newdir)
@@ -405,64 +406,6 @@ class Data2Bids:  # main conversion and file organization program
 
     def get_bids_version(self):
         return self._bids_version
-
-    def match_regexp(self, config_regexp, filename, subtype=False):
-        delimiter_left = config_regexp["left"]
-        delimiter_right = config_regexp["right"]
-        match_found = False
-
-        if subtype:
-            for to_match in config_regexp["content"]:
-                # print(".*?" + delimiter_left + '(' + to_match[1] + ')' + delimiter_right + ".*?")
-                if re.match(".*?"
-                            + delimiter_left
-                            + '(' + to_match[1] + ')'
-                            + delimiter_right
-                            + ".*?", filename):
-                    match = to_match[0]
-                    match_found = True
-        else:
-            for to_match in config_regexp["content"]:
-                if re.match(".*?"
-                            + delimiter_left
-                            + '(' + to_match + ')'
-                            + delimiter_right
-                            + ".*?", filename):
-                    # print(re.match(".*?"+ delimiter_left + '(' + to_match + ')' + delimiter_right + ".*?",filename).groups())
-                    match = re.match(".*?"
-                                     + delimiter_left
-                                     + '(' + to_match + ')'
-                                     + delimiter_right
-                                     + ".*?", filename).group(1)
-                    match_found = True
-        assert match_found
-        return match
-
-    def gen_match_regexp(self, config_regexp, data, subtype=False):
-
-        if data.startswith("0"):
-            data = data.lstrip("0")
-        match_found = False
-        for to_match in config_regexp["content"]:
-            if re.match(to_match, data):
-                match_found = True
-        if not match_found:
-            raise AssertionError(
-                "{newname} doesn't match config criteria {given}".format(newname=data, given=config_regexp["content"]))
-        left = ex.getone(config_regexp["left"])
-        right = ex.getone(config_regexp["right"])
-        newname = left + data + right
-
-        try:
-            if data == self.match_regexp(config_regexp, newname, subtype=subtype):
-                return newname
-            else:
-                raise ValueError("{newname} doesn't match config criteria".format(newname=newname))
-        except AssertionError:
-            # return self.gen_match_regexp(config_regexp, data.lstrip("0"),subtype)
-            # except RecursionError:
-            raise AssertionError(
-                "{newname} doesn't match config criteria {given}".format(newname=newname, given=config_regexp))
 
     def bids_validator(self):
         assert self._bids_dir is not None, "Cannot launch bids-validator without specifying bids directory !"
@@ -485,7 +428,7 @@ class Data2Bids:  # main conversion and file organization program
         if filename is None:
             filename = os.path.basename(src_file_path)
         if part_match is None:
-            part_match = self.match_regexp(self._config["partLabel"], filename)
+            part_match = match_regexp(self._config["partLabel"], filename)
         if verbose is None:
             verbose = self._is_verbose
         try:
@@ -502,7 +445,7 @@ class Data2Bids:  # main conversion and file organization program
         # Matching the session
         try:
             if sess_match is None:
-                sess_match = self.match_regexp(self._config["sessLabel"], filename)
+                sess_match = match_regexp(self._config["sessLabel"], filename)
             dst_file_path = dst_file_path + "/ses-" + sess_match
             new_name = new_name + "_ses-" + sess_match
         except AssertionError:
@@ -512,7 +455,7 @@ class Data2Bids:  # main conversion and file organization program
         # Matching the run number
         try:
             if run_match is None:
-                run_match = self.match_regexp(self._config["runIndex"], filename)
+                run_match = match_regexp(self._config["runIndex"], filename)
             try:
                 if re.match(r"^[^\d]{1,3}", run_match):
                     run_matches = re.split(r"([^\d]{1,3})", run_match, 1)
@@ -528,26 +471,26 @@ class Data2Bids:  # main conversion and file organization program
         # Matching the anat/fmri data type and task
         try:
             if data_type_match is None:
-                data_type_match = self.match_regexp(self._config["anat"]
-                                                    , filename
-                                                    , subtype=True)
+                data_type_match = match_regexp(self._config["anat"]
+                                               , filename
+                                               , subtype=True)
             dst_file_path = dst_file_path + "/anat"
             self._data_types["anat"] = True
         except (AssertionError, KeyError) as e:
             # If no anatomical, trying functionnal
             try:
                 if data_type_match is None:
-                    data_type_match = self.match_regexp(self._config["func"]
-                                                        , filename
-                                                        , subtype=True)
+                    data_type_match = match_regexp(self._config["func"]
+                                                   , filename
+                                                   , subtype=True)
                 dst_file_path = dst_file_path + "/func"
                 self._data_types["func"] = True
                 # Now trying to match the task
                 try:
                     if task_label_match is None:
-                        task_label_match = self.match_regexp(self._config["func.task"]
-                                                             , filename
-                                                             , subtype=True)
+                        task_label_match = match_regexp(self._config["func.task"]
+                                                        , filename
+                                                        , subtype=True)
                     new_name = new_name + "_task-" + task_label_match
                 except AssertionError:
                     print("No task found for %s" % src_file_path)
@@ -557,17 +500,17 @@ class Data2Bids:  # main conversion and file organization program
                 # no functional or anatomical, try ieeg
                 try:
                     if data_type_match is None:
-                        data_type_match = self.match_regexp(self._config["ieeg"]
-                                                            , filename
-                                                            , subtype=True)
+                        data_type_match = match_regexp(self._config["ieeg"]
+                                                       , filename
+                                                       , subtype=True)
                     dst_file_path = dst_file_path + "/ieeg"
                     self._data_types["ieeg"] = True
                     # Now trying to match the task
                     try:
                         if task_label_match is None:
-                            task_label_match = self.match_regexp(self._config["ieeg.task"]
-                                                                 , filename
-                                                                 , subtype=True)
+                            task_label_match = match_regexp(self._config["ieeg.task"]
+                                                            , filename
+                                                            , subtype=True)
                         new_name = new_name + "_task-" + task_label_match
                     except AssertionError:
                         print("No task found for %s" % src_file_path)
@@ -583,7 +526,7 @@ class Data2Bids:  # main conversion and file organization program
         # if is an MRI
         if dst_file_path.endswith("/func") or dst_file_path.endswith("/anat"):
             try:
-                SeqType = str(self.match_regexp(self._config["pulseSequenceType"], filename, subtype=True))
+                SeqType = str(match_regexp(self._config["pulseSequenceType"], filename, subtype=True))
             except AssertionError:
                 if verbose:
                     print("No pulse sequence found for %s" % src_file_path)
@@ -592,7 +535,7 @@ class Data2Bids:  # main conversion and file organization program
                     print("pulse sequence not listed for %s, will look for in file header" % src_file_path)
             try:
                 if echo_match is None:
-                    echo_match = self.match_regexp(self._config["echo"], filename)
+                    echo_match = match_regexp(self._config["echo"], filename)
                 new_name = new_name + "_echo-" + echo_match
             except AssertionError:
                 if verbose:
@@ -601,7 +544,7 @@ class Data2Bids:  # main conversion and file organization program
         # check for optional labels
         try:
             if acq_match is None:
-                acq_match = self.match_regexp(self._config["acq"], filename)
+                acq_match = match_regexp(self._config["acq"], filename)
             try:
                 if re.match(r"^[^\d]{1,3}", acq_match):
                     acq_matches = re.split(r"([^\d]{1,3})", acq_match, 1)
@@ -617,8 +560,8 @@ class Data2Bids:  # main conversion and file organization program
                 print("no optional labels for %s" % src_file_path)
         try:
             if ce_match is None:
-                ce_match = self.match_regexp(self._config["ce"]
-                                             , filename)
+                ce_match = match_regexp(self._config["ce"]
+                                        , filename)
             new_name = new_name + "_ce-" + ce_match
 
         except (AssertionError, KeyError) as e:
@@ -635,11 +578,6 @@ class Data2Bids:  # main conversion and file organization program
                 acq_match, echo_match, sess_match, ce_match,
                 data_type_match, task_label_match, SeqType)
 
-    def slice_time_calc(self, TR, sNum, totNum, delay):
-        intervaltime = (TR - delay) / totNum
-        tslice = delay + ((sNum) * intervaltime)
-        return tslice
-
     def multi_echo_check(self, runnum, src_file=""):  # check to see if run is multi echo based on input
         if self.is_multi_echo:
             if int(runnum) in self._multi_echo:
@@ -647,7 +585,7 @@ class Data2Bids:  # main conversion and file organization program
             else:
                 if self._multi_echo == 0:
                     try:
-                        self.match_regexp(self._config["echo"], src_file)
+                        match_regexp(self._config["echo"], src_file)
                     except AssertionError:
                         return (False)
                     return (True)
@@ -708,9 +646,9 @@ class Data2Bids:  # main conversion and file organization program
                 InstanceNumber = 0
                 while None in timings:
                     if timings[InStackPositionNumber - 1] is None:
-                        timings[InStackPositionNumber - 1] = self.slice_time_calc(RepetitionTime, InstanceNumber,
-                                                                                  int(ImagesInAcquisition / vols_per_time),
-                                                                                  echo)
+                        timings[InStackPositionNumber - 1] = slice_time_calc(RepetitionTime, InstanceNumber,
+                                                                             int(ImagesInAcquisition / vols_per_time),
+                                                                             echo)
                     if acquisition_series == "odd-interleaved" or acquisition_series == "even-interleaved":
                         InStackPositionNumber += 2
                         if InStackPositionNumber > ImagesInAcquisition / vols_per_time and acquisition_series == "odd-interleaved":
@@ -721,52 +659,6 @@ class Data2Bids:  # main conversion and file organization program
                         InStackPositionNumber += 1
                     InstanceNumber += 1
                 return (timings, echo, ScanningSequence, SequenceVariant, SequenceOptions, SequenceName)
-
-    def set_default(self, obj):
-        if isinstance(obj, set):
-            return list(obj)
-        raise TypeError
-
-    def force_remove(self, mypath):
-        x = 0
-        e = None
-        while os.path.isfile(mypath) or os.path.isdir(mypath):
-            x += 1
-            if os.path.isfile(mypath):
-                os.remove(mypath)
-            try:
-                if os.path.isdir(mypath):
-                    self.delete_folder(Path(mypath))
-            except OSError:
-                try:
-                    shutil.rmtree(mypath)
-                except PermissionError:
-                    for root, dirs, files in os.walk(mypath, topdown=False):
-                        for file in files:
-                            fullfile = os.path.join(root, file)
-                            os.chmod(fullfile, stat.S_IWUSR)
-                            os.remove(fullfile)
-                        for dir in dirs:
-                            try:
-                                self.delete_folder(os.path.join(root, dir))
-                            except AttributeError:
-                                os.rmdir(os.path.join(root, dir))
-                    shutil.rmtree(mypath, ignore_errors=True)
-                except Exception as e:
-                    shutil.rmtree(mypath, ignore_errors=True)
-            if x >= 1000:
-                if e is not None:
-                    raise RuntimeError(mypath + " could not remove all files or directories because of " + e)
-                else:
-                    raise
-
-    def delete_folder(self, pth):
-        for sub in pth.iterdir():
-            if sub.is_dir():
-                self.delete_folder(sub)
-            else:
-                sub.unlink()
-        pth.rmdir()
 
     def read_edf(self, file_name, channels=None, extra_arrays=None, extra_signal_headers=None):
 
@@ -825,7 +717,7 @@ class Data2Bids:  # main conversion and file organization program
         if filename:
 
             try:
-                part_match = self.match_regexp(self._config["partLabel"], filename)
+                part_match = match_regexp(self._config["partLabel"], filename)
             except AssertionError:
                 print("No participant found for %s" % filename)
             except KeyError as e:
@@ -921,6 +813,7 @@ class Data2Bids:  # main conversion and file organization program
                 tsv_condition_runs = []
                 tsv_fso_runs = []
                 d_list = []
+                txt_df_list = []
                 if not files:
                     continue
                 files.sort()
@@ -937,7 +830,7 @@ class Data2Bids:  # main conversion and file organization program
 
                     if re.match(".*?" + ".json", file):
                         try:
-                            part_match = self.match_regexp(self._config["partLabel"], file)
+                            part_match = match_regexp(self._config["partLabel"], file)
                         except AssertionError:
                             raise SyntaxError("file: {filename} has no matching {config}".format(filename=file, config=
                             self._config["content"][:][0]))
@@ -985,7 +878,7 @@ class Data2Bids:  # main conversion and file organization program
                                         filedata['SequenceOption'] = SeqOpt
                                     if SeqName is not None:
                                         filedata['SequenceName'] = SeqName
-                                    json.dump(filedata, fst, ensure_ascii=False, indent=4, default=self.set_default)
+                                    json.dump(filedata, fst, ensure_ascii=False, indent=4, default=set_default)
                             else:
                                 print("Cannot update %s" % (dst_file_path + new_name + ".json"))
                         elif any(re.search(".nii", filelist) for filelist in files):
@@ -1045,13 +938,13 @@ class Data2Bids:  # main conversion and file organization program
                         if part_match_z is None:
                             files.append(file)
                             continue
-                        df = pd.read_csv(src_file_path, sep=" ")
-                        df.columns = ["name1", "name2", "x", "y", "z", "hemisphere", "del"]
-                        df["name"] = df["name1"] + df["name2"].astype(str).str.zfill(2)
-                        df["hemisphere"] = df["hemisphere"] + df["del"]
-                        df = df.drop(columns=["name1", "name2", "del"])
-                        df.to_csv(self._bids_dir + "/sub-" + part_match_z + "/sub-" + part_match_z +
-                                  "_space-Talairach_electrodes.tsv", sep="\t", index=False)
+                        try:
+                            df = pd.read_csv(src_file_path, sep=" ")
+                            e = None
+                        except Exception as e:
+                            df = None
+                        txt_df_list.append(dict(name=file, data=df, error=e))
+
                         continue
                     elif not any(re.match(".*?" + ext, file) for ext in curr_ext):
                         print("Warning : Skipping %s" % src_file_path)
@@ -1224,6 +1117,19 @@ class Data2Bids:  # main conversion and file organization program
                 if mat_list:  # deal with remaining .mat files
                     self.mat2tsv(mat_list)
 
+                if txt_df_list:
+                    for txt_df_dict in txt_df_list:
+                        if self._config["coordsystem"] in txt_df_dict["name"]:
+                            if txt_df_dict["error"] is not None:
+                                raise txt_df_dict["error"]
+                            df = txt_df_dict["data"]
+                            df.columns = ["name1", "name2", "x", "y", "z", "hemisphere", "del"]
+                            df["name"] = df["name1"] + df["name2"].astype(str).str.zfill(2)
+                            df["hemisphere"] = df["hemisphere"] + df["del"]
+                            df = df.drop(columns=["name1", "name2", "del"])
+                            df.to_csv(self._bids_dir + "/sub-" + part_match_z + "/sub-" + part_match_z +
+                                      "_space-Talairach_electrodes.tsv", sep="\t", index=False)
+
                 # check final file set
                 for new_name in names_list:
                     file_path = dst_file_path_list[names_list.index(new_name)]
@@ -1392,7 +1298,14 @@ class Data2Bids:  # main conversion and file organization program
                         if fname.endswith(".wav"):
                             if self.stim_dir is not None:
                                 fname = os.path.join(self.stim_dir, fname)
-                            frames, data = wavfile.read(fname)
+                                dir = self.stim_dir
+                            else:
+                                dir = self._data_dir
+                            try:
+                                frames, data = wavfile.read(fname)
+                            except FileNotFoundError as e:
+                                print(fname + " not found in current directory or in " + dir)
+                                raise e
                             duration = (data.size / frames) * self._config["eventFormat"]["SampleRate"]
                         else:
                             raise NotImplementedError("current build only supports .wav stim files")
@@ -1435,17 +1348,17 @@ class Data2Bids:  # main conversion and file organization program
         is_separate = None
         for mat_file in mat_files:
 
-            if not self.match_regexp(self._config["partLabel"],
-                                     mat_file) == part_match:  # initialize dataframe if new participant
+            if not match_regexp(self._config["partLabel"],
+                                mat_file) == part_match:  # initialize dataframe if new participant
                 if written:
                     df = pd.DataFrame()
-                elif not part_match == self.match_regexp(self._config["partLabel"], mat_file):
+                elif not part_match == match_regexp(self._config["partLabel"], mat_file):
                     b_index = [j not in df.columns.values.tolist() for j in self._config["eventFormat"]["Sep"]].index(
                         True)
                     raise FileNotFoundError("{config} variable was not found in {part}'s event files".format(
                         config=list(self._config["eventFormat"]["Sep"].values())[b_index], part=part_match))
             try:
-                part_match = self.match_regexp(self._config["partLabel"], mat_file)
+                part_match = match_regexp(self._config["partLabel"], mat_file)
             except AssertionError:
                 raise SyntaxError("file: {filename} has no matching {config}\n".format(filename=mat_file, config=
                 self._config["content"][:][0]))
@@ -1519,7 +1432,7 @@ class Data2Bids:  # main conversion and file organization program
                     for k in self._config["eventFormat"]["Sep"].keys():
                         if k in self._config.keys():
                             data = str(df_unique[self._config["eventFormat"]["Sep"][k]].iloc[i])
-                            match_name = match_name + self.gen_match_regexp(self._config[k], data)
+                            match_name = match_name + gen_match_regexp(self._config[k], data)
 
                     # fix this to check for data type
                     match_name = match_name + self._config["ieeg"]["content"][0][1]
@@ -1621,118 +1534,6 @@ class Data2Bids:  # main conversion and file organization program
                                 tsv_writer = csv.writer(out_file, delimiter='\t')
                                 tsv_writer.writerow(
                                     [fields[j][i - 1], duration, categories[j][i - 1]])  # ,TRfields[j][i-1]])
-
-
-class DisplayablePath:  # this code simply creates a tree visual to explain the BIDS file organization
-    display_filename_prefix_middle = '├──'
-    display_filename_prefix_last = '└──'
-    display_parent_prefix_middle = '    '
-    display_parent_prefix_last = '│   '
-
-    def __init__(self, path, parent_path, is_last):
-        self.path = Path(str(path))
-        self.parent = parent_path
-        self.is_last = is_last
-        if self.parent:
-            self.depth = self.parent.depth + 1
-        else:
-            self.depth = 0
-
-    @property
-    def displayname(self):
-        if self.path.is_dir():
-            return self.path.name + '/'
-        return self.path.name
-
-    @classmethod
-    def make_tree(cls, root, parent=None, is_last=False, criteria=None):
-        root = Path(str(root))
-        criteria = criteria or cls._default_criteria
-
-        displayable_root = cls(root, parent, is_last)
-        yield displayable_root
-
-        children = sorted(list(path
-                               for path in root.iterdir()
-                               if criteria(path)),
-                          key=lambda s: str(s).lower())
-        count = 1
-        for path in children:
-            is_last = count == len(children)
-            if path.is_dir():
-                # yield from
-                for i in cls.make_tree(path,
-                                       parent=displayable_root,
-                                       is_last=is_last,
-                                       criteria=criteria):
-                    yield i
-            else:
-                yield cls(path, displayable_root, is_last)
-            count += 1
-
-    @classmethod
-    def _default_criteria(cls, path):
-        return True
-
-    def displayable(self):
-        if self.parent is None:
-            return self.path
-
-        _filename_prefix = (self.display_filename_prefix_last
-                            if self.is_last
-                            else self.display_filename_prefix_middle)
-
-        parts = ['{!s} {!s}'.format(_filename_prefix,
-                                    self.displayname)]
-
-        parent = self.parent
-        while parent and parent.parent is not None:
-            parts.append(self.display_parent_prefix_middle
-                         if parent.is_last
-                         else self.display_parent_prefix_last)
-            parent = parent.parent
-
-        return ''.join(reversed(parts))
-
-
-def cat_edf(filename):
-    f = EdfReader(filename)
-    for i in range(f.signals_in_file):
-        print(f.readSignal(i), threading.current_thread().getName())
-
-
-def read_write_edf(read_obj, chn):
-    if isinstance(chn, str):
-        chn = read_obj.getSignalLabels().index(chn)
-    read_obj.readSignal(chn)
-
-
-# this part of the code creates the tree graphic
-def tree(path):
-    paths = DisplayablePath.make_tree(Path(path))
-    for path_to_display in paths:
-        print(path_to_display.displayable())
-
-
-@jit
-def rot_x(alpha):
-    return np.array([[1, 0, 0]
-                        , [0, np.cos(alpha), np.sin(alpha)]
-                        , [0, -np.sin(alpha), np.cos(alpha)]])
-
-
-@jit
-def rot_y(alpha):
-    return np.array([[np.cos(alpha), 0, -np.sin(alpha)]
-                        , [0, 1, 0]
-                        , [np.sin(alpha), 0, np.cos(alpha)]])
-
-
-@jit
-def rot_z(alpha):
-    return np.array([[np.cos(alpha), np.sin(alpha), 0]
-                        , [-np.sin(alpha), np.cos(alpha), 0]
-                        , [0, 0, 1]])
 
 
 def main():

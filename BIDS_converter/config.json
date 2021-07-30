@@ -88,6 +88,7 @@
 , "split": { "Sep": "all",
             "buffer": 10,
             "practice": true},
-  "institution": "Duke University"
+  "institution": "Duke University",
+  "coordsystem": "RAS"
 }
 
