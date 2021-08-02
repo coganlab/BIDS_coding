@@ -4,17 +4,13 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="48805e9b-6305-4dbb-a3eb-2450704f0651" name="Default Changelist" comment="shell script ubiquitousness">
-      <change afterPath="$PROJECT_DIR$/BIDS_converter/BIDS_convert_wsl.sh" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/BIDS_converter/utils/__init__.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/BIDS_converter/utils/utils.py" afterDir="false" />
+    <list default="true" id="48805e9b-6305-4dbb-a3eb-2450704f0651" name="Default Changelist" comment="fix flake issue">
       <change beforePath="$PROJECT_DIR$/.idea/BIDS_coding.iml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/BIDS_coding.iml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/misc.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/misc.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/modules.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/modules.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/BIDS_converter/BIDS_convert_windows.ps1" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/BIDS_converter/config.json" beforeDir="false" afterPath="$PROJECT_DIR$/BIDS_converter/config.json" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/BIDS_converter/data2bids.py" beforeDir="false" afterPath="$PROJECT_DIR$/BIDS_converter/data2bids.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/envs/requirements.txt" beforeDir="false" afterPath="$PROJECT_DIR$/envs/requirements.txt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/BIDS_converter/utils/utils.py" beforeDir="false" afterPath="$PROJECT_DIR$/BIDS_converter/utils/utils.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -38,16 +34,16 @@
     </file-type-list>
   </component>
   <component name="HighlightingSettingsPerFile">
-    <setting file="file://$PROJECT_DIR$/BIDS_converter/config.json" root0="FORCE_HIGHLIGHTING" />
-    <setting file="file://$PROJECT_DIR$/envs/requirements.txt" root0="FORCE_HIGHLIGHTING" />
+    <setting file="file://$PROJECT_DIR$/preprocess.py" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/envs/environment.yml" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/BIDS_converter/BIDS_convert_wsl.sh" root0="FORCE_HIGHLIGHTING" />
-    <setting file="file://$PROJECT_DIR$/package_test.py" root0="FORCE_HIGHLIGHTING" />
-    <setting file="file://$PROJECT_DIR$/preprocess.py" root0="FORCE_HIGHLIGHTING" />
-    <setting file="file://$PROJECT_DIR$/BIDS_converter/BIDS_convert.sh" root0="FORCE_HIGHLIGHTING" />
-    <setting file="file://$PROJECT_DIR$/BIDS_converter/data2bids.py" root0="FORCE_HIGHLIGHTING" />
-    <setting file="file://$PROJECT_DIR$/.github/workflows/Windows_test.yml" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/.github/workflows/Ubuntu_test.yml" root0="FORCE_HIGHLIGHTING" />
+    <setting file="file://$PROJECT_DIR$/BIDS_converter/data2bids.py" root0="FORCE_HIGHLIGHTING" />
+    <setting file="file://$PROJECT_DIR$/package_test.py" root0="FORCE_HIGHLIGHTING" />
+    <setting file="file://$PROJECT_DIR$/BIDS_converter/config.json" root0="FORCE_HIGHLIGHTING" />
+    <setting file="file://$PROJECT_DIR$/.github/workflows/Windows_test.yml" root0="FORCE_HIGHLIGHTING" />
+    <setting file="file://$PROJECT_DIR$/envs/requirements.txt" root0="FORCE_HIGHLIGHTING" />
+    <setting file="file://$PROJECT_DIR$/BIDS_converter/BIDS_convert.sh" root0="FORCE_HIGHLIGHTING" />
   </component>
   <component name="ProjectId" id="1uJJKmF1K4taUwuMSxVBSi6XtqU" />
   <component name="ProjectLevelVcsManager" settingsEditedManually="true" />
@@ -60,7 +56,7 @@
     <property name="RunOnceActivity.ShowReadmeOnStart" value="true" />
     <property name="SHARE_PROJECT_CONFIGURATION_FILES" value="true" />
     <property name="last.edited.regexp" value="(goEnd - goStart) * 30" />
-    <property name="last_opened_file_path" value="//wsl$/Ubuntu-20.04/home/aaron/miniconda3/envs/BIDS_coding" />
+    <property name="last_opened_file_path" value="$PROJECT_DIR$/../../workspace" />
     <property name="settings.editor.selected.configurable" value="com.jetbrains.python.configuration.PythonContentEntriesConfigurable" />
   </component>
   <component name="PyConsoleOptionsProvider">

@@ -5,6 +5,7 @@
       <module fileurl="file://$PROJECT_DIR$/.idea/BIDS_coding.iml" filepath="$PROJECT_DIR$/.idea/BIDS_coding.iml" />
       <module fileurl="file:////wsl$/Ubuntu-20.04/home/aaron/Workspace/.idea/Workspace.iml" filepath="//wsl$/Ubuntu-20.04/home/aaron/Workspace/.idea/Workspace.iml" />
       <module fileurl="file://$PROJECT_DIR$/../pyedflib/.idea/pyedflib.iml" filepath="$PROJECT_DIR$/../pyedflib/.idea/pyedflib.iml" />
+      <module fileurl="file://$PROJECT_DIR$/../../workspace/.idea/workspace.iml" filepath="$PROJECT_DIR$/../../workspace/.idea/workspace.iml" />
     </modules>
   </component>
 </project>

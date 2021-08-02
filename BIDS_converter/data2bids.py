@@ -159,9 +159,25 @@ class Data2Bids:  # main conversion and file organization program
         self.set_stim_dir(stim_dir)
         self.set_channels(channels)
 
+    def check_ignore(self, file):
+
+        assert os.path.isabs(file), file + "must be given with the absolute path including root"
+        if not os.path.exists(file):
+            raise FileNotFoundError(file + " does not exist")
+
+        ans = False
+        for item in self._ignore:
+            if os.path.isfile(item) and Path(file).resolve() == Path(item).resolve():
+                ans = True
+            elif os.path.isdir(item):
+                for root, dirs, files in os.walk(item):
+                    if os.path.basename(file) in files and Path(root).resolve() == Path(
+                            os.path.dirname(file)).resolve():
+                        ans = True
+        return ans
+
     def set_stim_dir(self, dir):
         if dir is None:
-            print(os.listdir(self._data_dir))
             if "stimuli" in os.listdir(self._data_dir):  # data2bids can be called at the parent folder
                 dir = os.path.join(self._data_dir, "stimuli")
             elif "stimuli" in os.listdir(os.path.dirname(self._data_dir)):  # or subject folder level
@@ -172,10 +188,9 @@ class Data2Bids:  # main conversion and file organization program
             if not os.path.isdir(os.path.join(self._bids_dir, "stimuli")):
                 os.mkdir(os.path.join(self._bids_dir, "stimuli"))
         for item in os.listdir(dir):
-            self._ignore.append(os.path.join(dir, item))
             shutil.copy(os.path.join(dir, item), os.path.join(self._bids_dir, "stimuli", item))
         self.stim_dir = dir
-        print(self.stim_dir)
+        self._ignore.append(dir)
 
     def set_channels(self, channels):
         try:
@@ -189,12 +204,11 @@ class Data2Bids:  # main conversion and file organization program
         if self._data_dir:
             for root, _, files in os.walk(self._data_dir):
                 # ignore BIDS directories and stimuli
-                files[:] = [f for f in files if os.path.join(root, f) not in self._ignore]
+                files[:] = [f for f in files if not self.check_ignore(os.path.join(root, f))]
                 while files:
                     file = files.pop(0)
                     src = os.path.join(root, file)
                     if not part_match == match_regexp(self._config["partLabel"], file):
-                        print(file)
                         part_match = match_regexp(self._config["partLabel"], file)
                         self.channels[part_match] = []
                     part_match_z = self.part_check(part_match)[1]
@@ -243,7 +257,6 @@ class Data2Bids:  # main conversion and file organization program
                                                           "\nthis file format does not yet support {ext} files for "
                                                           "channel labels".format(
                                                               ext=os.path.splitext(src)[1]))
-        # print(self._ignore)
         if isinstance(channels, str) and channels not in channels[part_match]:
             self.channels[part_match] = self.channels[part_match] + [channels]
         elif channels is not None:
@@ -400,7 +413,6 @@ class Data2Bids:  # main conversion and file organization program
             os.mkdir(newdir)
         self._bids_dir = newdir
         self._ignore.append(newdir)
-
         # as of BIDS ver 1.6.0, CT is not a part of BIDS, so check for CT files and add to .bidsignore
         self.bidsignore("*_CT.*")
 
@@ -801,10 +813,7 @@ class Data2Bids:  # main conversion and file organization program
             for root, _, files in os.walk(self._data_dir,
                                           topdown=True):
                 # each loop is a new participant so long as participant is top level
-                files[:] = [f for f in files if
-                            not os.path.join(root,  # ignore BIDS directories
-                                             f).startswith(self._bids_dir) and os.path.join(root,
-                                                                                            f) not in self._ignore]
+                files[:] = [f for f in files if not self.check_ignore(os.path.join(root, f))]
                 eeg = []
                 dst_file_path_list = []
                 names_list = []
@@ -1273,7 +1282,6 @@ class Data2Bids:  # main conversion and file organization program
             event_order += 1
             temp_df = pd.DataFrame()
             for key, value in event.items():
-                print(key, value)
                 if not re.match(r"[\w\d()_]+[ +\-/*%]+[\w\d()_]+", value) and value not in df.columns:
                     temp_df[key] = value
                 else:
@@ -1281,7 +1289,6 @@ class Data2Bids:  # main conversion and file organization program
                         temp_df[key] = df.eval(value)  # pandas eval is the backend equation interpreter
                         # print(df.eval(value))
                     except TypeError as e:
-                        print("Warning: empty cells detected, converting to numeric with NaNs")
                         if re.match(r"[\w\d()_]+[ +\-/*%]+[\w\d()_]+", value):  # if evaluating a math expression
                             for name in [i for i in re.split(r"[ +\-/*%]", value) if i != '']:
                                 print("name: " + name)
@@ -1319,7 +1326,7 @@ class Data2Bids:  # main conversion and file organization program
                 new_df = temp_df
             else:
                 new_df = new_df.append(temp_df, ignore_index=True, sort=False)
-        print(new_df)
+
         for name in ["onset", "duration"]:
             if not (pd.api.types.is_float_dtype(new_df[name]) or pd.api.types.is_integer_dtype(new_df[name])):
                 new_df[name] = pd.to_numeric(new_df[name], errors="coerce")

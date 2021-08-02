@@ -10,7 +10,6 @@ from pathlib import Path
 
 import exrex as ex
 import numpy as np
-from numba import jit
 from pyedflib import EdfReader
 
 
@@ -163,21 +162,18 @@ def tree(path):
         print(path_to_display.displayable())
 
 
-@jit
 def rot_x(alpha):
     return np.array([[1, 0, 0]
                         , [0, np.cos(alpha), np.sin(alpha)]
                         , [0, -np.sin(alpha), np.cos(alpha)]])
 
 
-@jit
 def rot_y(alpha):
     return np.array([[np.cos(alpha), 0, -np.sin(alpha)]
                         , [0, 1, 0]
                         , [np.sin(alpha), 0, np.cos(alpha)]])
 
 
-@jit
 def rot_z(alpha):
     return np.array([[np.cos(alpha), np.sin(alpha), 0]
                         , [-np.sin(alpha), np.cos(alpha), 0]
