@@ -84,6 +84,7 @@
                              {"onset": "Auditory", "stim_file": "sound", "trial_num": "Trial", "trial_type": "Audio"},
                              {"onset": "Go", "duration":  "(goEnd - goStart) * 30", "trial_num": "Trial", "trial_type": "go"},
                              {"onset": "ResponseStart", "duration": "ResponseEnd - ResponseStart", "trial_num": "Trial","trial_type": "Response"}]
+                ,"AudioCorrection": "PhonemeSequencingStimStarts.txt"
         }
 , "split": { "Sep": "all",
             "buffer": 10,

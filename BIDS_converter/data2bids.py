@@ -262,12 +262,6 @@ class Data2Bids:  # main conversion and file organization program
         elif channels is not None:
             self.channels[part_match] = self.channels[part_match] + [c for c in channels if
                                                                      c not in self.channels[part_match]]
-        if self._is_verbose and self.channels is not None:
-            print("Channels for participant " + part_match + " are")
-            print(self.channels[part_match])
-            for i in self._ignore:
-                if part_match in i:
-                    print("From " + i)
 
     def set_overwrite(self, overwrite):
         self._is_overwrite = overwrite
@@ -823,9 +817,25 @@ class Data2Bids:  # main conversion and file organization program
                 tsv_fso_runs = []
                 d_list = []
                 txt_df_list = []
+                correct = None
                 if not files:
                     continue
                 files.sort()
+                part_match = None
+                i = 0
+                while part_match is None:
+                    try:
+                        part_match, part_match_z = self.part_check(filename=files[i])
+                    except:
+                        i += 1
+                        continue
+                if self.channels:
+                    if self._is_verbose and self.channels[part_match] is not None:
+                        print("Channels for participant " + part_match + " are")
+                        print(self.channels[part_match])
+                        for i in self._ignore:
+                            if part_match in i:
+                                print("From " + i)
                 if self._is_verbose:
                     print(files)
                 while files:  # loops over each participant file
@@ -838,11 +848,6 @@ class Data2Bids:  # main conversion and file organization program
                     new_name = None
 
                     if re.match(".*?" + ".json", file):
-                        try:
-                            part_match = match_regexp(self._config["partLabel"], file)
-                        except AssertionError:
-                            raise SyntaxError("file: {filename} has no matching {config}".format(filename=file, config=
-                            self._config["content"][:][0]))
                         try:
                             (new_name, dst_file_path, part_match, run_match,
                              acq_match, echo_match, sess_match, ce_match,
@@ -890,9 +895,8 @@ class Data2Bids:  # main conversion and file organization program
                                     json.dump(filedata, fst, ensure_ascii=False, indent=4, default=set_default)
                             else:
                                 print("Cannot update %s" % (dst_file_path + new_name + ".json"))
-                        elif any(re.search(".nii", filelist) for filelist in files):
+                        elif any(re.search("\\.nii", filelist) for filelist in files):
                             files.append(src_file_path)
-                            part_match = ""
                         continue
                     elif re.match(".*?" + "EADME.txt", file):  # if README.txt in image list
                         with open(src_file_path, 'r') as readmetext:
@@ -915,26 +919,20 @@ class Data2Bids:  # main conversion and file organization program
                                     prevline = ""
                                 else:
                                     prevline = ""
-                        if part_match is not None:
-                            if not os.path.exists(
-                                    self._bids_dir + "/sub-" + part_match):
-                                # Writing both a particpant-specific and agnostic README
-                                # Requires creation of a .bidsignore file for local READMEs
-                                os.makedirs(self._bids_dir + "/sub-" + part_match)
-                            shutil.copy(src_file_path, self._bids_dir + "/sub-" + part_match + "/README.txt")
-                            with open(src_file_path, 'r') as readmetext:
-                                for line in readmetext:
-                                    if os.path.exists(self._bids_dir + "/README"):
-                                        with open(self._bids_dir + "/README", 'a') as f:
-                                            f.write(line + "\n")
-                                    else:
-                                        with open(self._bids_dir + "/README", 'w') as f:
-                                            f.write(line + "\n")
-                            if not os.path.exists(self._bids_dir + "/.bidsignore"):
-                                with open(self._bids_dir + "/.bidsignore", 'w') as f:
-                                    f.write("*.txt")
-                        else:
-                            files.append(src_file_path)
+                        if not os.path.exists(
+                                self._bids_dir + "/sub-" + part_match):
+                            # Writing both a particpant-specific and agnostic README
+                            # Requires creation of a .bidsignore file for local READMEs
+                            os.makedirs(self._bids_dir + "/sub-" + part_match)
+                        shutil.copy(src_file_path, self._bids_dir + "/sub-" + part_match + "/README.txt")
+                        with open(src_file_path, 'r') as readmetext:
+                            for line in readmetext:
+                                if os.path.exists(self._bids_dir + "/README"):
+                                    with open(self._bids_dir + "/README", 'a') as f:
+                                        f.write(line + "\n")
+                                else:
+                                    with open(self._bids_dir + "/README", 'w') as f:
+                                        f.write(line + "\n")
                         continue
                     elif re.match(".*?" + "\\.1D", file):
                         d_list.append(src_file_path)
@@ -959,14 +957,11 @@ class Data2Bids:  # main conversion and file organization program
                         continue
                     if self._is_verbose:
                         print("trying %s" % src_file_path)
-
-                    part_match, part_match_z = self.part_check(filename=file)
                     try:
                         (new_name, dst_file_path, part_match, run_match,
                          acq_match, echo_match, sess_match, ce_match,
                          data_type_match, task_label_match, _) = self.generate_names(src_file_path,
                                                                                      part_match=part_match)
-
                     except TypeError as problem:  #
                         print("\nIssue in generate names")
                         print("problem with %s:" % src_file_path, problem, "\n")
@@ -1138,6 +1133,12 @@ class Data2Bids:  # main conversion and file organization program
                             df = df.drop(columns=["name1", "name2", "del"])
                             df.to_csv(self._bids_dir + "/sub-" + part_match_z + "/sub-" + part_match_z +
                                       "_space-Talairach_electrodes.tsv", sep="\t", index=False)
+                        elif self._config["eventFormat"]["AudioCorrection"] in txt_df_dict["name"]:
+                            if txt_df_dict["error"] is not None:
+                                raise txt_df_dict["error"]
+                            correct = txt_df_dict["data"]
+                        else:
+                            print("skipping " + txt_df_dict["name"])
 
                 # check final file set
                 for new_name in names_list:
@@ -1207,8 +1208,7 @@ class Data2Bids:  # main conversion and file organization program
                             os.remove(tsv_name)
                             # all column manipulation and math in frame2bids
                             df_new = self.frame2bids(df, self._config["eventFormat"]["Events"],
-                                                     self.sample_rate[part_match],
-                                                     os.path.join(self._data_dir, "stimuli"), start)
+                                                     self.sample_rate[part_match], correct, start)
                             df_new.to_csv(tsv_name, sep="\t", index=False,
                                           na_rep="n/a")
                             # dont forget .json files!
@@ -1272,8 +1272,8 @@ class Data2Bids:  # main conversion and file organization program
             with open(os.path.splitext(full_file)[0] + ".json", "w") as fst:
                 json.dump(data, fst)
 
-    def frame2bids(self, df: pd.DataFrame, events: Union[dict, List[dict]], data_sample_rate=None, stim_file_dir=None,
-                   start_at=0):
+    def frame2bids(self, df: pd.DataFrame, events: Union[dict, List[dict]], data_sample_rate=None, audio_correction=None
+                   , start_at=0):
         new_df = None
         if isinstance(events, dict):
             events = list(events)
@@ -1301,6 +1301,7 @@ class Data2Bids:  # main conversion and file organization program
             if "duration" not in temp_df.columns:
                 if "stim_file" in temp_df.columns:
                     temp = []
+                    t_correct = []
                     for _, fname in temp_df["stim_file"].iteritems():
                         if fname.endswith(".wav"):
                             if self.stim_dir is not None:
@@ -1313,11 +1314,24 @@ class Data2Bids:  # main conversion and file organization program
                             except FileNotFoundError as e:
                                 print(fname + " not found in current directory or in " + dir)
                                 raise e
+                            if audio_correction is not None:
+                                correct = audio_correction.set_index(0).squeeze()[os.path.basename(
+                                    os.path.splitext(fname)[0])] * self._config["eventFormat"]["SampleRate"]
+                            else:
+                                correct = 0
                             duration = (data.size / frames) * self._config["eventFormat"]["SampleRate"]
                         else:
                             raise NotImplementedError("current build only supports .wav stim files")
                         temp.append(duration)
+                        t_correct.append(correct)
                     temp_df["duration"] = temp
+                    # audio correction
+                    if t_correct:
+                        print(t_correct)
+                        temp_df["correct"] = t_correct
+                        temp_df["duration"] = temp_df.eval("duration - correct")
+                        temp_df["onset"] = temp_df.eval("onset + correct")
+                        temp_df.drop(columns=["correct"])
                 else:
                     raise LookupError("duration of event or copy of audio file required but not found in " +
                                       self._config_path)
