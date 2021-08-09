@@ -1,7 +1,7 @@
 #!/bin/bash
 
 ORIG_DATA_DIR="$HOME/Desktop/share/CoganLab"
-SUB_IDS=(D48 D52)
+SUB_IDS=(D25 D28 D29 D31 D35 D39 D40 D41 D42 D45 D48 D49 D52 D53 D54 D55 D56 D57 D58)
 TASKS=(Phoneme_sequencing)
 
 #declare -l mylist[30]
@@ -85,6 +85,7 @@ for TASK in "${TASKS[@]}"
         #the big bad python code to convert the renamed files to BIDS
         #requires numpy, nibabel, and pathlib modules
         python3 data2bids.py -c config.json -i "$OUTPUT_DIR/$SUB_ID" -o $BIDS_DIR -v || { echo "BIDS conversion for $SUB_ID failed, trying next subject" ; continue; }
+        rm -rf "$OUTPUT_DIR/$SUB_ID"
 
         [[ $RAN_SUBS =~ (^| )$SUB_ID( |$) ]] || RAN_SUBS+=${SUB_ID}" "
         [[ $RAN_TASKS =~ (^| )$TASK( |$) ]] || RAN_TASKS+=${TASK}" "
