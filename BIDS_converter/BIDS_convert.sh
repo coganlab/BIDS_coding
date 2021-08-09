@@ -1,7 +1,7 @@
 #!/bin/bash
 
 ORIG_DATA_DIR="$HOME/Desktop/share/CoganLab"
-SUB_IDS=(D52 D48) 
+SUB_IDS=(D48 D52)
 TASKS=(Phoneme_sequencing)
 
 #declare -l mylist[30]

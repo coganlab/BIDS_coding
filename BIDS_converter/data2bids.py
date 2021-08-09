@@ -1122,7 +1122,6 @@ class Data2Bids:  # main conversion and file organization program
 
                 if txt_df_list:
                     for txt_df_dict in txt_df_list:
-                        print(txt_df_dict)
                         if self._config["coordsystem"] in txt_df_dict["name"]:
                             if txt_df_dict["error"] is not None:
                                 raise txt_df_dict["error"]
@@ -1145,14 +1144,12 @@ class Data2Bids:  # main conversion and file organization program
                     file_path = dst_file_path_list[names_list.index(new_name)]
                     full_name = file_path + new_name + ".edf"
                     # split any edfs according to tsvs
-                    split = False
                     if new_name.endswith("_ieeg") and any(re.match(new_name.split("_ieeg")[0].split("/", 1)[1] +
                                                                    "(?:" + "_acq-" + self._config["acq"]["content"][0] +
                                                                    ")?" + "_run-" + self._config["runIndex"]["content"][
                                                                        0] + "_events.tsv", set_file) for set_file in
                                                           os.listdir(file_path)):  # if edf is not yet split
 
-                        split = True
                         if self._is_verbose:
                             print("Reading for split... ")
                         if full_name in [i["bids_name"] for i in eeg]:
@@ -1165,19 +1162,19 @@ class Data2Bids:  # main conversion and file organization program
                                                            eeg_dict["file_header"]]
                         start_nums = []
                         matches = []
-                        for file in os.listdir(file_path):
+                        for file in sorted(os.listdir(file_path)):
                             match_tsv = re.match(new_name.split("_ieeg", 1)[0].split("/", 1)[1] +
                                                  "(?:_acq-" + self._config["acq"]["content"][0] + ")?_run-(" +
                                                  self._config["runIndex"]["content"][0] + ")_events.tsv", file)
                             if match_tsv:
                                 df = pd.read_csv(os.path.join(file_path, file), sep="\t", header=0)
+                                # converting signal start and end to correct sample rate for data
                                 num_list = [round((float(x) / float(self._config["eventFormat"]["SampleRate"])) *
                                                   signal_headers[0]["sample_rate"]) for x in (
                                                 df[self._config["eventFormat"]["Timing"]["start"]][0],
                                                 df[self._config["eventFormat"]["Timing"]["end"]].iloc[-1])]
                                 start_nums.append(tuple(num_list))
                                 matches.append(match_tsv)
-                        # print(start_nums)
                         for i in range(len(start_nums)):
                             if i == 0:
                                 start = 0
@@ -1327,7 +1324,6 @@ class Data2Bids:  # main conversion and file organization program
                     temp_df["duration"] = temp
                     # audio correction
                     if t_correct:
-                        print(t_correct)
                         temp_df["correct"] = t_correct
                         temp_df["duration"] = temp_df.eval("duration - correct")
                         temp_df["onset"] = temp_df.eval("onset + correct")
