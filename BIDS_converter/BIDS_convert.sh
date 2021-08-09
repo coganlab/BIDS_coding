@@ -4,9 +4,7 @@ ORIG_DATA_DIR="$HOME/Desktop/share/CoganLab"
 SUB_IDS=(D25 D28 D29 D31 D35 D39 D40 D41 D42 D45 D48 D49 D52 D53 D54 D55 D56 D57 D58)
 TASKS=(Phoneme_sequencing)
 
-#declare -l mylist[30]
-
-#BIDS_DIR="$OUTPUT_DIR/$TASK/BIDS"
+BIDS_DIR="$OUTPUT_DIR/$TASK/BIDS"
 for TASK in "${TASKS[@]}"
  do
 
