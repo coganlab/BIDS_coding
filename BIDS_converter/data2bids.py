@@ -188,7 +188,7 @@ class Data2Bids:  # main conversion and file organization program
             if not os.path.isdir(os.path.join(self._bids_dir, "stimuli")):
                 os.mkdir(os.path.join(self._bids_dir, "stimuli"))
         for item in os.listdir(dir):
-            shutil.copy(os.path.join(dir, item), os.path.join(self._bids_dir, "stimuli", item))
+            shutil.copyfile(os.path.join(dir, item), os.path.join(self._bids_dir, "stimuli", item))
         self.stim_dir = dir
         self._ignore.append(dir)
 
@@ -944,16 +944,15 @@ class Data2Bids:  # main conversion and file organization program
                         continue
                         # if the file doesn't match the extension, we skip it
                     elif re.match(".*?" + "\\.txt", file):
-                        if part_match_z is None:
+                        if part_match is None:
                             files.append(file)
-                            continue
-                        try:
-                            df = pd.read_csv(src_file_path, sep=" ")
-                            e = None
-                        except Exception as e:
-                            df = None
-                        txt_df_list.append(dict(name=file, data=df, error=e))
-
+                        else:
+                            try:
+                                df = pd.read_table(src_file_path, header=None, sep="\s+")
+                                e = None
+                            except Exception as e:
+                                df = None
+                            txt_df_list.append(dict(name=file, data=df, error=e))
                         continue
                     elif not any(re.match(".*?" + ext, file) for ext in curr_ext):
                         print("Warning : Skipping %s" % src_file_path)
@@ -1128,6 +1127,7 @@ class Data2Bids:  # main conversion and file organization program
 
                 if txt_df_list:
                     for txt_df_dict in txt_df_list:
+                        print(txt_df_dict)
                         if self._config["coordsystem"] in txt_df_dict["name"]:
                             if txt_df_dict["error"] is not None:
                                 raise txt_df_dict["error"]

@@ -1,7 +1,7 @@
 #!/bin/bash
 
 ORIG_DATA_DIR="$HOME/c/Users/Jakda/Box Sync/CoganLab"
-SUB_IDS=(D52 D48) 
+SUB_IDS=(D48 D52)
 TASKS=(Phoneme_sequencing)
 
 #declare -l mylist[30]
@@ -50,8 +50,12 @@ for TASK in "${TASKS[@]}"
         #electrode locations .txt
         find "$ORIG_DATA_DIR/../ECoG_Recon/$SUB_ID/elec_recon" -name "${SUB_ID}_elec_locations_RAS.txt" -type f -exec cp -v {} "$OUTPUT_DIR/$SUB_ID/" \;
         #T1 MRI file .mgz
-        find "$ORIG_DATA_DIR/ECoG_Recon_Full/$SUB_ID/elec_recon" -name "T1.nii.gz" -type f -exec cp -v {} "$OUTPUT_DIR/$SUB_ID/${SUB_ID}_T1w.nii.gz" \; | head -1
-
+        find "$ORIG_DATA_DIR/ECoG_Recon_Full/$SUB_ID/elec_recon" -name "T1.nii.gz" -type f -exec cp {} "$OUTPUT_DIR/$SUB_ID/${SUB_ID}_T1w.nii.gz" \; | head -1
+        #stim file corrections
+        if [ $TASK == "Phoneme_sequencing" ]
+        then
+            cp -v "$ORIG_DATA_DIR/ECoG_Task_Data/response_coding/PhonemeSequencingStimStarts.txt" "$OUTPUT_DIR/$SUB_ID/${SUB_ID}_PhonemeSequencingStimStarts.txt"
+        fi
         #eeg files
         if ! find "$ORIG_DATA_DIR/D_Data/$TASK/$SUB_ID" -regex ".*\.edf" -exec false {} +  ; then #search for edf files
             find "$ORIG_DATA_DIR/D_Data/$TASK/$SUB_ID" -regex ".*\.edf" -exec cp -v -t "$OUTPUT_DIR/$SUB_ID/" {} +
@@ -94,7 +98,5 @@ done
 #cd .. 
 #python3 CMRIF_preprocess.py -i $BIDS_DIR -in s${SUB_NUM} -verb || { echo "preprocessing for $SUB_ID failed, trying next subject" ; cd $CWD; continue; }
 #cd /BIDS_converter
-
-
 
 echo "Finished"
