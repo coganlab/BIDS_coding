@@ -4,8 +4,11 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="48805e9b-6305-4dbb-a3eb-2450704f0651" name="Default Changelist" comment="fix flake issue">
+    <list default="true" id="48805e9b-6305-4dbb-a3eb-2450704f0651" name="Default Changelist" comment="for whole database">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/BIDS_converter/BIDS_convert.sh" beforeDir="false" afterPath="$PROJECT_DIR$/BIDS_converter/BIDS_convert.sh" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/BIDS_converter/config.json" beforeDir="false" afterPath="$PROJECT_DIR$/BIDS_converter/config.json" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/BIDS_converter/data2bids.py" beforeDir="false" afterPath="$PROJECT_DIR$/BIDS_converter/data2bids.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -157,9 +160,9 @@
     </configuration>
     <list>
       <item itemvalue="Python.Bids_coding" />
+      <item itemvalue="Python tests.pytest in package_test.py" />
       <item itemvalue="Shell Script.BIDS_convert" />
       <item itemvalue="Shell Script.init" />
-      <item itemvalue="Python tests.pytest in package_test.py" />
     </list>
   </component>
   <component name="SpellCheckerSettings" RuntimeDictionaries="0" Folders="0" CustomDictionaries="0" DefaultDictionary="application-level" UseSingleDictionary="true" transferred="true" />
@@ -237,7 +240,21 @@
       <option name="project" value="LOCAL" />
       <updated>1627329231491</updated>
     </task>
-    <option name="localTasksCounter" value="10" />
+    <task id="LOCAL-00010" summary="fixed sampling bug">
+      <created>1628552249869</created>
+      <option name="number" value="00010" />
+      <option name="presentableId" value="LOCAL-00010" />
+      <option name="project" value="LOCAL" />
+      <updated>1628552249869</updated>
+    </task>
+    <task id="LOCAL-00011" summary="for whole database">
+      <created>1628552257195</created>
+      <option name="number" value="00011" />
+      <option name="presentableId" value="LOCAL-00011" />
+      <option name="project" value="LOCAL" />
+      <updated>1628552257195</updated>
+    </task>
+    <option name="localTasksCounter" value="12" />
     <servers />
   </component>
   <component name="TerminalProjectNonSharedOptionsProvider">
@@ -269,7 +286,8 @@
     <MESSAGE value="fix flake issue" />
     <MESSAGE value="Testing data fix" />
     <MESSAGE value="shell fix" />
-    <option name="LAST_COMMIT_MESSAGE" value="shell fix" />
+    <MESSAGE value="for whole database" />
+    <option name="LAST_COMMIT_MESSAGE" value="for whole database" />
   </component>
   <component name="XDebuggerManager">
     <breakpoint-manager>

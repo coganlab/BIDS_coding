@@ -228,13 +228,22 @@ class Data2Bids:  # main conversion and file organization program
                                             task_label_match + "_channels.tsv")
                     os.mkdir(os.path.dirname(filename))
                     df.to_csv(filename, sep="\t", index=False)
+                    if part_match not in headers_dict.keys():
+                        try:
+                            var = headers_dict["default"]
+                            if isinstance(var, str):
+                                var = [var]
+                            self.channels[part_match] = self.channels[part_match] + [v for v in var if
+                                                                                     v not in self.channels[part_match]]
+                        except KeyError:
+                            pass
                     for name, var in headers_dict.items():
                         if name == part_match:
                             if isinstance(var, str):
                                 var = [var]
                             self.channels[part_match] = self.channels[part_match] + [v for v in var if
                                                                                      v not in self.channels[part_match]]
-                        elif re.match(".*?" + part_match + ".*?" + name, src):
+                        elif re.match(".*?" + part_match + ".*?" + name, src): # some sort of checking for .mat or txt files?
                             if name.endswith(".mat") and re.match(".*?" + part_match + ".*?" + name, src):
                                 self.channels[part_match] = self.channels[part_match] + mat2df(src, var).tolist()
                                 try:

@@ -1,7 +1,7 @@
 #!/bin/bash
 
-ORIG_DATA_DIR="$HOME/Desktop/share/CoganLab"
-SUB_IDS=(D25 D28 D29 D31 D35 D39 D40 D41 D42 D45 D48 D49 D52 D53 D54 D55 D56 D57 D58)
+ORIG_DATA_DIR="$HOME/Desktop/share/Box/CoganLab"
+SUB_IDS=(D29 D31 D35 D39 D40 D41 D42 D45 D48 D49 D52 D53 D54 D55 D56 D57 D58)
 TASKS=(Phoneme_sequencing)
 
 BIDS_DIR="$OUTPUT_DIR/$TASK/BIDS"
@@ -9,7 +9,7 @@ for TASK in "${TASKS[@]}"
  do
 
     OUTPUT_DIR="$HOME/Desktop/Workspace/sourcedata/$TASK"
-    BIDS_DIR="$OUTPUT_DIR/../../$TASK/BIDS"
+    BIDS_DIR="$HOME/Desktop/share/share/$TASK/BIDS"
     ZIP=false
 
     if [ -d $OUTPUT_DIR ]
@@ -43,8 +43,8 @@ for TASK in "${TASKS[@]}"
         fi
         mkdir -p "$OUTPUT_DIR/$SUB_ID"
 
-        #CT scan .nii
-        find "$ORIG_DATA_DIR/ECoG_Recon_Full/$SUB_ID/elec_recon" -name "postInPre.nii.gz" -type f -exec cp -v {} "$OUTPUT_DIR/$SUB_ID/${SUB_ID}_CT.nii.gz" \;
+        #CT scan .nii "[(pos)c]tI[(nPre)(Nt1)]"
+        find "$ORIG_DATA_DIR/ECoG_Recon_Full/$SUB_ID/elec_recon" -regex ".*[(postInPre)(ctINt1)]\.nii\.gz" -type f -exec cp -v {} "$OUTPUT_DIR/$SUB_ID/${SUB_ID}_CT.nii.gz" \;
         #electrode locations .txt
         find "$ORIG_DATA_DIR/../ECoG_Recon/$SUB_ID/elec_recon" -name "${SUB_ID}_elec_locations_RAS.txt" -type f -exec cp -v {} "$OUTPUT_DIR/$SUB_ID/" \;
         #T1 MRI file .mgz
