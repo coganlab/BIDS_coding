@@ -7,14 +7,8 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="48805e9b-6305-4dbb-a3eb-2450704f0651" name="Default Changelist" comment="WSL utilities refactorization">
-      <change beforePath="$PROJECT_DIR$/.idea/BIDS_coding.iml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/BIDS_coding.iml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/misc.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/misc.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/modules.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/modules.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/BIDS_converter/data2bids.py" beforeDir="false" afterPath="$PROJECT_DIR$/BIDS_converter/data2bids.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/BIDS_converter/t3st_workspace.py" beforeDir="false" afterPath="$PROJECT_DIR$/BIDS_converter/t3st_workspace.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/BIDS_converter/utils/utils.py" beforeDir="false" afterPath="$PROJECT_DIR$/BIDS_converter/utils/utils.py" afterDir="false" />
+    <list default="true" id="48805e9b-6305-4dbb-a3eb-2450704f0651" name="Default Changelist" comment="WSL utilities refactorization 2">
+      <change beforePath="$PROJECT_DIR$/.gitignore" beforeDir="false" afterPath="$PROJECT_DIR$/.gitignore" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -42,6 +36,7 @@
       </map>
     </option>
     <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
+    <option name="UPDATE_TYPE" value="REBASE" />
   </component>
   <component name="GitSEFilterConfiguration">
     <file-type-list>
@@ -109,7 +104,7 @@
       <recent name="C:\Users\ae166\share\workspace\Phoneme_sequencing" />
     </key>
   </component>
-  <component name="RunManager">
+  <component name="RunManager" selected="Python.Bids_coding">
     <configuration name="Bids_coding" type="PythonConfigurationType" factoryName="Python">
       <module name="BIDS_coding" />
       <option name="INTERPRETER_OPTIONS" value="" />
@@ -170,7 +165,7 @@
       <option name="presentableId" value="Default" />
       <updated>1624377698423</updated>
       <workItem from="1628704521548" duration="931000" />
-      <workItem from="1628705553149" duration="2672000" />
+      <workItem from="1628705553149" duration="2824000" />
     </task>
     <task id="LOCAL-00001" summary="working on json and tsvs 2">
       <created>1625604326922</created>
@@ -235,7 +230,21 @@
       <option name="project" value="LOCAL" />
       <updated>1627329231491</updated>
     </task>
-    <option name="localTasksCounter" value="10" />
+    <task id="LOCAL-00010" summary="WSL utilities refactorization 2">
+      <created>1628708327806</created>
+      <option name="number" value="00010" />
+      <option name="presentableId" value="LOCAL-00010" />
+      <option name="project" value="LOCAL" />
+      <updated>1628708327806</updated>
+    </task>
+    <task id="LOCAL-00011" summary="WSL utilities refactorization 2">
+      <created>1628708343271</created>
+      <option name="number" value="00011" />
+      <option name="presentableId" value="LOCAL-00011" />
+      <option name="project" value="LOCAL" />
+      <updated>1628708343271</updated>
+    </task>
+    <option name="localTasksCounter" value="12" />
     <servers />
   </component>
   <component name="TerminalProjectNonSharedOptionsProvider">
@@ -272,6 +281,7 @@
     <MESSAGE value="fix flake issue" />
     <MESSAGE value="Testing data fix" />
     <MESSAGE value="shell fix" />
-    <option name="LAST_COMMIT_MESSAGE" value="shell fix" />
+    <MESSAGE value="WSL utilities refactorization 2" />
+    <option name="LAST_COMMIT_MESSAGE" value="WSL utilities refactorization 2" />
   </component>
 </project>
