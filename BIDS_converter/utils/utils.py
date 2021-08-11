@@ -1,15 +1,14 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
+import exrex as ex
+import numpy as np
 import os
 import re
 import shutil
 import stat
 import threading
 from pathlib import Path
-
-import exrex as ex
-import numpy as np
 from pyedflib import EdfReader
 
 

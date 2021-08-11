@@ -1,19 +1,39 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
+  <component name="AnalysisUIOptions">
+    <option name="SCOPE_TYPE" value="3" />
+  </component>
   <component name="AutoImportSettings">
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="48805e9b-6305-4dbb-a3eb-2450704f0651" name="Default Changelist" comment="for whole database">
+    <list default="true" id="48805e9b-6305-4dbb-a3eb-2450704f0651" name="Default Changelist" comment="WSL utilities refactorization">
+      <change beforePath="$PROJECT_DIR$/.idea/BIDS_coding.iml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/BIDS_coding.iml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/misc.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/misc.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/modules.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/modules.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/BIDS_converter/BIDS_convert.sh" beforeDir="false" afterPath="$PROJECT_DIR$/BIDS_converter/BIDS_convert.sh" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/BIDS_converter/config.json" beforeDir="false" afterPath="$PROJECT_DIR$/BIDS_converter/config.json" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/BIDS_converter/data2bids.py" beforeDir="false" afterPath="$PROJECT_DIR$/BIDS_converter/data2bids.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/BIDS_converter/t3st_workspace.py" beforeDir="false" afterPath="$PROJECT_DIR$/BIDS_converter/t3st_workspace.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/BIDS_converter/utils/utils.py" beforeDir="false" afterPath="$PROJECT_DIR$/BIDS_converter/utils/utils.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
     <option name="LAST_RESOLUTION" value="IGNORE" />
+  </component>
+  <component name="DjangoConsoleOptions" custom-start-script="import sys; print('Python %s on %s' % (sys.version, sys.platform))&#10;import django; print('Django %s' % django.get_version())&#10;sys.path.extend([WORKING_DIR_AND_PYTHON_PATHS])&#10;if 'setup' in dir(django): django.setup()&#10;import django_manage_shell; django_manage_shell.run(PROJECT_ROOT)">
+    <option name="myCustomStartScript" value="import sys; print('Python %s on %s' % (sys.version, sys.platform))&#10;import django; print('Django %s' % django.get_version())&#10;sys.path.extend([WORKING_DIR_AND_PYTHON_PATHS])&#10;if 'setup' in dir(django): django.setup()&#10;import django_manage_shell; django_manage_shell.run(PROJECT_ROOT)" />
+  </component>
+  <component name="FlaskConsoleOptions" custom-start-script="import sys&#10;sys.path.extend([WORKING_DIR_AND_PYTHON_PATHS])&#10;from flask.cli import ScriptInfo&#10;locals().update(ScriptInfo(create_app=None).load_app().make_shell_context())&#10;print(&quot;Python %s on %s\nApp: %s [%s]\nInstance: %s&quot; % (sys.version, sys.platform, app.import_name, app.env, app.instance_path))">
+    <envs>
+      <env key="FLASK_APP" value="app" />
+    </envs>
+    <option name="myCustomStartScript" value="import sys&#10;sys.path.extend([WORKING_DIR_AND_PYTHON_PATHS])&#10;from flask.cli import ScriptInfo&#10;locals().update(ScriptInfo(create_app=None).load_app().make_shell_context())&#10;print(&quot;Python %s on %s\nApp: %s [%s]\nInstance: %s&quot; % (sys.version, sys.platform, app.import_name, app.env, app.instance_path))" />
+    <option name="myEnvs">
+      <map>
+        <entry key="FLASK_APP" value="app" />
+      </map>
+    </option>
   </component>
   <component name="Git.Settings">
     <option name="RECENT_BRANCH_BY_REPOSITORY">
@@ -32,16 +52,16 @@
     </file-type-list>
   </component>
   <component name="HighlightingSettingsPerFile">
-    <setting file="file://$PROJECT_DIR$/preprocess.py" root0="FORCE_HIGHLIGHTING" />
-    <setting file="file://$PROJECT_DIR$/envs/environment.yml" root0="FORCE_HIGHLIGHTING" />
-    <setting file="file://$PROJECT_DIR$/BIDS_converter/BIDS_convert_wsl.sh" root0="FORCE_HIGHLIGHTING" />
-    <setting file="file://$PROJECT_DIR$/.github/workflows/Ubuntu_test.yml" root0="FORCE_HIGHLIGHTING" />
-    <setting file="file://$PROJECT_DIR$/BIDS_converter/data2bids.py" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/package_test.py" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/BIDS_converter/config.json" root0="FORCE_HIGHLIGHTING" />
-    <setting file="file://$PROJECT_DIR$/.github/workflows/Windows_test.yml" root0="FORCE_HIGHLIGHTING" />
+    <setting file="file://$PROJECT_DIR$/preprocess.py" root0="FORCE_HIGHLIGHTING" />
+    <setting file="file://$PROJECT_DIR$/BIDS_converter/BIDS_convert_wsl.sh" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/envs/requirements.txt" root0="FORCE_HIGHLIGHTING" />
+    <setting file="file://$PROJECT_DIR$/envs/environment.yml" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/BIDS_converter/BIDS_convert.sh" root0="FORCE_HIGHLIGHTING" />
+    <setting file="file://$PROJECT_DIR$/BIDS_converter/data2bids.py" root0="FORCE_HIGHLIGHTING" />
+    <setting file="file://$PROJECT_DIR$/.github/workflows/Windows_test.yml" root0="FORCE_HIGHLIGHTING" />
+    <setting file="file://$PROJECT_DIR$/.github/workflows/Ubuntu_test.yml" root0="FORCE_HIGHLIGHTING" />
   </component>
   <component name="ProjectId" id="1uJJKmF1K4taUwuMSxVBSi6XtqU" />
   <component name="ProjectLevelVcsManager" settingsEditedManually="true" />
@@ -53,24 +73,27 @@
     <property name="RunOnceActivity.OpenProjectViewOnStart" value="true" />
     <property name="RunOnceActivity.ShowReadmeOnStart" value="true" />
     <property name="SHARE_PROJECT_CONFIGURATION_FILES" value="true" />
+    <property name="WebServerToolWindowFactoryState" value="false" />
     <property name="last.edited.regexp" value="(goEnd - goStart) * 30" />
-    <property name="last_opened_file_path" value="$PROJECT_DIR$" />
-    <property name="settings.editor.selected.configurable" value="com.jetbrains.python.configuration.PyActiveSdkModuleConfigurable" />
+    <property name="last_opened_file_path" value="//wsl$/Ubuntu-20.04/home/aaron" />
+    <property name="run.code.analysis.last.selected.profile" value="pProject Default" />
+    <property name="settings.editor.selected.configurable" value="terminal" />
+    <property name="two.files.diff.last.used.file" value="$PROJECT_DIR$/BIDS_converter/BIDS_convert_wsl.sh" />
   </component>
   <component name="PyConsoleOptionsProvider">
     <option name="myPythonConsoleState">
-      <console-settings module-name="BIDS_coding" sdk-home="C:\Users\Jakda\.conda\envs\BIDS_coding\python.exe" working-directory="$PROJECT_DIR$">
+      <console-settings module-name="BIDS_coding" sdk-home="wsl://Ubuntu-20.04/home/aaron/miniconda3/envs/BIDS_coding/bin/python" working-directory="//wsl$/Ubuntu-20.04/home/aaron">
         <envs>
           <env key="PATH" value="C:\Users\ae166\Anaconda3;C:\Users\ae166\Anaconda3\Library\mingw-w64\bin;C:\Users\ae166\Anaconda3\Library\usr\bin;C:\Users\ae166\Anaconda3\Library\bin;C:\Users\ae166\Anaconda3\Scripts;C:\Users\ae166\Anaconda3\bin;C:\Users\ae166\Anaconda3\c ondabin;C:\ProgramData\Oracle\Java\javapath;C:\WINDOWS\system32;C:\WINDOWS;C:\WINDOWS\System32\Wbem;C:\WINDOWS\System32\WindowsPowerShell\v1.0;C:\Program Files\MATLAB\R2018b\bin;C:\WINDOWS\System32\OpenSSH;C:\Program Files (x86)\Sennheise r\SenncomSDK;C:\Users\ae166\AppData\Local\Microsoft\WindowsApps;C:\Users\ae166\AppData\Local\Programs\Git LFS;C:\Users\ae166\AppData\Local\Programs\Git\cmd;C:\Users\ae166\AppData\Local\Programs\Microsoft VS Code\bin " />
         </envs>
-        <option name="mySdkHome" value="C:\Users\Jakda\.conda\envs\BIDS_coding\python.exe" />
+        <option name="mySdkHome" value="wsl://Ubuntu-20.04/home/aaron/miniconda3/envs/BIDS_coding/bin/python" />
         <option name="myModuleName" value="BIDS_coding" />
         <option name="myEnvs">
           <map>
             <entry key="PATH" value="C:\Users\ae166\Anaconda3;C:\Users\ae166\Anaconda3\Library\mingw-w64\bin;C:\Users\ae166\Anaconda3\Library\usr\bin;C:\Users\ae166\Anaconda3\Library\bin;C:\Users\ae166\Anaconda3\Scripts;C:\Users\ae166\Anaconda3\bin;C:\Users\ae166\Anaconda3\c ondabin;C:\ProgramData\Oracle\Java\javapath;C:\WINDOWS\system32;C:\WINDOWS;C:\WINDOWS\System32\Wbem;C:\WINDOWS\System32\WindowsPowerShell\v1.0;C:\Program Files\MATLAB\R2018b\bin;C:\WINDOWS\System32\OpenSSH;C:\Program Files (x86)\Sennheise r\SenncomSDK;C:\Users\ae166\AppData\Local\Microsoft\WindowsApps;C:\Users\ae166\AppData\Local\Programs\Git LFS;C:\Users\ae166\AppData\Local\Programs\Git\cmd;C:\Users\ae166\AppData\Local\Programs\Microsoft VS Code\bin " />
           </map>
         </option>
-        <option name="myWorkingDirectory" value="$PROJECT_DIR$" />
+        <option name="myWorkingDirectory" value="//wsl$/Ubuntu-20.04/home/aaron" />
       </console-settings>
     </option>
     <option name="myUseExistingConsole" value="true" />
@@ -86,7 +109,7 @@
       <recent name="C:\Users\ae166\share\workspace\Phoneme_sequencing" />
     </key>
   </component>
-  <component name="RunManager" selected="Shell Script.BIDS_convert">
+  <component name="RunManager">
     <configuration name="Bids_coding" type="PythonConfigurationType" factoryName="Python">
       <module name="BIDS_coding" />
       <option name="INTERPRETER_OPTIONS" value="" />
@@ -100,6 +123,7 @@
       <option name="IS_MODULE_SDK" value="false" />
       <option name="ADD_CONTENT_ROOTS" value="true" />
       <option name="ADD_SOURCE_ROOTS" value="true" />
+      <EXTENSION ID="PythonCoverageRunConfigurationExtension" runner="coverage.py" />
       <option name="SCRIPT_NAME" value="$PROJECT_DIR$/package_test.py" />
       <option name="PARAMETERS" value="" />
       <option name="SHOW_COMMAND_LINE" value="false" />
@@ -107,36 +131,6 @@
       <option name="MODULE_MODE" value="false" />
       <option name="REDIRECT_INPUT" value="false" />
       <option name="INPUT_FILE" value="" />
-      <method v="2" />
-    </configuration>
-    <configuration name="BIDS_convert" type="ShConfigurationType" activateToolWindowBeforeRun="false">
-      <option name="SCRIPT_TEXT" value="" />
-      <option name="INDEPENDENT_SCRIPT_PATH" value="true" />
-      <option name="SCRIPT_PATH" value="$PROJECT_DIR$/BIDS_converter/BIDS_convert_windows.ps1" />
-      <option name="SCRIPT_OPTIONS" value="" />
-      <option name="INDEPENDENT_SCRIPT_WORKING_DIRECTORY" value="true" />
-      <option name="SCRIPT_WORKING_DIRECTORY" value="$PROJECT_DIR$/BIDS_converter" />
-      <option name="INDEPENDENT_INTERPRETER_PATH" value="true" />
-      <option name="INTERPRETER_PATH" value="$PROJECT_DIR$/../../../../../Windows/System32/WindowsPowerShell/v1.0/powershell.exe" />
-      <option name="INTERPRETER_OPTIONS" value="-ExecutionPolicy Bypass -File" />
-      <option name="EXECUTE_IN_TERMINAL" value="true" />
-      <option name="EXECUTE_SCRIPT_FILE" value="true" />
-      <envs />
-      <method v="2" />
-    </configuration>
-    <configuration name="init" type="ShConfigurationType">
-      <option name="SCRIPT_TEXT" value="" />
-      <option name="INDEPENDENT_SCRIPT_PATH" value="true" />
-      <option name="SCRIPT_PATH" value="$PROJECT_DIR$/BIDS_converter/shell_init.sh" />
-      <option name="SCRIPT_OPTIONS" value="" />
-      <option name="INDEPENDENT_SCRIPT_WORKING_DIRECTORY" value="true" />
-      <option name="SCRIPT_WORKING_DIRECTORY" value="$PROJECT_DIR$" />
-      <option name="INDEPENDENT_INTERPRETER_PATH" value="true" />
-      <option name="INTERPRETER_PATH" value="$PROJECT_DIR$/../../../../../Windows/System32/WindowsPowerShell/v1.0/powershell.exe" />
-      <option name="INTERPRETER_OPTIONS" value="" />
-      <option name="EXECUTE_IN_TERMINAL" value="true" />
-      <option name="EXECUTE_SCRIPT_FILE" value="true" />
-      <envs />
       <method v="2" />
     </configuration>
     <configuration name="pytest in package_test.py" type="tests" factoryName="py.test" nameIsGenerated="true">
@@ -151,6 +145,7 @@
       <option name="IS_MODULE_SDK" value="true" />
       <option name="ADD_CONTENT_ROOTS" value="true" />
       <option name="ADD_SOURCE_ROOTS" value="true" />
+      <EXTENSION ID="PythonCoverageRunConfigurationExtension" runner="coverage.py" />
       <option name="_new_keywords" value="&quot;&quot;" />
       <option name="_new_parameters" value="&quot;&quot;" />
       <option name="_new_additionalArguments" value="&quot;&quot;" />
@@ -161,8 +156,6 @@
     <list>
       <item itemvalue="Python.Bids_coding" />
       <item itemvalue="Python tests.pytest in package_test.py" />
-      <item itemvalue="Shell Script.BIDS_convert" />
-      <item itemvalue="Shell Script.init" />
     </list>
   </component>
   <component name="SpellCheckerSettings" RuntimeDictionaries="0" Folders="0" CustomDictionaries="0" DefaultDictionary="application-level" UseSingleDictionary="true" transferred="true" />
@@ -176,6 +169,8 @@
       <option name="number" value="Default" />
       <option name="presentableId" value="Default" />
       <updated>1624377698423</updated>
+      <workItem from="1628704521548" duration="931000" />
+      <workItem from="1628705553149" duration="2672000" />
     </task>
     <task id="LOCAL-00001" summary="working on json and tsvs 2">
       <created>1625604326922</created>
@@ -240,27 +235,18 @@
       <option name="project" value="LOCAL" />
       <updated>1627329231491</updated>
     </task>
-    <task id="LOCAL-00010" summary="fixed sampling bug">
-      <created>1628552249869</created>
-      <option name="number" value="00010" />
-      <option name="presentableId" value="LOCAL-00010" />
-      <option name="project" value="LOCAL" />
-      <updated>1628552249869</updated>
-    </task>
-    <task id="LOCAL-00011" summary="for whole database">
-      <created>1628552257195</created>
-      <option name="number" value="00011" />
-      <option name="presentableId" value="LOCAL-00011" />
-      <option name="project" value="LOCAL" />
-      <updated>1628552257195</updated>
-    </task>
-    <option name="localTasksCounter" value="12" />
+    <option name="localTasksCounter" value="10" />
     <servers />
   </component>
   <component name="TerminalProjectNonSharedOptionsProvider">
     <envs>
-      <env key="PYTHONPATH" value="C:\ProgramData\Anaconda3" />
+      <env key="PYTHONPATH" value="\\wsl$\Ubuntu-20.04\home\aaron\miniconda3" />
     </envs>
+    <option name="shellPath" value="C:\Users\Jakda\AppData\Local\Microsoft\WindowsApps\CanonicalGroupLimited.Ubuntu20.04onWindows_79rhkp1fndgsc\ubuntu2004.exe" />
+    <option name="startingDirectory" value="\\wsl$\Ubuntu-20.04\home\aaron" />
+  </component>
+  <component name="TypeScriptGeneratedFilesManager">
+    <option name="version" value="3" />
   </component>
   <component name="Vcs.Log.Tabs.Properties">
     <option name="TAB_STATES">
@@ -286,18 +272,6 @@
     <MESSAGE value="fix flake issue" />
     <MESSAGE value="Testing data fix" />
     <MESSAGE value="shell fix" />
-    <MESSAGE value="for whole database" />
-    <option name="LAST_COMMIT_MESSAGE" value="for whole database" />
-  </component>
-  <component name="XDebuggerManager">
-    <breakpoint-manager>
-      <breakpoints>
-        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
-          <url>file://$PROJECT_DIR$/BIDS_converter/data2bids.py</url>
-          <line>4</line>
-          <option name="timeStamp" value="1" />
-        </line-breakpoint>
-      </breakpoints>
-    </breakpoint-manager>
+    <option name="LAST_COMMIT_MESSAGE" value="shell fix" />
   </component>
 </project>
