@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<module type="PYTHON_MODULE" version="4">
+  <component name="NewModuleRootManager">
+    <content url="file://$MODULE_DIR$">
+      <sourceFolder url="file://$MODULE_DIR$/BIDS_converter" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/BIDS_converter/utils" isTestSource="false" />
+      <excludeFolder url="file://$MODULE_DIR$/.pytest_cache" />
+      <excludeFolder url="file://$MODULE_DIR$/BIDS_converter/.pytest_cache" />
+      <excludeFolder url="file://$MODULE_DIR$/.empty" />
+    </content>
+    <orderEntry type="jdk" jdkName="Python 3.8 (BIDS_coding)" jdkType="Python SDK" />
+    <orderEntry type="sourceFolder" forTests="false" />
+    <orderEntry type="module" module-name="workspace" />
+  </component>
+  <component name="PackageRequirementsSettings">
+    <option name="requirementsPath" value="C:\Users\ae166\share\git\BIDS_coding\envs\requirements.txt" />
+  </component>
+  <component name="TestRunnerService">
+    <option name="PROJECT_TEST_RUNNER" value="pytest" />
+  </component>
+</module>

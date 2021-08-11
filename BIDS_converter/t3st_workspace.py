@@ -1,9 +1,10 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
-import gzip
-import json
 import numpy as np
+import json
+import gzip
+
 
 if __name__ == '__main__':
 

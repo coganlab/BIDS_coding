@@ -8,16 +8,17 @@ import datetime
 import gc
 import gzip
 import json
+import subprocess
+import sys
+from typing import Union, List
+
 import nibabel as nib
 import pandas as pd
 import pydicom as dicom
-import subprocess
-import sys
 from bids import layout
 from matgrab import mat2df
 from pyedflib import highlevel
 from scipy.io import wavfile
-from typing import Union, List
 
 from utils import *
 
