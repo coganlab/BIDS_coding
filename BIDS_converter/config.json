@@ -34,6 +34,8 @@
                             ,["PhonemeSequence", "PhonemeSequence"]
                             ,["PhonemeSequence", "PhonemeSequencing"]
                             ,["PhonemeSequence", "Phoneme_Sequencing"]
+                            ,["PhonemeSequence", "phoneme_seq"]
+                            ,["PhonemeSequence", "Phoneme_Seq"]
 ]
     }
 , "ieeg.loc":{"left" : ".*?"
@@ -53,7 +55,7 @@
                 , "repeat" : false
                 }
 , "partLabel" : {"left" : ".*?"
-                , "right" : "[_ ]"
+                , "right" : "[_ (\\.edf)]"
                 , "content" : ["D[0-9]{1,4}"]
                 , "fill": 4
                 }
@@ -92,6 +94,22 @@
             "buffer": 10,
             "practice": true},
   "institution": "Duke University",
-  "coordsystem": "RAS"
+  "coordsystem": "RAS",
+  "JSON_files": {"events.json": {"trial_num": {
+                                      "LongName": "Event number",
+                                      "Description": "Iteration number of event sequence"
+                                  },
+                                  "trial_type": {
+                                    "LongName": "Event type",
+                                    "Description": "Type of stimuli presented to the participant",
+                                    "Levels": {
+                                      "Listen": "Cue where the word 'Listen' is displayed",
+                                      "Audio": "A spoken word is played through a speaker",
+                                      "Speak": "Cue where the word 'Speak' is displayed",
+                                      "Response": "Participant's response is recorded"
+                                    }
+                                  }
+                                }
+                }
 }
 
