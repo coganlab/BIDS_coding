@@ -1156,7 +1156,7 @@ class Data2Bids:  # main conversion and file organization program
                             df["name"] = df["name1"] + df["name2"].astype(str).str.zfill(2)
                             df["hemisphere"] = df["hemisphere"] + df["del"]
                             df = df.drop(columns=["name1", "name2", "del"])
-                            df = pd.concat([df["name"], df["x"], df["y"], df["z"], df["hemisphere"]])
+                            df = pd.concat([df["name"], df["x"], df["y"], df["z"], df["hemisphere"]],axis=1)
                             df.to_csv(self._bids_dir + "/sub-" + part_match_z + "/sub-" + part_match_z +
                                       "_space-Talairach_electrodes.tsv", sep="\t", index=False)
                         elif self._config["eventFormat"]["AudioCorrection"] in txt_df_dict["name"]:
