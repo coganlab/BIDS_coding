@@ -117,7 +117,7 @@ def match_regexp(config_regexp, filename, subtype=False):
     return match
 
 
-def gen_match_regexp(config_regexp, data, subtype=False):
+def gen_match_regexp(config_regexp, data, subtype=False):  # takes a match config and generates a matching string
     if data.startswith("0"):
         data = data.lstrip("0")
     match_found = False
