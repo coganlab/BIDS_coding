@@ -821,6 +821,13 @@ class Data2Bids:  # main conversion and file organization program
                             'BIDSVersion': self._bids_version}
                     json.dump(data, fst, ensure_ascii=False, indent=4)
 
+            try:
+                for key, data in self._config["JSON_files"].items():
+                    with open(self._bids_dir + '/' + key, 'w') as fst:
+                        json.dump(data, fst, ensure_ascii=False, indent=4)
+            except KeyError:
+                pass
+
             # add a README file
             if not os.path.exists(self._bids_dir + "/README"):
                 with open(self._bids_dir + "/README", 'w') as fst:
@@ -1156,7 +1163,7 @@ class Data2Bids:  # main conversion and file organization program
                             df["name"] = df["name1"] + df["name2"].astype(str).str.zfill(2)
                             df["hemisphere"] = df["hemisphere"] + df["del"]
                             df = df.drop(columns=["name1", "name2", "del"])
-                            df = pd.concat([df["name"], df["x"], df["y"], df["z"], df["hemisphere"]],axis=1)
+                            df = pd.concat([df["name"], df["x"], df["y"], df["z"], df["hemisphere"]], axis=1)
                             df.to_csv(self._bids_dir + "/sub-" + part_match_z + "/sub-" + part_match_z +
                                       "_space-Talairach_electrodes.tsv", sep="\t", index=False)
                         elif self._config["eventFormat"]["AudioCorrection"] in txt_df_dict["name"]:
@@ -1196,6 +1203,12 @@ class Data2Bids:  # main conversion and file organization program
                             if match_tsv:
                                 df = pd.read_csv(os.path.join(file_path, file), sep="\t", header=0)
                                 # converting signal start and end to correct sample rate for data
+                                end_num = df[self._config["eventFormat"]["Timing"]["end"]].iloc[-1]
+                                i = -1
+                                while not isinstance(end_num, (int, float)):
+                                    print(end_num)
+                                    i -= 1
+                                    end_num = df[self._config["eventFormat"]["Timing"]["end"]].iloc[i]
                                 num_list = [round((float(x) / float(self._config["eventFormat"]["SampleRate"])) *
                                                   signal_headers[0]["sample_rate"]) for x in (
                                                 df[self._config["eventFormat"]["Timing"]["start"]][0],
@@ -1321,7 +1334,6 @@ class Data2Bids:  # main conversion and file organization program
                 else:
                     try:
                         temp_df[key] = df.eval(value)  # pandas eval is the backend equation interpreter
-                        # print(df.eval(value))
                     except TypeError as e:
                         if re.match(r"[\w\d()_]+[ +\-/*%]+[\w\d()_]+", value):  # if evaluating a math expression
                             for name in [i for i in re.split(r"[ +\-/*%]", value) if i != '']:
