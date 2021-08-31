@@ -180,6 +180,20 @@ def rot_z(alpha):
                         , [0, 0, 1]])
 
 
+def is_number(s):
+    try:
+        float(s)
+        return True
+    except ValueError:
+        return False
+
+
+def str2num(s):
+    if is_number(s):
+        return float(s)
+    else:
+        return s
+
 def slice_time_calc(TR, sNum, totNum, delay):
     intervaltime = (TR - delay) / totNum
     tslice = delay + ((sNum) * intervaltime)

@@ -1175,8 +1175,12 @@ class Data2Bids:  # main conversion and file organization program
 
                 # check final file set
                 for new_name in names_list:
+                    print(new_name)
                     file_path = dst_file_path_list[names_list.index(new_name)]
                     full_name = file_path + new_name + ".edf"
+                    task_match = re.match(".*_task-(\w*)_.*", full_name)
+                    if task_match:
+                        task_label_match = task_match.group(1)
                     # split any edfs according to tsvs
                     if new_name.endswith("_ieeg") and any(re.match(new_name.split("_ieeg")[0].split("/", 1)[1] +
                                                                    "(?:" + "_acq-" + self._config["acq"]["content"][0] +
@@ -1203,16 +1207,15 @@ class Data2Bids:  # main conversion and file organization program
                             if match_tsv:
                                 df = pd.read_csv(os.path.join(file_path, file), sep="\t", header=0)
                                 # converting signal start and end to correct sample rate for data
-                                end_num = df[self._config["eventFormat"]["Timing"]["end"]].iloc[-1]
+                                end_num = str2num(df[self._config["eventFormat"]["Timing"]["end"]].iloc[-1])
                                 i = -1
                                 while not isinstance(end_num, (int, float)):
-                                    print(end_num)
+                                    print(end_num, type(end_num))
                                     i -= 1
-                                    end_num = df[self._config["eventFormat"]["Timing"]["end"]].iloc[i]
+                                    end_num = str2num(df[self._config["eventFormat"]["Timing"]["end"]].iloc[i])
                                 num_list = [round((float(x) / float(self._config["eventFormat"]["SampleRate"])) *
                                                   signal_headers[0]["sample_rate"]) for x in (
-                                                df[self._config["eventFormat"]["Timing"]["start"]][0],
-                                                df[self._config["eventFormat"]["Timing"]["end"]].iloc[-1])]
+                                                df[self._config["eventFormat"]["Timing"]["start"]][0], end_num)]
                                 start_nums.append(tuple(num_list))
                                 matches.append(match_tsv)
                         for i in range(len(start_nums)):
@@ -1261,6 +1264,7 @@ class Data2Bids:  # main conversion and file organization program
                 except KeyError:
                     json_list = dict()
                 for jfile, contents in json_list.items():
+                    print(part_match_z, task_label_match, jfile)
                     file_name = os.path.join(self._bids_dir, "sub-" + part_match_z, "sub-" + part_match_z + "_task-" +
                                              task_label_match + "_" + jfile)
                     with open(file_name, "w") as fst:
