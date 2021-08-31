@@ -2,6 +2,9 @@ name: BIDS_coding
 channels:
   - defaults
 dependencies:
+  - tqdm
+  - pytest
+  - flake8
   - pip
   - pip:
     - -r requirements.txt

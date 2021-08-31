@@ -117,7 +117,7 @@ def match_regexp(config_regexp, filename, subtype=False):
     return match
 
 
-def gen_match_regexp(config_regexp, data, subtype=False):
+def gen_match_regexp(config_regexp, data, subtype=False):  # takes a match config and generates a matching string
     if data.startswith("0"):
         data = data.lstrip("0")
     match_found = False
@@ -179,6 +179,20 @@ def rot_z(alpha):
                         , [-np.sin(alpha), np.cos(alpha), 0]
                         , [0, 0, 1]])
 
+
+def is_number(s):
+    try:
+        float(s)
+        return True
+    except ValueError:
+        return False
+
+
+def str2num(s):
+    if is_number(s):
+        return float(s)
+    else:
+        return s
 
 def slice_time_calc(TR, sNum, totNum, delay):
     intervaltime = (TR - delay) / totNum
