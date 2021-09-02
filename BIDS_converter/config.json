@@ -29,6 +29,7 @@
 , "ieeg.task": {"left" : "_"
             , "right" : ".*?"
             , "content" : [ ["PhonemeSequence","PHONEMESEQUENCE"]
+                            ,["PhonemeSequence","PHONEME SEQUENCE"]
                             ,["PhonemeSequence", "PhonemeSequence"]
                             ,["PhonemeSequence", "PhonemeSequencing"]
                             ,["PhonemeSequence", "Phoneme_Sequencing"]
