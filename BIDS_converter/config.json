@@ -36,7 +36,8 @@
                             ,["PhonemeSequence", "Phoneme_Sequencing"]
                             ,["PhonemeSequence", "phoneme_seq"]
                             ,["PhonemeSequence", "Phoneme_Seq"]
-                            ,["UniquenessPoint","Uniqueness_Point"]
+                            ,["UniquenessPoint", "Uniqueness_Point"]
+                            ,["UniquenessPoint", "UniquenessPoint"]
 ]
     }
 , "ieeg.loc":{"left" : ".*?"
@@ -83,7 +84,7 @@
                 ,"Sep" : { "runIndex" : "block",
                              "acq" : "Rec" }
                 ,"Timing": { "start": "Start",
-                          "end": "ResponseEnd" }
+                          "end": "Auditory" }
                 ,"SampleRate": 30000
                 ,"Events" : [{"onset": "Start","duration": "(cueEnd - cueStart) * 30", "trial_num": "Trial","trial_type": "cue"},
                              {"onset": "Auditory", "stim_file": "sound", "trial_num": "Trial", "trial_type": "Audio"},
