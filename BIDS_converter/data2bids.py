@@ -735,6 +735,12 @@ class Data2Bids:  # main conversion and file organization program
             else:
                 trig_label = self._config["ieeg"]["headerData"]["default"]
             for i in range(len(signal_headers)):
+                #print(re.match(".*\.xls.*", trig_label))
+                if re.match(".*\.xls.*", str(trig_label)):
+                    xls_df = pd.ExcelFile(trig_label).parse(part_match)
+                    for column in xls_df:
+                        if "Trigger" in column:
+                            trig_label = xls_df[column].iloc[0]
                 if signal_headers[i]["label"] == trig_label:
                     signal_headers[i]["label"] = "Trigger"
 
