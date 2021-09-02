@@ -10,7 +10,9 @@ from pathlib import Path
 
 import exrex as ex
 import numpy as np
+import pandas as pd
 from pyedflib import EdfReader
+from scipy.io import wavfile
 
 
 class DisplayablePath:  # this code simply creates a tree visual to explain the BIDS file organization
@@ -247,3 +249,38 @@ def force_remove(mypath):
                 raise RuntimeError(mypath + " could not remove all files or directories because of " + e)
             else:
                 raise
+
+def eval_df(df: pd.DataFrame, exp:str, file_dir=""):
+    new_df = pd.DataFrame()
+    for name in [i for i in re.split(r"[ +\-/*%]", exp) if i != '']:
+        if name in df.columns:
+            try:
+                df[name] = df[name].astype(float)
+            except Exception as e:
+                try:
+                    assert os.path.isfile(os.path.join(file_dir,df[name].iloc[0]))
+                except AssertionError:
+                    raise e
+                i = 0
+                for _, fname in df[name].iteritems():
+                    fname = os.path.join(file_dir, fname)
+                    frames, data = wavfile.read(fname)
+                    duration = data.size / frames
+                    df[name].iat[i] = duration
+                    i += 1
+            new_df[name] =
+    '''
+    if not re.match(r"[\w\d()_]+[ +\-/*%]+[\w\d()_]+", exp) and exp not in df.columns: # if exp is single word not in df
+        temp_df = pd.Series(exp)
+    else:
+        try:
+            temp_df = df.eval(exp).squeeze()  # pandas eval is the backend equation interpreter
+        except TypeError as e:
+            if re.match(r"[\w\d()_]+[ +\-/*%]+[\w\d()_]+", exp):  # if evaluating a math expression
+                for name in [i for i in re.split(r"[ +\-/*%]", exp) if i != '']:
+                    
+                    df[name] = pd.to_numeric(df[name], errors="coerce")
+                temp_df = df.eval(exp).squeeze()
+            else:
+                raise e
+    return temp_df'''

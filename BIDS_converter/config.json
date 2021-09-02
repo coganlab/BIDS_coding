@@ -83,7 +83,7 @@
                 ,"Sep" : { "runIndex" : "block",
                              "acq" : "Rec" }
                 ,"Timing": { "start": "Start",
-                          "end": "Auditory" }
+                          "end": "Auditory + (ReactionTime * 30000)" }
                 ,"SampleRate": 30000
                 ,"Events" : [{"onset": "Start","duration": "(cueStart - cueTime) * 30", "trial_num": "Trial","trial_type": "cue"},
                              {"onset": "Auditory", "stim_file": "sound", "trial_num": "Trial", "trial_type": "Audio"},
