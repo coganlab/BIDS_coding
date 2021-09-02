@@ -19,10 +19,8 @@
                             ]
             , "binary?" : false
             , "binaryEncoding": "float32"
-            , "headerData": {"experiment.mat": "channels.name", "default": "DC1"
-                            , "D52": "DC1", "D48": "DC1", "D25": "DC1", "D28": "DC1", "D29": "DC1","D31": "DC1","D35": "DC1",
-                              "D39": "DC1", "D40": "DC1", "D41": "DC1", "D42": "DC1", "D45": "DC1", "D49": "DC1", "D53": "DC1",
-                              "D54": "DC1", "D55": "DC1", "D56": "DC1", "D57": "DC1", "D58": "DC1"
+            , "headerData": {"experiment.mat": "channels.name",
+                            "default": "~/Box/CoganLab/ECoG_Task_Data/Timestamps [MASTER].xlsx"
   }
             , "channels": {"experiment.mat":  "channels"}
             , "sampleRate": "recording.sample_rate"

@@ -5,6 +5,7 @@ dependencies:
   - tqdm
   - pytest
   - flake8
+  - openpyxl
   - pip
   - pip:
     - -r requirements.txt
