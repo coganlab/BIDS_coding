@@ -205,6 +205,7 @@ class Data2Bids:  # main conversion and file organization program
             for root, _, files in os.walk(self._data_dir):
                 # ignore BIDS directories and stimuli
                 files[:] = [f for f in files if not self.check_ignore(os.path.join(root, f))]
+                i = 1
                 while files:
                     file = files.pop(0)
                     src = os.path.join(root, file)
@@ -226,8 +227,14 @@ class Data2Bids:  # main conversion and file organization program
                     if df is None:
                         continue
                     elif task_label_match is None:
-                        files.append(file)
-                        continue
+                        i += 1
+                        if i > 40:
+                            raise NameError("No tasks could be found in files:\n", os.listdir(os.path.dirname(src)))
+                        else:
+                            files.append(file)
+                            continue
+                    else:
+                        i = 1
                     filename = os.path.join(self._bids_dir, "sub-" + part_match_z, "sub-" + part_match_z + "_task-" +
                                             task_label_match + "_channels.tsv")
                     os.mkdir(os.path.dirname(filename))
