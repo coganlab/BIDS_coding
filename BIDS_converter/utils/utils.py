@@ -183,10 +183,21 @@ def rot_z(alpha):
 
 
 def is_number(s):
-    try:
-        float(s)
+    if isinstance(s, str):
+        try:
+            float(s)
+            return True
+        except ValueError:
+            return False
+    elif isinstance(s, np.number):
         return True
-    except ValueError:
+    elif isinstance(s, pd.DataFrame):
+        try:
+            s.astype(float)
+            return True
+        except Exception:
+            return False
+    else:
         return False
 
 
@@ -195,6 +206,7 @@ def str2num(s):
         return float(s)
     else:
         return s
+
 
 def slice_time_calc(TR, sNum, totNum, delay):
     intervaltime = (TR - delay) / totNum
@@ -250,37 +262,19 @@ def force_remove(mypath):
             else:
                 raise
 
-def eval_df(df: pd.DataFrame, exp:str, file_dir=""):
-    new_df = pd.DataFrame()
+
+def eval_df(df: pd.DataFrame, exp: str, file_dir=""):  # input a df and expression and return a single dataframe column
     for name in [i for i in re.split(r"[ +\-/*%]", exp) if i != '']:
         if name in df.columns:
-            try:
+            if is_number(df):
                 df[name] = df[name].astype(float)
-            except Exception as e:
-                try:
-                    assert os.path.isfile(os.path.join(file_dir,df[name].iloc[0]))
-                except AssertionError:
-                    raise e
-                i = 0
-                for _, fname in df[name].iteritems():
+            elif os.path.isfile(os.path.join(file_dir, str(df[name].iloc[0]))):
+                for i, (_, fname) in enumerate(df[name].iteritems()):
                     fname = os.path.join(file_dir, fname)
                     frames, data = wavfile.read(fname)
                     duration = data.size / frames
                     df[name].iat[i] = duration
-                    i += 1
-            new_df[name] =
-    '''
-    if not re.match(r"[\w\d()_]+[ +\-/*%]+[\w\d()_]+", exp) and exp not in df.columns: # if exp is single word not in df
-        temp_df = pd.Series(exp)
-    else:
-        try:
-            temp_df = df.eval(exp).squeeze()  # pandas eval is the backend equation interpreter
-        except TypeError as e:
-            if re.match(r"[\w\d()_]+[ +\-/*%]+[\w\d()_]+", exp):  # if evaluating a math expression
-                for name in [i for i in re.split(r"[ +\-/*%]", exp) if i != '']:
-                    
-                    df[name] = pd.to_numeric(df[name], errors="coerce")
-                temp_df = df.eval(exp).squeeze()
-            else:
-                raise e
-    return temp_df'''
+                df[name] = df[name].astype(float)
+        elif not is_number(name):
+            df[name] = pd.Series([name] * df.shape[0])
+    return df.eval(exp).squeeze()

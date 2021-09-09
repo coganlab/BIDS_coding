@@ -735,7 +735,7 @@ class Data2Bids:  # main conversion and file organization program
             else:
                 trig_label = self._config["ieeg"]["headerData"]["default"]
             for i in range(len(signal_headers)):
-                #print(re.match(".*\.xls.*", trig_label))
+                # print(re.match(".*\.xls.*", trig_label))
                 if re.match(".*\.xls.*", str(trig_label)):
                     xls_df = pd.ExcelFile(trig_label).parse(part_match)
                     for column in xls_df:
@@ -1195,11 +1195,11 @@ class Data2Bids:  # main conversion and file organization program
                     if task_match:
                         task_label_match = task_match.group(1)
                     # split any edfs according to tsvs
-                    if new_name.endswith("_ieeg") and any(re.match(new_name.split("_ieeg")[0].split("/", 1)[1] +
-                                                                   "(?:" + "_acq-" + self._config["acq"]["content"][0] +
-                                                                   ")?" + "_run-" + self._config["runIndex"]["content"][
-                                                                       0] + "_events.tsv", set_file) for set_file in
-                                                          os.listdir(file_path)):  # if edf is not yet split
+                    pattern = "{}(?:_acq-{})?_run-{}_events\.tsv".format(new_name.split("_ieeg")[0].split("/", 1)[1],
+                                                                         self._config["acq"]["content"][0],
+                                                                         self._config["runIndex"]["content"][0])
+                    match_set = [re.match(pattern, set_file) for set_file in os.listdir(file_path)]
+                    if new_name.endswith("_ieeg") and any(match_set):  # if edf is not yet split
 
                         if self._is_verbose:
                             print("Reading for split... ")
@@ -1220,15 +1220,22 @@ class Data2Bids:  # main conversion and file organization program
                             if match_tsv:
                                 df = pd.read_csv(os.path.join(file_path, file), sep="\t", header=0)
                                 # converting signal start and end to correct sample rate for data
-                                end_num = str2num(df[self._config["eventFormat"]["Timing"]["end"]].iloc[-1])
+                                eval_col = eval_df(df, self._config["eventFormat"]["Timing"]["end"], self.stim_dir)
+                                end_num = str2num(eval_col.iloc[-1])
                                 i = -1
-                                while not isinstance(end_num, (int, float)):
-                                    print(end_num, type(end_num))
+                                while not isinstance(end_num, np.number):
                                     i -= 1
-                                    end_num = str2num(df[self._config["eventFormat"]["Timing"]["end"]].iloc[i])
+                                    end_num = str2num(eval_col.iloc[i])
+
+                                eval_col = eval_df(df, self._config["eventFormat"]["Timing"]["start"], self.stim_dir)
+                                start_num = eval_col.iloc[0]
+                                i = 0
+                                while not isinstance(start_num, np.number):
+                                    i += 1
+                                    start_num = str2num(eval_col.iloc[i])
+
                                 num_list = [round((float(x) / float(self._config["eventFormat"]["SampleRate"])) *
-                                                  signal_headers[0]["sample_rate"]) for x in (
-                                                df[self._config["eventFormat"]["Timing"]["start"]][0], end_num)]
+                                                  signal_headers[0]["sample_rate"]) for x in (start_num, end_num)]
                                 start_nums.append(tuple(num_list))
                                 matches.append(match_tsv)
                         for i in range(len(start_nums)):
@@ -1346,20 +1353,12 @@ class Data2Bids:  # main conversion and file organization program
             event_order += 1
             temp_df = pd.DataFrame()
             for key, value in event.items():
-                if not re.match(r"[\w\d()_]+[ +\-/*%]+[\w\d()_]+", value) and value not in df.columns:
-                    temp_df[key] = value
-                else:
-                    try:
-                        temp_df[key] = df.eval(value)  # pandas eval is the backend equation interpreter
-                    except TypeError as e:
-                        if re.match(r"[\w\d()_]+[ +\-/*%]+[\w\d()_]+", value):  # if evaluating a math expression
-                            for name in [i for i in re.split(r"[ +\-/*%]", value) if i != '']:
-                                df[name] = pd.to_numeric(df[name], errors="coerce")
-                            temp_df[key] = df.eval(value)
-                        else:
-                            raise e
+                temp_df[key] = eval_df(df, value, self.stim_dir)
+            if "stim_file" in temp_df.columns and is_number(temp_df["stim_file"]):
+                temp_df["duration"] = temp_df["stim_file"]
             if "trial_num" not in temp_df.columns:
                 temp_df["trial_num"] = [1 + i for i in list(range(temp_df.shape[0]))]
+            '''
             if "duration" not in temp_df.columns:
                 if "stim_file" in temp_df.columns:
                     temp = []
@@ -1396,6 +1395,7 @@ class Data2Bids:  # main conversion and file organization program
                 else:
                     raise LookupError("duration of event or copy of audio file required but not found in " +
                                       self._config_path)
+            '''
             temp_df["event_order"] = event_order
             if new_df is None:
                 new_df = temp_df
