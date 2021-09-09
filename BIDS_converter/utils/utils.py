@@ -189,7 +189,7 @@ def is_number(s):
             return True
         except ValueError:
             return False
-    elif isinstance(s, np.number):
+    elif isinstance(s, (np.number,int, float)):
         return True
     elif isinstance(s, pd.DataFrame):
         try:
@@ -264,9 +264,10 @@ def force_remove(mypath):
 
 
 def eval_df(df: pd.DataFrame, exp: str, file_dir=""):  # input a df and expression and return a single dataframe column
+    temp_df = pd.DataFrame()
     for name in [i for i in re.split(r"[ +\-/*%]", exp) if i != '']:
         if name in df.columns:
-            if is_number(df):
+            if is_number(df[name]):
                 df[name] = df[name].astype(float)
             elif os.path.isfile(os.path.join(file_dir, str(df[name].iloc[0]))):
                 for i, (_, fname) in enumerate(df[name].iteritems()):
@@ -275,6 +276,8 @@ def eval_df(df: pd.DataFrame, exp: str, file_dir=""):  # input a df and expressi
                     duration = data.size / frames
                     df[name].iat[i] = duration
                 df[name] = df[name].astype(float)
+            else:
+                df[name] = df[name]
         elif not is_number(name):
             df[name] = pd.Series([name] * df.shape[0])
     return df.eval(exp).squeeze()

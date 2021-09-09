@@ -36,6 +36,8 @@
                             ,["PhonemeSequence", "Phoneme_Seq"]
                             ,["UniquenessPoint", "Uniqueness_Point"]
                             ,["UniquenessPoint", "UniquenessPoint"]
+                            ,["UniquenessPoint", "Uniqueness_point"]
+                            ,["UniquenessPoint", "UNIQUENESSPOINT"]
 ]
     }
 , "ieeg.loc":{"left" : ".*?"

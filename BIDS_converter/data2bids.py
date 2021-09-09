@@ -1112,8 +1112,8 @@ class Data2Bids:  # main conversion and file organization program
                         else:
                             raise FileNotFoundError("{file} header could not be found".format(file=file))
 
-                        # check for extra channels in data, not working in other file modalities
                         f = EdfReader(os.path.splitext(src_file_path)[0] + ".edf")
+                        # check for extra channels in data, not working in other file modalities
                         extra_arrays = []
                         extra_signal_headers = []
                         if any(len(mat2df(os.path.join(root, fname))) == f.samples_in_file(0) for fname in
@@ -1223,14 +1223,14 @@ class Data2Bids:  # main conversion and file organization program
                                 eval_col = eval_df(df, self._config["eventFormat"]["Timing"]["end"], self.stim_dir)
                                 end_num = str2num(eval_col.iloc[-1])
                                 i = -1
-                                while not isinstance(end_num, np.number):
+                                while not is_number(end_num):
                                     i -= 1
                                     end_num = str2num(eval_col.iloc[i])
 
                                 eval_col = eval_df(df, self._config["eventFormat"]["Timing"]["start"], self.stim_dir)
                                 start_num = eval_col.iloc[0]
                                 i = 0
-                                while not isinstance(start_num, np.number):
+                                while not is_number(start_num):
                                     i += 1
                                     start_num = str2num(eval_col.iloc[i])
 
@@ -1353,9 +1353,11 @@ class Data2Bids:  # main conversion and file organization program
             event_order += 1
             temp_df = pd.DataFrame()
             for key, value in event.items():
-                temp_df[key] = eval_df(df, value, self.stim_dir)
-            if "stim_file" in temp_df.columns and is_number(temp_df["stim_file"]):
-                temp_df["duration"] = temp_df["stim_file"]
+                if key == "stim_file":
+                    temp_df["stim_file"] = df[value]
+                    temp_df["duration"] = eval_df(df, value, self.stim_dir)
+                else:
+                    temp_df[key] = eval_df(df, value)
             if "trial_num" not in temp_df.columns:
                 temp_df["trial_num"] = [1 + i for i in list(range(temp_df.shape[0]))]
             '''
