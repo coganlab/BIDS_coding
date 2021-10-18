@@ -536,7 +536,8 @@ class Data2Bids:  # main conversion and file organization program
         # Adding the modality to the new filename
         new_name = new_name + "_" + data_type_match
 
-        return (new_name, dst_file_path, part_match, run_match, acq_match, echo_match, sess_match, ce_match,
+        return (new_name, dst_file_path, part_match, run_match, acq_match,
+                echo_match, sess_match, ce_match,
                 data_type_match, task_label_match, SeqType)
 
     def multi_echo_check(self, runnum, src_file=""):  # check to see if run is multi echo based on input
