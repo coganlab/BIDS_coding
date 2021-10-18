@@ -49,7 +49,7 @@ jobs:
       run: |
         . /etc/lsb-release
         if [[ "$DISTRIB_RELEASE" == "16.04" ]]; then
-            pytest -v package_test.py -k "test_D48"
+            pytest -v tests/package_test.py -k "test_D48"
         else
-            pytest -v package_test.py
+            pytest -v tests/package_test.py
         fi
