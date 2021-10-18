@@ -129,8 +129,8 @@ class Data2Bids:  # main conversion and file organization program
             else:
                 self.stim_dir = None
                 return
-            if not os.path.isdir(os.path.join(self._bids_dir, "stimuli")):
-                os.mkdir(os.path.join(self._bids_dir, "stimuli"))
+        if not os.path.isdir(os.path.join(self._bids_dir, "stimuli")):
+            os.mkdir(os.path.join(self._bids_dir, "stimuli"))
         for item in os.listdir(dir):
             shutil.copyfile(os.path.join(dir, item), os.path.join(self._bids_dir, "stimuli", item))
         self.stim_dir = dir
@@ -1219,8 +1219,8 @@ class Data2Bids:  # main conversion and file organization program
             with open(os.path.splitext(full_file)[0] + ".json", "w") as fst:
                 json.dump(data, fst)
 
-    def frame2bids(self, df: pd.DataFrame, events: Union[dict, List[dict]], data_sample_rate=None,
-                   audio_correction=None, start_at=0):
+    def frame2bids(self, df: pd.DataFrame, events: Union[dict, List[dict]],
+                   data_sample_rate=None, audio_correction=None, start_at=0):
         new_df = None
         if isinstance(events, dict):
             events = list(events)
