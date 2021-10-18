@@ -807,21 +807,24 @@ class Data2Bids:  # main conversion and file organization program
                     if self._is_verbose:
                         print(file)
                     src_file_path = os.path.join(root, file)
+                    """
                     dst_file_path = self._bids_dir
                     data_type_match = None
                     new_name = None
-
                     if re.match(".*?" + ".json", file):
                         try:
-                            (new_name, dst_file_path, part_match, run_match, acq_match, echo_match, sess_match,
-                             ce_match, data_type_match, task_label_match, SeqType) = self.generate_names(src_file_path,
-                                                                                                         part_match=part_match)
+                            (new_name, dst_file_path, part_match, run_match, 
+                             acq_match, echo_match, sess_match, ce_match, 
+                             data_type_match, task_label_match, SeqType) = \
+                                self.generate_names(src_file_path,
+                                                    part_match=part_match)
                         except TypeError:
                             continue
                         if echo_match is None:
                             echo_match = 0
                         if new_name in names_list:
-                            shutil.copy(src_file_path, dst_file_path + new_name + ".json")
+                            shutil.copy(src_file_path,
+                                        dst_file_path + new_name + ".json")
                             # finally, if it is a bold experiment, we need to edit the JSON file using DICOM tags
                             if os.path.exists(dst_file_path + new_name + ".json"):
                                 # https://github.com/nipy/nibabel/issues/712, that is why we take the
@@ -861,45 +864,8 @@ class Data2Bids:  # main conversion and file organization program
                         elif any(re.search("\\.nii", filelist) for filelist in files):
                             files.append(src_file_path)
                         continue
-                    elif re.match(".*?" + "EADME.txt", file):  # if README.txt in image list
-                        with open(src_file_path, 'r') as readmetext:
-                            for line in readmetext:
-                                regret_words = ["Abort", "NOTE"]
-                                if ". tempAttnAudT" in line:
-                                    # these lines could and should be improved by
-                                    # linking config["func.task"] instead of literal strings
-                                    prevline = "con"
-                                    tsv_condition_runs.append(
-                                        re.search(r'\d+', line).group())  # save the first number on the line
-                                elif ". fsoSubLocal" in line:
-                                    prevline = "fso"
-                                    tsv_fso_runs.append(re.search(r'\d+', line).group())
-                                elif all(x in line for x in regret_words):
-                                    if prevline == "con":
-                                        del tsv_condition_runs[-1]
-                                    elif prevline == "fso":
-                                        del tsv_fso_runs[-1]
-                                    prevline = ""
-                                else:
-                                    prevline = ""
-                        if not os.path.exists(self._bids_dir + "/sub-" + part_match):
-                            # Writing both a particpant-specific and agnostic README
-                            # Requires creation of a .bidsignore file for local READMEs
-                            os.makedirs(self._bids_dir + "/sub-" + part_match)
-                        shutil.copy(src_file_path, self._bids_dir + "/sub-" + part_match + "/README.txt")
-                        with open(src_file_path, 'r') as readmetext:
-                            for line in readmetext:
-                                if os.path.exists(self._bids_dir + "/README"):
-                                    with open(self._bids_dir + "/README", 'a') as f:
-                                        f.write(line + "\n")
-                                else:
-                                    with open(self._bids_dir + "/README", 'w') as f:
-                                        f.write(line + "\n")
-                        continue
-                    elif re.match(".*?" + "\\.1D", file):
-                        d_list.append(src_file_path)
-                        continue
-                    elif re.match(".*?" + "\\.mat", file):
+                        """
+                    if re.match(".*?" + "\\.mat", file):
                         mat_list.append(src_file_path)
                         continue  # if the file doesn't match the extension, we skip it
                     elif re.match(".*?" + "\\.txt", file):
@@ -1447,7 +1413,7 @@ class Data2Bids:  # main conversion and file organization program
                     print(mat_file, "--->", dst_file_path + new_name.split("ieeg")[0] + "events.tsv")
                 df.to_csv(dst_file_path + new_name.split("ieeg")[0] + "events.tsv", sep="\t", index=False)
             written = True
-
+    """
     def convert_1D(self, run_list, d_list, tsv_fso_runs, tsv_condition_runs, names_list, dst_file_path_list):
         # This section is for converting .1D files to tsv event files. If you have the 1D files that's great,
         # but chances are you have some other format if this is the case,I recommend
@@ -1532,7 +1498,7 @@ class Data2Bids:  # main conversion and file organization program
                                 tsv_writer = csv.writer(out_file, delimiter='\t')
                                 tsv_writer.writerow(
                                     [fields[j][i - 1], duration, categories[j][i - 1]])  # ,TRfields[j][i-1]])
-
+    """
 
 def main():
     args = get_parser().parse_args()
