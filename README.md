@@ -1,7 +1,5 @@
 # Work in Progress
 See issues for updates on code completion progress
-![example workflow](https://github.com/coganlab/BIDS_coding/actions/workflows/Ubuntu_test.yml/badge.svg)
-![example workflow](https://github.com/coganlab/BIDS_coding/actions/workflows/Windows_test.yml/badge.svg)
 
 ![example workflow](https://github.com/coganlab/BIDS_coding/actions/workflows/Ubuntu_test.yml/badge.svg)
 ![example workflow](https://github.com/coganlab/BIDS_coding/actions/workflows/Windows_test.yml/badge.svg)
