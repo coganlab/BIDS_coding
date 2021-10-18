@@ -119,7 +119,8 @@ def match_regexp(config_regexp, filename, subtype=False):
     return match
 
 
-def gen_match_regexp(config_regexp, data, subtype=False):  # takes a match config and generates a matching string
+def gen_match_regexp(config_regexp, data,
+                     subtype=False):  # takes a match config and generates a matching string
     if data.startswith("0"):
         data = data.lstrip("0")
     match_found = False
@@ -128,7 +129,8 @@ def gen_match_regexp(config_regexp, data, subtype=False):  # takes a match confi
             match_found = True
     if not match_found:
         raise AssertionError(
-            "{newname} doesn't match config criteria {given}".format(newname=data, given=config_regexp["content"]))
+            "{newname} doesn't match config criteria {given}".format(
+                newname=data, given=config_regexp["content"]))
     left = ex.getone(config_regexp["left"])
     right = ex.getone(config_regexp["right"])
     newname = left + data + right
@@ -137,12 +139,14 @@ def gen_match_regexp(config_regexp, data, subtype=False):  # takes a match confi
         if data == match_regexp(config_regexp, newname, subtype=subtype):
             return newname
         else:
-            raise ValueError("{newname} doesn't match config criteria".format(newname=newname))
+            raise ValueError("{newname} doesn't match config criteria".format(
+                newname=newname))
     except AssertionError:
         # return self.gen_match_regexp(config_regexp, data.lstrip("0"),subtype)
         # except RecursionError:
         raise AssertionError(
-            "{newname} doesn't match config criteria {given}".format(newname=newname, given=config_regexp))
+            "{newname} doesn't match config criteria {given}".format(
+                newname=newname, given=config_regexp))
 
 
 def cat_edf(filename):
@@ -189,7 +193,7 @@ def is_number(s):
             return True
         except ValueError:
             return False
-    elif isinstance(s, (np.number,int, float)):
+    elif isinstance(s, (np.number, int, float)):
         return True
     elif isinstance(s, pd.DataFrame):
         try:
@@ -258,12 +262,14 @@ def force_remove(mypath):
                 shutil.rmtree(mypath, ignore_errors=True)
         if x >= 1000:
             if e is not None:
-                raise RuntimeError(mypath + " could not remove all files or directories because of " + e)
+                raise RuntimeError(
+                    mypath + " could not remove all files or directories because of " + e)
             else:
                 raise
 
 
-def eval_df(df: pd.DataFrame, exp: str, file_dir=""):  # input a df and expression and return a single dataframe column
+def eval_df(df: pd.DataFrame, exp: str,
+            file_dir=""):  # input a df and expression and return a single dataframe column
     temp_df = pd.DataFrame()
     for name in [i for i in re.split(r"[ +\-/*%]", exp) if i != '']:
         if name in df.columns:
@@ -281,3 +287,20 @@ def eval_df(df: pd.DataFrame, exp: str, file_dir=""):  # input a df and expressi
         elif not is_number(name):
             df[name] = pd.Series([name] * df.shape[0])
     return df.eval(exp).squeeze()
+
+
+def trigger_from_excel(filename, participant):
+    # replace trigger channels with trigger label ("DC1")
+    xls_file = filename
+    xls_df = pd.ExcelFile(filename).parse(participant)
+
+    if any("Trigger" in column for column in xls_df):
+        for column in xls_df:
+            if "Trigger" in column:
+                trig_label = xls_df[column].iloc[0]
+                if is_number(trig_label):
+                    return int(trig_label)
+                else:
+                    return trig_label
+    else:
+        raise KeyError("'Trigger' not found in " + xls_file)
