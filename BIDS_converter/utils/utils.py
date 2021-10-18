@@ -94,7 +94,6 @@ def match_regexp(config_regexp, filename, subtype=False):
 
     if subtype:
         for to_match in config_regexp["content"]:
-            # print(".*?" + delimiter_left + '(' + to_match[1] + ')' + delimiter_right + ".*?")
             if re.match(".*?"
                         + delimiter_left
                         + '(' + to_match[1] + ')'

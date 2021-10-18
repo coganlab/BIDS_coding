@@ -15,7 +15,8 @@ def test_D52():
 
     print("Unzipping: D52 201213 COGAN_PHONEMESEQUENCE.edf.tar.xz")
 
-    with tarfile.open("Data/Phoneme_Sequencing/eeg_data/D52 201213 COGAN_PHONEMESEQUENCE.edf.tar.xz", mode="r:xz") as f:
+    with tarfile.open(
+            "Data/Phoneme_Sequencing/eeg_data/D52 201213 COGAN_PHONEMESEQUENCE.edf.tar.xz", mode="r:xz") as f:
         f.extractall(path="Data/Phoneme_Sequencing/sourcedata/D52")
     try:
         Data2Bids(input_dir='Data/Phoneme_Sequencing/sourcedata/D52', output_dir='Data/Phoneme_Sequencing/BIDS',
@@ -42,14 +43,16 @@ def test_D48():
 
     print("Unzipping: D48 200906 Cogan_PhonemeSequence_Session1.edf.tar.xz")
 
-    with tarfile.open("Data/Phoneme_Sequencing/eeg_data/D48 200906 Cogan_PhonemeSequence_Session1.edf.tar.xz",
-                      mode="r:xz") as f:
-        f.extractall(path="Data/Phoneme_Sequencing/sourcedata/D48")
+    with tarfile.open(
+            "Data/Phoneme_Sequencing/eeg_data/D48 200906 Cogan_PhonemeSequence_Session1.edf.tar.xz",
+            mode="r:xz") as f:
+        f.extractall(path="../Data/Phoneme_Sequencing/sourcedata/D48")
 
     print("Unzipping: D48 200908 Cogan_PhonemeSequence_Session2.edf.tar.xz")
 
-    with tarfile.open("Data/Phoneme_Sequencing/eeg_data/D48 200908 Cogan_PhonemeSequence_Session2.edf.tar.xz",
-                      mode="r:xz") as f:
+    with tarfile.open(
+            "Data/Phoneme_Sequencing/eeg_data/D48 200908 Cogan_PhonemeSequence_Session2.edf.tar.xz",
+            mode="r:xz") as f:
         f.extractall(path="Data/Phoneme_Sequencing/sourcedata/D48")
 
     try:

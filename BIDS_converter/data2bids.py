@@ -3,7 +3,6 @@
 
 
 import argparse
-import csv
 import datetime
 import gc
 import gzip
@@ -13,14 +12,13 @@ import sys
 from typing import Union, List
 
 import nibabel as nib
-import pandas as pd
 import pydicom as dicom
 from bids import layout
 from matgrab import mat2df
 from pyedflib import highlevel
 from scipy.io import wavfile
 
-from utils import *
+from BIDS_converter.utils import *
 
 
 def get_parser():  # parses flags at onset of command
