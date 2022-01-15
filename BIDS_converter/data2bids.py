@@ -7,6 +7,7 @@ import datetime
 import gc
 import gzip
 import json
+import os.path
 import subprocess
 import sys
 from typing import Union, List
@@ -701,7 +702,7 @@ class Data2Bids:  # main conversion and file organization program
         extra_arrays = []
         extra_signal_headers = []
         file = fobj.file_name
-        part_match = match_regexp(self._config["partLabel"], file)
+        part_match = self.part_check(filename=file)[0]
         if any(len(mat2df(os.path.join(root, fname))) == fobj.samples_in_file(
                 0) for fname in[i for i in all_files if i.endswith(
             ".mat")]) or any(len(mat2df(os.path.join(
@@ -732,6 +733,60 @@ class Data2Bids:  # main conversion and file organization program
                             mat2df(fname)))
         return extra_arrays, extra_signal_headers
 
+    def mri_file_transfer(self, source, destination, new_name):
+        file = os.path.basename(source)
+        compress = self._config["compress"]
+        # we convert it using nibabel
+        if not any(file.endswith(ext) for ext in [".nii", ".nii.gz"]):
+            # check if .nii listed in config file, not if file ends with .nii
+            # loading the original image
+            nib_img = nib.load(source)
+            nib_affine = np.array(nib_img.affine)
+            nib_data = np.array(nib_img.dataobj)
+
+            # create the nifti1 image
+            # if minc format, invert the data and change the affine transformation
+            # there is also an issue on minc headers
+            if file.endswith(".mnc"):
+                if len(nib_img.shape) > 3:
+                    nib_affine[0:3, 0:3] = nib_affine[0:3, 0:3]
+                    rot_z(np.pi / 2)
+                    rot_y(np.pi)
+                    rot_x(np.pi / 2)
+                    nib_data = nib_data.T
+                    nib_data = np.swapaxes(nib_data, 0, 1)
+
+                    nifti_img = nib.Nifti1Image(nib_data, nib_affine,
+                                                nib_img.header)
+                    nifti_img.header.set_xyzt_units(xyz="mm", t="sec")
+                    zooms = np.array(nifti_img.header.get_zooms())
+                    zooms[3] = self._config["repetitionTimeInSec"]
+                    nifti_img.header.set_zooms(zooms)
+                elif len(nib_img.shape) == 3:
+                    nifti_img = nib.Nifti1Image(nib_data, nib_affine,
+                                                nib_img.header)
+                    nifti_img.header.set_xyzt_units(xyz="mm")
+            else:
+                nifti_img = nib.Nifti1Image(nib_data, nib_affine,
+                                            nib_img.header)
+
+            # saving the image
+            nib.save(nifti_img, destination + new_name + ".nii.gz")
+
+        # if it is already a nifti file, no need to convert it so we just copy rename
+        if file.endswith(".nii.gz"):
+            shutil.copy(source, destination + new_name + ".nii.gz")
+        elif file.endswith(".nii"):
+            shutil.copy(source, destination + new_name + ".nii")
+            # compression just if .nii files
+            if compress is True:
+                print("zipping " + file)
+                with open(destination + new_name + ".nii", 'rb') as f_in:
+                    with gzip.open(destination + new_name + ".nii.gz", 'wb',
+                                   self._config["compressLevel"]) as f_out:
+                        shutil.copyfileobj(f_in, f_out)
+                os.remove(destination + new_name + ".nii")
+
     def run(self):  # main function
 
         # First we check that every parameters are configured
@@ -756,10 +811,8 @@ class Data2Bids:  # main conversion and file organization program
 
             # What is the base format to convert to
             curr_ext = self._config["dataFormat"]
-            compress = self._config["compress"]
 
             # delay time in TR unit (if delay_time = 1, delay_time = repetition_time)
-            repetition_time = self._config["repetitionTimeInSec"]
             delaytime = self._config["delayTimeInSec"]
 
             # dataset_description.json must be included in the folder root foolowing BIDS specs
@@ -866,53 +919,8 @@ class Data2Bids:  # main conversion and file organization program
                     # print(data_type_match)
                     # finally, if the file is not nifti
                     if dst_file_path.endswith("/func") or dst_file_path.endswith("/anat"):
-                        # we convert it using nibabel
-                        if not any(file.endswith(ext) for ext in [".nii", ".nii.gz"]):
-                            # check if .nii listed in config file, not if file ends with .nii
-                            # loading the original image
-                            nib_img = nib.load(src_file_path)
-                            nib_affine = np.array(nib_img.affine)
-                            nib_data = np.array(nib_img.dataobj)
-
-                            # create the nifti1 image
-                            # if minc format, invert the data and change the affine transformation
-                            # there is also an issue on minc headers
-                            if file.endswith(".mnc"):
-                                if len(nib_img.shape) > 3:
-                                    nib_affine[0:3, 0:3] = nib_affine[0:3, 0:3]
-                                    rot_z(np.pi / 2)
-                                    rot_y(np.pi)
-                                    rot_x(np.pi / 2)
-                                    nib_data = nib_data.T
-                                    nib_data = np.swapaxes(nib_data, 0, 1)
-
-                                    nifti_img = nib.Nifti1Image(nib_data, nib_affine, nib_img.header)
-                                    nifti_img.header.set_xyzt_units(xyz="mm", t="sec")
-                                    zooms = np.array(nifti_img.header.get_zooms())
-                                    zooms[3] = repetition_time
-                                    nifti_img.header.set_zooms(zooms)
-                                elif len(nib_img.shape) == 3:
-                                    nifti_img = nib.Nifti1Image(nib_data, nib_affine, nib_img.header)
-                                    nifti_img.header.set_xyzt_units(xyz="mm")
-                            else:
-                                nifti_img = nib.Nifti1Image(nib_data, nib_affine, nib_img.header)
-
-                            # saving the image
-                            nib.save(nifti_img, dst_file_path + new_name + ".nii.gz")
-
-                        # if it is already a nifti file, no need to convert it so we just copy rename
-                        if file.endswith(".nii.gz"):
-                            shutil.copy(src_file_path, dst_file_path + new_name + ".nii.gz")
-                        elif file.endswith(".nii"):
-                            shutil.copy(src_file_path, dst_file_path + new_name + ".nii")
-                            # compression just if .nii files
-                            if compress is True:
-                                print("zipping " + file)
-                                with open(dst_file_path + new_name + ".nii", 'rb') as f_in:
-                                    with gzip.open(dst_file_path + new_name + ".nii.gz", 'wb',
-                                                   self._config["compressLevel"]) as f_out:
-                                        shutil.copyfileobj(f_in, f_out)
-                                os.remove(dst_file_path + new_name + ".nii")
+                        self.mri_file_transfer(
+                            src_file_path, dst_file_path, new_name)
 
                     elif dst_file_path.endswith("/ieeg"):
                         remove_src_edf = True
