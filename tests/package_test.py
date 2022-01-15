@@ -1,6 +1,3 @@
-#!/usr/bin/env python3
-# -*- coding: utf-8 -*-
-
 from BIDS_converter.data2bids import Data2Bids
 import shutil
 import os

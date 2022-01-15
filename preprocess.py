@@ -511,7 +511,7 @@ if __name__ == "__main__":
                 os.remove(filepath)
 
     #getting all the subjects into place
-    sub_ids = pre.BIDS_layout.get_subjects()
+    sub_ids = pre.BIDS_layout.get_subjects()34
 
     #Main preprocessing pipeline: uses tools defined above
     for sub_id in sub_ids :

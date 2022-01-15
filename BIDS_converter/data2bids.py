@@ -13,12 +13,13 @@ from typing import Union, List
 
 import nibabel as nib
 import pydicom as dicom
+import pyedflib
 from bids import layout
 from matgrab import mat2df
 from pyedflib import highlevel
 from scipy.io import wavfile
 
-from BIDS_converter.utils import *
+from utils import *
 
 
 def get_parser():  # parses flags at onset of command
@@ -105,7 +106,7 @@ class Data2Bids:  # main conversion and file organization program
 
     def check_ignore(self, file):
 
-        assert os.path.isabs(file), file + "must be given with the absolute path including root"
+        #assert os.path.isabs(file), file + "must be given with the absolute path including root"
         if not os.path.exists(file):
             raise FileNotFoundError(file + " does not exist")
 
@@ -229,8 +230,8 @@ class Data2Bids:  # main conversion and file organization program
         for i, chan in enumerate(self.channels[part_match]):
             if re.match(".*\.xls.*", chan):
                 trig_label = trigger_from_excel(chan, part_match)
-            if (signal["label"] or i) == trig_label:
-                signal["label"] = "Trigger"
+                if (chan or i) == trig_label:
+                    self.channels[part_match] = "Trigger"
 
     def set_overwrite(self, overwrite):
         self._is_overwrite = overwrite
@@ -652,19 +653,6 @@ class Data2Bids:  # main conversion and file organization program
                 array = array + extra_arrays
             if extra_signal_headers:
                 signal_headers = signal_headers + extra_signal_headers
-            """
-            # replace trigger channels with trigger label ("DC1")
-            if part_match in self._config["ieeg"]["headerData"].keys():
-                trig_label = self._config["ieeg"]["headerData"][part_match]
-            else:
-                trig_label = self._config["ieeg"]["headerData"]["default"]
-            for i, signal in enumerate(signal_headers):
-                # print(re.match(".*\.xls.*", trig_label))
-                if re.match(".*\.xls.*", str(trig_label)):
-                    trig_label = trigger_from_excel(str(trig_label), part_match)
-                if (signal["label"] or i) == trig_label:
-                    signal["label"] = "Trigger"
-                    """
 
             return dict(name=file_name, bids_name=edf_name, nsamples=array.shape[1], signal_headers=signal_headers,
                         file_header=header, data=array, reader=f)
@@ -707,6 +695,42 @@ class Data2Bids:  # main conversion and file organization program
             with open(self._bids_dir + "/.bidsignore", "r+") as f:
                 if string not in f.read():
                     f.write(string + "\n")
+
+    def check_for_mat_channels(self, fobj: pyedflib.EdfReader, root, all_files,
+                               mat_files):
+        extra_arrays = []
+        extra_signal_headers = []
+        file = fobj.file_name
+        part_match = match_regexp(self._config["partLabel"], file)
+        if any(len(mat2df(os.path.join(root, fname))) == fobj.samples_in_file(
+                0) for fname in[i for i in all_files if i.endswith(
+            ".mat")]) or any(len(mat2df(os.path.join(
+            root, fname))) == fobj.samples_in_file(0) for fname in
+            [i for i in mat_files if i.endswith(".mat")]):
+
+            for fname in [i for i in all_files + mat_files if i.endswith(".mat")]:
+                sig_len = fobj.samples_in_file(0)
+                if not os.path.isfile(fname):
+                    fname = os.path.join(root, fname)
+                if mat2df(fname) is None:
+                    continue
+                elif len(mat2df(fname)) == sig_len:
+                    if fname in all_files:
+                        all_files.remove(fname)
+                    if fname in mat_files:
+                        mat_files.remove(fname)
+                    df = pd.DataFrame(mat2df(fname))
+                    for cols in df.columns:
+                        extra_arrays = np.vstack([extra_arrays, df[cols]])
+                        extra_signal_headers.append(
+                            highlevel.make_signal_header(
+                                os.path.splitext(os.path.basename(fname))[0],
+                                sample_rate=self.sample_rate[part_match]))
+                elif sig_len * 0.99 <= len(mat2df(fname)) <= sig_len * 1.01:
+                    raise BufferError(
+                         file + "of size" + sig_len + "is not the same size as" + fname + "of size" + len(
+                            mat2df(fname)))
+        return extra_arrays, extra_signal_headers
 
     def run(self):  # main function
 
@@ -806,64 +830,6 @@ class Data2Bids:  # main conversion and file organization program
                     if self._is_verbose:
                         print(file)
                     src_file_path = os.path.join(root, file)
-                    """
-                    dst_file_path = self._bids_dir
-                    data_type_match = None
-                    new_name = None
-                    if re.match(".*?" + ".json", file):
-                        try:
-                            (new_name, dst_file_path, part_match, run_match, 
-                             acq_match, echo_match, sess_match, ce_match, 
-                             data_type_match, task_label_match, SeqType) = \
-                                self.generate_names(src_file_path,
-                                                    part_match=part_match)
-                        except TypeError:
-                            continue
-                        if echo_match is None:
-                            echo_match = 0
-                        if new_name in names_list:
-                            shutil.copy(src_file_path,
-                                        dst_file_path + new_name + ".json")
-                            # finally, if it is a bold experiment, we need to edit the JSON file using DICOM tags
-                            if os.path.exists(dst_file_path + new_name + ".json"):
-                                # https://github.com/nipy/nibabel/issues/712, that is why we take the
-                                # scanner parameters from the config.json
-                                # nib_img = nib.load(src_file_path)
-                                # TR = nib_img.header.get_zooms()[3]
-                                for foldername in os.listdir(str(self._DICOM_path)):
-                                    if run_match.zfill(4) == foldername.zfill(4):
-                                        DICOM_filepath = os.path.join(self._DICOM_path, foldername)
-                                        slicetimes, echotime, ScanSeq, SeqVar, SeqOpt, SeqName = self.get_params(
-                                            str(DICOM_filepath), int(echo_match), int(run_match))
-
-                                    # with open(dst_file_path + new_name + ".json", 'w') as fst:
-                                with open(dst_file_path + new_name + ".json", 'r+') as fst:
-                                    filedata = json.load(fst)
-                                with open(dst_file_path + new_name + ".json", 'w') as fst:
-                                    if data_type_match == "bold":
-                                        filedata['TaskName'] = task_label_match
-                                        filedata['SliceTiming'] = slicetimes
-                                        if int(run_match) in self._multi_echo:
-                                            filedata['EchoTime'] = echotime
-                                        else:
-                                            filedata['DelayTime'] = delaytime[0]
-                                    if SeqType is not None:
-                                        filedata['PulseSequenceType'] = SeqType
-                                    if ScanSeq is not None:
-                                        filedata['ScanningSequence'] = ScanSeq
-                                    if SeqVar is not None:
-                                        filedata['SequenceVariant'] = SeqVar
-                                    if SeqOpt is not None:
-                                        filedata['SequenceOption'] = SeqOpt
-                                    if SeqName is not None:
-                                        filedata['SequenceName'] = SeqName
-                                    json.dump(filedata, fst, ensure_ascii=False, indent=4, default=set_default)
-                            else:
-                                print("Cannot update %s" % (dst_file_path + new_name + ".json"))
-                        elif any(re.search("\\.nii", filelist) for filelist in files):
-                            files.append(src_file_path)
-                        continue
-                        """
                     if re.match(".*?" + "\\.mat", file):
                         mat_list.append(src_file_path)
                         continue  # if the file doesn't match the extension, we skip it
@@ -992,39 +958,16 @@ class Data2Bids:  # main conversion and file organization program
 
                         f = EdfReader(os.path.splitext(src_file_path)[0] + ".edf")
                         # check for extra channels in data, not working in other file modalities
-                        extra_arrays = []
-                        extra_signal_headers = []
-                        if any(len(mat2df(os.path.join(root, fname))) == f.samples_in_file(0) for fname in
-                               [i for i in files if i.endswith(".mat")]) or any(
-                            len(mat2df(os.path.join(root, fname))) == f.samples_in_file(0) for fname in
-                            [i for i in mat_list if i.endswith(".mat")]):
+                        extra_arrays, extra_signal_headers = \
+                            self.check_for_mat_channels(
+                                f, root, files, mat_list)
 
-                            for fname in [i for i in files + mat_list if i.endswith(".mat")]:
-                                sig_len = f.samples_in_file(0)
-                                if not os.path.isfile(fname):
-                                    fname = os.path.join(root, fname)
-                                if mat2df(fname) is None:
-                                    continue
-                                elif len(mat2df(fname)) == sig_len:
-                                    if fname in files:
-                                        files.remove(fname)
-                                    if fname in mat_list:
-                                        mat_list.remove(fname)
-                                    df = pd.DataFrame(mat2df(fname))
-                                    for cols in df.columns:
-                                        extra_arrays = np.vstack([extra_arrays, df[cols]])
-                                        extra_signal_headers.append(
-                                            highlevel.make_signal_header(os.path.splitext(os.path.basename(fname))[0],
-                                                                         sample_rate=self.sample_rate[part_match]))
-                                elif sig_len * 0.99 <= len(mat2df(fname)) <= sig_len * 1.01:
-                                    raise BufferError(
-                                        file + "of size" + sig_len + "is not the same size as" + fname + "of size" + len(
-                                            mat2df(fname)))
                         f.close()
                         # read edf and either copy data to BIDS file or save data as dict for writing later
-                        eeg.append(
-                            self.read_edf(os.path.splitext(src_file_path)[0] + ".edf", headers_dict, extra_arrays,
-                                          extra_signal_headers))
+                        eeg.append(self.read_edf(os.path.splitext(
+                            src_file_path)[0] + ".edf", headers_dict,
+                                                 extra_arrays,
+                                                 extra_signal_headers))
                         if remove_src_edf:
                             if self._is_verbose:
                                 print("Removing " + os.path.splitext(src_file_path)[0] + ".edf")
