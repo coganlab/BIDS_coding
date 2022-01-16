@@ -228,11 +228,6 @@ class Data2Bids:  # main conversion and file organization program
         elif channels is not None:
             self.channels[part_match] = self.channels[part_match] + [c for c in channels if
                                                                      c not in self.channels[part_match]]
-        for i, chan in enumerate(self.channels[part_match]):
-            if re.match(".*\.xls.*", chan):
-                trig_label = trigger_from_excel(chan, part_match)
-                if (chan or i) == trig_label:
-                    self.channels[part_match] = "Trigger"
 
     def set_overwrite(self, overwrite):
         self._is_overwrite = overwrite
@@ -545,18 +540,18 @@ class Data2Bids:  # main conversion and file organization program
     def multi_echo_check(self, runnum, src_file=""):  # check to see if run is multi echo based on input
         if self.is_multi_echo:
             if int(runnum) in self._multi_echo:
-                return (True)
+                return True
             else:
                 if self._multi_echo == 0:
                     try:
                         match_regexp(self._config["echo"], src_file)
                     except AssertionError:
-                        return (False)
-                    return (True)
+                        return False
+                    return True
                 else:
-                    return (False)
+                    return False
         else:
-            return (False)
+            return False
 
     def get_params(self, folder, echo_num, run_num):  # function to run through DICOMs and get metadata
         # threading?
@@ -648,12 +643,26 @@ class Data2Bids:  # main conversion and file organization program
         if check_sep:
             # read edf
             print("Reading " + file_name + "...")
-            [array, signal_headers, _] = highlevel.read_edf(file_name, ch_nrs=chn_nums,
-                                                            digital=self._config["ieeg"]["digital"], verbose=True)
+            [array, signal_headers, _] = highlevel.read_edf(
+                file_name, ch_nrs=list(range(100)),
+                digital=self._config["ieeg"]["digital"], verbose=True)
+            print("read it")
             if extra_arrays:
                 array = array + extra_arrays
             if extra_signal_headers:
                 signal_headers = signal_headers + extra_signal_headers
+
+            if part_match in self._config["ieeg"]["headerData"].keys():
+                trig_label = self._config["ieeg"]["headerData"][part_match]
+            else:
+                trig_label = self._config["ieeg"]["headerData"]["default"]
+            for i, signal in enumerate(signal_headers):
+                # print(re.match(".*\.xls.*", trig_label))
+                if re.match(".*\.xls.*", str(trig_label)):
+                    trig_label = trigger_from_excel(str(trig_label),
+                                                    part_match)
+                if (signal["label"] or i) == trig_label:
+                    signal_headers[i]["label"] = "Trigger"
 
             return dict(name=file_name, bids_name=edf_name, nsamples=array.shape[1], signal_headers=signal_headers,
                         file_header=header, data=array, reader=f)
@@ -786,6 +795,60 @@ class Data2Bids:  # main conversion and file organization program
                                    self._config["compressLevel"]) as f_out:
                         shutil.copyfileobj(f_in, f_out)
                 os.remove(destination + new_name + ".nii")
+
+    def force_to_edf(self, source, files):
+        remove_src_edf = True
+        file = os.path.basename(source)
+        part_match = self.part_check(filename=file)[0]
+        headers_dict = self.channels[part_match]
+        if file.endswith(".edf"):
+            remove_src_edf = False
+        elif file.endswith(".edf.gz"):
+            with gzip.open(source, 'rb',
+                           self._config["compressLevel"]) as f_in:
+                with open(source.rsplit(".gz", 1)[0], 'wb') as f_out:
+                    shutil.copyfileobj(f_in, f_out)
+        elif not self._config["ieeg"]["binary?"]:
+            raise NotImplementedError(
+                "{file} file format not yet supported. If file is binary format, please indicate so "
+                "and what encoding in the config.json file".format(file=file))
+        elif headers_dict and any(".mat" in i for i in files) and \
+                self.sample_rate[
+                    part_match] is not None:
+            # assume has binary encoding
+            try:  # open binary file and write decoded numbers as array where rows = channels
+                # check if zipped
+                if file.endswith(".gz"):
+                    with gzip.open(source, 'rb',
+                                   self._config["compressLevel"]) as f:
+                        data = np.frombuffer(f.read(),
+                                             dtype=np.dtype(
+                                                 self._config["ieeg"][
+                                                     "binaryEncoding"]))
+                else:
+                    with open(source, mode='rb') as f:
+                        data = np.fromfile(f, dtype=self._config["ieeg"][
+                            "binaryEncoding"])
+                array = np.reshape(data, [len(headers_dict), -1],
+                                   order='F')  # byte order is Fortran encoding, dont know why
+                signal_headers = highlevel.make_signal_headers(
+                    headers_dict, sample_rate=self.sample_rate[part_match],
+                    physical_max=np.amax(array), physical_min=(np.amin(array)))
+                print("converting binary" + source + " to edf" +
+                      os.path.splitext(source)[0] + ".edf")
+                highlevel.write_edf(
+                    os.path.splitext(source)[0] + ".edf", array,
+                    signal_headers,
+                    digital=self._config["ieeg"]["digital"])
+            except OSError as e:
+                print(
+                    "eeg file is either not detailed well enough in config file or file type not yet "
+                    "supported")
+                raise e
+        else:
+            raise FileNotFoundError(
+                "{file} header could not be found".format(file=file))
+        return remove_src_edf
 
     def run(self):  # main function
 
@@ -923,46 +986,8 @@ class Data2Bids:  # main conversion and file organization program
                             src_file_path, dst_file_path, new_name)
 
                     elif dst_file_path.endswith("/ieeg"):
-                        remove_src_edf = True
-                        headers_dict = self.channels[part_match]
-                        if file.endswith(".edf"):
-                            remove_src_edf = False
-                        elif file.endswith(".edf.gz"):
-                            with gzip.open(src_file_path, 'rb', self._config["compressLevel"]) as f_in:
-                                with open(src_file_path.rsplit(".gz", 1)[0], 'wb') as f_out:
-                                    shutil.copyfileobj(f_in, f_out)
-                        elif not self._config["ieeg"]["binary?"]:
-                            raise NotImplementedError(
-                                "{file} file format not yet supported. If file is binary format, please indicate so "
-                                "and what encoding in the config.json file".format(file=file))
-                        elif headers_dict and any(".mat" in i for i in files) and self.sample_rate[
-                            part_match] is not None:
-                            # assume has binary encoding
-                            try:  # open binary file and write decoded numbers as array where rows = channels
-                                # check if zipped
-                                if file.endswith(".gz"):
-                                    with gzip.open(src_file_path, 'rb', self._config["compressLevel"]) as f:
-                                        data = np.frombuffer(f.read(),
-                                                             dtype=np.dtype(self._config["ieeg"]["binaryEncoding"]))
-                                else:
-                                    with open(src_file_path, mode='rb') as f:
-                                        data = np.fromfile(f, dtype=self._config["ieeg"]["binaryEncoding"])
-                                array = np.reshape(data, [len(headers_dict), -1],
-                                                   order='F')  # byte order is Fortran encoding, dont know why
-                                signal_headers = highlevel.make_signal_headers(headers_dict,
-                                                                               sample_rate=self.sample_rate[part_match],
-                                                                               physical_max=np.amax(array),
-                                                                               physical_min=(np.amin(array)))
-                                print("converting binary" + src_file_path + " to edf" + os.path.splitext(src_file_path)[
-                                    0] + ".edf")
-                                highlevel.write_edf(os.path.splitext(src_file_path)[0] + ".edf", array, signal_headers,
-                                                    digital=self._config["ieeg"]["digital"])
-                            except OSError as e:
-                                print("eeg file is either not detailed well enough in config file or file type not yet "
-                                      "supported")
-                                raise e
-                        else:
-                            raise FileNotFoundError("{file} header could not be found".format(file=file))
+                        remove_src_edf = self.force_to_edf(
+                            src_file_path, files)
 
                         f = EdfReader(os.path.splitext(src_file_path)[0] + ".edf")
                         # check for extra channels in data, not working in other file modalities
@@ -973,9 +998,9 @@ class Data2Bids:  # main conversion and file organization program
                         f.close()
                         # read edf and either copy data to BIDS file or save data as dict for writing later
                         eeg.append(self.read_edf(os.path.splitext(
-                            src_file_path)[0] + ".edf", headers_dict,
-                                                 extra_arrays,
-                                                 extra_signal_headers))
+                            src_file_path)[0] + ".edf", self.channels[
+                            part_match], extra_arrays, extra_signal_headers))
+
                         if remove_src_edf:
                             if self._is_verbose:
                                 print("Removing " + os.path.splitext(src_file_path)[0] + ".edf")
