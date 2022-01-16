@@ -156,16 +156,11 @@ class Data2Bids:  # main conversion and file organization program
             # ignore BIDS directories and stimuli
             task_label_match = self.find_a_match(files, "ieeg.task")
             part_match = self.find_a_match(files, "partLabel")
+            self.trigger[part_match] = get_trigger(part_match, headers)
+            self.channels[part_match] = [self.trigger[part_match]]
             for i, file in enumerate(files):
                 src = os.path.join(root, file)
-                try:
-                    part_match = match_regexp(self._config["partLabel"], file)
-                    self.trigger[part_match] = get_trigger(part_match, headers)
-                    self.channels[part_match] = [self.trigger[part_match]]
-                except AssertionError:
-                    pass
-
-                if src in self._config["ieeg"]["channels"].keys():
+                if any(f in file for f in self._config["ieeg"]["channels"].keys()):
                     self.make_channels_tsv(src, task_label_match)
 
                 for name, var in headers.items():
@@ -183,28 +178,11 @@ class Data2Bids:  # main conversion and file organization program
                             raise NotImplementedError(
                                 src + "\nthis file format does not yet support {ext} files for "
                                       "channel labels".format(ext=os.path.splitext(src)[1]))
-        if isinstance(channels, str) and channels not in channels[part_match]:
-            self.channels[part_match] = self.channels[part_match] + [channels]
-        elif channels is not None:
-            self.channels[part_match] = self.channels[part_match] + [c for c in channels if
-                                                                     c not in self.channels[part_match]]
-
-    def find_a_match(self, files: Union[List[str], str],
-                     config_key: str) -> str:
-        if isinstance(self._config[config_key]["content"][0], str):
-            subtype = False
-        else:
-            subtype = True
-        if isinstance(files, str):
-            files: List[str] = list(files)
-
-        for file in files:
-            try:
-                return match_regexp(self._config[config_key], file, subtype)
-            except AssertionError:
-                continue
-        raise FileNotFoundError("There was no file matching the config key {}"
-                                "".format(config_key))
+            if isinstance(channels, str):
+                channels = list(channels)
+            if channels is not None:
+                self.channels[part_match] = self.channels[part_match] + [
+                    c for c in channels if c not in self.channels[part_match]]
 
     def make_channels_tsv(self, file_path, task_label_match):
         part_match, part_match_z = self.part_check(filename=file_path)
@@ -377,13 +355,29 @@ class Data2Bids:  # main conversion and file organization program
         subprocess.check_call(['bids-validator',
                                self._bids_dir])  # except FileNotFoundError:
 
+    def find_a_match(self, files: Union[List[str], str],
+                     config_key: str) -> str:
+        subtype = isinstance(self._config[config_key]["content"][0], list)
+        if isinstance(files, str):
+            files: List[str] = list(files)
+
+        for file in files:
+            try:
+                return match_regexp(self._config[config_key], file, subtype)
+            except AssertionError:
+                continue
+        raise FileNotFoundError("There was no file matching the config key {}"
+                                "".format(config_key))
+
     def generate_names(self, src_file_path, filename=None,  # function to run through name text and generate metadata
                        part_match=None, sess_match=None, ce_match=None, acq_match=None, echo_match=None,
                        data_type_match=None, task_label_match=None, run_match=None, verbose=None, debug=False):
         if filename is None:
             filename = os.path.basename(src_file_path)
         if part_match is None:
-            part_match = self.find_a_match(filename, "partLabel")
+            part_match = match_regexp(self._config["partLabel"], filename)
+            # TODO: figure out why find_a_match doesn't work
+            #part_match = self.find_a_match(filename, "partLabel")
         if verbose is None:
             verbose = self._is_verbose
         try:
@@ -613,7 +607,6 @@ class Data2Bids:  # main conversion and file organization program
                 return (timings, echo, ScanningSequence, SequenceVariant, SequenceOptions, SequenceName)
 
     def read_edf(self, file_name, channels=None, extra_arrays=None, extra_signal_headers=None):
-
         [edfname, dst_path, part_match] = self.generate_names(file_name, verbose=False)[0:3]
         header = highlevel.make_header(patientname=part_match, startdate=datetime.datetime(1, 1, 1))
         edf_name = dst_path + edfname + ".edf"
