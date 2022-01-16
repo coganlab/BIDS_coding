@@ -644,7 +644,7 @@ class Data2Bids:  # main conversion and file organization program
             # read edf
             print("Reading " + file_name + "...")
             [array, signal_headers, _] = highlevel.read_edf(
-                file_name, ch_nrs=chn_nums),
+                file_name, ch_nrs=chn_nums,
                 digital=self._config["ieeg"]["digital"], verbose=True)
             print("read it")
             if extra_arrays:
