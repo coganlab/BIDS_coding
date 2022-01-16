@@ -81,6 +81,16 @@ def get_parser():  # parses flags at onset of command
     return parser
 
 
+def get_trigger(part_match, headers_dict) -> str:
+    if part_match in headers_dict.keys():
+        trig_lab = headers_dict[part_match]
+    else:
+        trig_lab = headers_dict["default"]
+    if ".xlsx" in trig_lab:
+        trig_lab = trigger_from_excel(str(trig_lab), part_match)
+    return trig_lab
+
+
 class Data2Bids:  # main conversion and file organization program
 
     def __init__(self, input_dir=None, config=None, output_dir=None, DICOM_path=None, multi_echo=None, overwrite=False,
@@ -138,96 +148,74 @@ class Data2Bids:  # main conversion and file organization program
         self.stim_dir = dir
         self._ignore.append(dir)
 
-    def set_channels(self, channels):
-        try:
-            headers_dict = self._config["ieeg"]["headerData"]
-        except KeyError:
-            headers_dict = None
+    def set_channels(self, channels: list):
+        headers_dict: dict = self._config["ieeg"]["headerData"]
         self.channels = {}
         self.sample_rate = {}
+        self.trigger = {}
         part_match = None
         task_label_match = None
-        if self._data_dir:
-            for root, _, files in os.walk(self._data_dir):
-                # ignore BIDS directories and stimuli
-                files[:] = [f for f in files if not self.check_ignore(os.path.join(root, f))]
-                i = 1
-                while files:
-                    file = files.pop(0)
-                    src = os.path.join(root, file)
-                    if not part_match == match_regexp(self._config["partLabel"], file):
-                        part_match = match_regexp(self._config["partLabel"], file)
-                        self.channels[part_match] = []
-                    part_match_z = self.part_check(part_match)[1]
-                    df = None
-                    for name, var in self._config["ieeg"]["channels"].items():
-                        if name in src:
-                            df = mat2df(src, var)
-                            if "highpass_cutoff" in df.columns.to_list():
-                                df = df.rename(columns={"highpass_cutoff": "high_cutoff"})
-                            if "lowpass_cutoff" in df.columns.to_list():
-                                df = df.rename(columns={"lowpass_cutoff": "low_cutoff"})
-                    name_gen = self.generate_names(src, part_match=part_match, verbose=False)
-                    if name_gen is not None and name_gen[-2] is not None:
-                        task_label_match = name_gen[-2]
-                    if df is None:
-                        continue
-                    elif task_label_match is None:
-                        i += 1
-                        if i > 40:
-                            raise NameError("No tasks could be found in files:\n", os.listdir(os.path.dirname(src)))
-                        else:
-                            files.append(file)
-                            continue
-                    else:
-                        i = 1
-                    filename = os.path.join(self._bids_dir, "sub-" + part_match_z,
-                                            "sub-" + part_match_z + "_task-" + task_label_match + "_channels.tsv")
-                    os.mkdir(os.path.dirname(filename))
-                    df.to_csv(filename, sep="\t", index=False)
-                    if part_match not in headers_dict.keys():
-                        try:
-                            var = headers_dict["default"]
-                            if isinstance(var, str):
-                                var = [var]
-                            self.channels[part_match] = self.channels[part_match] + [v for v in var if
-                                                                                     v not in self.channels[part_match]]
-                        except KeyError:
-                            pass
-                    for name, var in headers_dict.items():
-                        if name == part_match:
-                            if isinstance(var, str):
-                                var = [var]
-                            self.channels[part_match] = self.channels[part_match] + [v for v in var if
-                                                                                     v not in self.channels[part_match]]
-                        elif re.match(".*?" + part_match + ".*?" + name,
-                                      src):  # some sort of checking for .mat or txt files?
-                            if name.endswith(".mat") and re.match(".*?" + part_match + ".*?" + name, src):
-                                self.channels[part_match] = self.channels[part_match] + mat2df(src, var).tolist()
-                                try:
-                                    self.sample_rate[part_match] = mat2df(src, self._config['ieeg']['sampleRate']).iloc[
-                                        0]
-                                except KeyError:
-                                    self.sample_rate[part_match] = None
-                                except AttributeError:
-                                    raise IndexError(self._config['ieeg']['sampleRate'] + " not found in " + src)
-                                self._ignore.append(src)
-                            elif name.endswith((".txt", ".csv", ".tsv")) and re.match(".*?" + part_match + ".*?" + name,
-                                                                                      src):
-                                f = open(name, 'r')
-                                content = f.read()
-                                f.close()
-                                self.channels[part_match] = self.channels[part_match] + content.split()
-                            elif name.endswith(tuple(self._config['dataFormat'])) and re.match(
-                                    ".*?" + part_match + ".*?" + name, src):
-                                raise NotImplementedError(
-                                    src + "\nthis file format does not yet support {ext} files for "
-                                          "channel labels".format(ext=os.path.splitext(src)[1]))
+        for root, _, files in os.walk(self._data_dir):
+            # ignore BIDS directories and stimuli
+            files[:] = [f for f in files if not self.check_ignore(os.path.join(root, f))]
+            for i, file in enumerate(files):
+                src = os.path.join(root, file)
+                if not part_match == match_regexp(self._config["partLabel"], file):
+                    part_match = match_regexp(self._config["partLabel"], file)
+                    self.trigger[part_match] = get_trigger(part_match, headers_dict)
+                    self.channels[part_match] = [self.trigger[part_match]]
+
+                for name, var in headers_dict.items():
+                    if re.match(".*?" + part_match + ".*?" + name, src):  # some sort of checking for .mat or txt files?
+                        if name.endswith(".mat"):
+                            self.channels[part_match] = self.channels[part_match] + mat2df(src, var).tolist()
+                            self.sample_rate[part_match] = mat2df(src, self._config['ieeg']['sampleRate']).iloc[0]
+                            self._ignore.append(src)
+                        elif name.endswith((".txt", ".csv", ".tsv")):
+                            f = open(name, 'r')
+                            content = f.read()
+                            f.close()
+                            self.channels[part_match] = self.channels[part_match] + content.split()
+                        elif name.endswith(tuple(self._config['dataFormat'])):
+                            raise NotImplementedError(
+                                src + "\nthis file format does not yet support {ext} files for "
+                                      "channel labels".format(ext=os.path.splitext(src)[1]))
         if isinstance(channels, str) and channels not in channels[part_match]:
             self.channels[part_match] = self.channels[part_match] + [channels]
         elif channels is not None:
             self.channels[part_match] = self.channels[part_match] + [c for c in channels if
                                                                      c not in self.channels[part_match]]
+
+    def make_channels_tsv(self, file_path):
+        part_match, part_match_z = self.part_check(filename=file_path)
+        df = None
+        for name, var in self._config["ieeg"]["channels"].items():
+            if name in src:
+                df = mat2df(src, var)
+                if "highpass_cutoff" in df.columns.to_list():
+                    df = df.rename(columns={"highpass_cutoff": "high_cutoff"})
+                if "lowpass_cutoff" in df.columns.to_list():
+                    df = df.rename(columns={"lowpass_cutoff": "low_cutoff"})
+        name_gen = self.generate_names(src, part_match=part_match,
+                                       verbose=False)
+        if name_gen is not None and name_gen[-2] is not None:
+            task_label_match = name_gen[-2]
+        if df is None:
+            continue
+        elif task_label_match is None:
+            i += 1
+            if i > 40:
+                raise NameError("No tasks could be found in files:\n",
+                                os.listdir(os.path.dirname(src)))
+            else:
+                files.append(file)
+                continue
+        else:
+            i = 1
+        filename = os.path.join(self._bids_dir, "sub-" + part_match_z,
+                                "sub-" + part_match_z + "_task-" + task_label_match + "_channels.tsv")
+        os.mkdir(os.path.dirname(filename))
+        df.to_csv(filename, sep="\t", index=False)
 
     def set_overwrite(self, overwrite):
         self._is_overwrite = overwrite
