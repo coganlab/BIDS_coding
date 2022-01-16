@@ -194,11 +194,16 @@ class Data2Bids:  # main conversion and file organization program
                     df = df.rename(columns={"highpass_cutoff": "high_cutoff"})
                 if "lowpass_cutoff" in df.columns.to_list():
                     df = df.rename(columns={"lowpass_cutoff": "low_cutoff"})
+        df["type"] = self._config["ieeg"]["type"]
+        df["units"] = self._config["ieeg"]["units"]
         filename = os.path.join(self._bids_dir, "sub-{}".format(
-            part_match_z), "sub-" + part_match_z + "_task-" + task_label_match
-                                + "_channels.tsv")
+            part_match_z), "sub-" + part_match_z + "_task-{}".format(
+            task_label_match) + "_channels.tsv")
         os.mkdir(os.path.dirname(filename))
         df.to_csv(filename, sep="\t", index=False)
+
+        # TODO: write coordsystem
+
 
     def set_overwrite(self, overwrite):
         self._is_overwrite = overwrite
