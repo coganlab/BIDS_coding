@@ -18,7 +18,6 @@ import pyedflib
 from bids import layout
 from matgrab import mat2df
 from pyedflib import highlevel
-from scipy.io import wavfile
 
 from utils import *
 
@@ -149,23 +148,27 @@ class Data2Bids:  # main conversion and file organization program
         self._ignore.append(dir)
 
     def set_channels(self, channels: list):
-        headers_dict: dict = self._config["ieeg"]["headerData"]
+        headers: dict = self._config["ieeg"]["headerData"]
         self.channels = {}
         self.sample_rate = {}
         self.trigger = {}
-        part_match = None
-        task_label_match = None
         for root, _, files in os.walk(self._data_dir):
             # ignore BIDS directories and stimuli
-            files[:] = [f for f in files if not self.check_ignore(os.path.join(root, f))]
+            task_label_match = self.find_a_match(files, "ieeg.task")
+            part_match = self.find_a_match(files, "partLabel")
             for i, file in enumerate(files):
                 src = os.path.join(root, file)
-                if not part_match == match_regexp(self._config["partLabel"], file):
+                try:
                     part_match = match_regexp(self._config["partLabel"], file)
-                    self.trigger[part_match] = get_trigger(part_match, headers_dict)
+                    self.trigger[part_match] = get_trigger(part_match, headers)
                     self.channels[part_match] = [self.trigger[part_match]]
+                except AssertionError:
+                    pass
 
-                for name, var in headers_dict.items():
+                if src in self._config["ieeg"]["channels"].keys():
+                    self.make_channels_tsv(src, task_label_match)
+
+                for name, var in headers.items():
                     if re.match(".*?" + part_match + ".*?" + name, src):  # some sort of checking for .mat or txt files?
                         if name.endswith(".mat"):
                             self.channels[part_match] = self.channels[part_match] + mat2df(src, var).tolist()
@@ -186,34 +189,36 @@ class Data2Bids:  # main conversion and file organization program
             self.channels[part_match] = self.channels[part_match] + [c for c in channels if
                                                                      c not in self.channels[part_match]]
 
-    def make_channels_tsv(self, file_path):
+    def find_a_match(self, files: Union[List[str], str],
+                     config_key: str) -> str:
+        if isinstance(self._config[config_key]["content"][0], str):
+            subtype = False
+        else:
+            subtype = True
+        if isinstance(files, str):
+            files: List[str] = list(files)
+
+        for file in files:
+            try:
+                return match_regexp(self._config[config_key], file, subtype)
+            except AssertionError:
+                continue
+        raise FileNotFoundError("There was no file matching the config key {}"
+                                "".format(config_key))
+
+    def make_channels_tsv(self, file_path, task_label_match):
         part_match, part_match_z = self.part_check(filename=file_path)
         df = None
         for name, var in self._config["ieeg"]["channels"].items():
-            if name in src:
-                df = mat2df(src, var)
+            if name in file_path:
+                df = mat2df(file_path, var)
                 if "highpass_cutoff" in df.columns.to_list():
                     df = df.rename(columns={"highpass_cutoff": "high_cutoff"})
                 if "lowpass_cutoff" in df.columns.to_list():
                     df = df.rename(columns={"lowpass_cutoff": "low_cutoff"})
-        name_gen = self.generate_names(src, part_match=part_match,
-                                       verbose=False)
-        if name_gen is not None and name_gen[-2] is not None:
-            task_label_match = name_gen[-2]
-        if df is None:
-            continue
-        elif task_label_match is None:
-            i += 1
-            if i > 40:
-                raise NameError("No tasks could be found in files:\n",
-                                os.listdir(os.path.dirname(src)))
-            else:
-                files.append(file)
-                continue
-        else:
-            i = 1
-        filename = os.path.join(self._bids_dir, "sub-" + part_match_z,
-                                "sub-" + part_match_z + "_task-" + task_label_match + "_channels.tsv")
+        filename = os.path.join(self._bids_dir, "sub-{}".format(
+            part_match_z), "sub-" + part_match_z + "_task-" + task_label_match
+                                + "_channels.tsv")
         os.mkdir(os.path.dirname(filename))
         df.to_csv(filename, sep="\t", index=False)
 
@@ -378,7 +383,7 @@ class Data2Bids:  # main conversion and file organization program
         if filename is None:
             filename = os.path.basename(src_file_path)
         if part_match is None:
-            part_match = match_regexp(self._config["partLabel"], filename)
+            part_match = self.find_a_match(filename, "partLabel")
         if verbose is None:
             verbose = self._is_verbose
         try:
@@ -640,16 +645,8 @@ class Data2Bids:  # main conversion and file organization program
             if extra_signal_headers:
                 signal_headers = signal_headers + extra_signal_headers
 
-            if part_match in self._config["ieeg"]["headerData"].keys():
-                trig_label = self._config["ieeg"]["headerData"][part_match]
-            else:
-                trig_label = self._config["ieeg"]["headerData"]["default"]
             for i, signal in enumerate(signal_headers):
-                # print(re.match(".*\.xls.*", trig_label))
-                if re.match(".*\.xls.*", str(trig_label)):
-                    trig_label = trigger_from_excel(str(trig_label),
-                                                    part_match)
-                if (signal["label"] or i) == trig_label:
+                if (signal["label"] or i) == self.trigger[part_match]:
                     signal_headers[i]["label"] = "Trigger"
 
             return dict(name=file_name, bids_name=edf_name, nsamples=array.shape[1], signal_headers=signal_headers,
