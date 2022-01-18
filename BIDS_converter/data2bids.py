@@ -23,7 +23,8 @@ from utils import *
 
 
 def get_parser():  # parses flags at onset of command
-    parser = argparse.ArgumentParser(formatter_class=argparse.RawDescriptionHelpFormatter, description="""
+    parser = argparse.ArgumentParser(
+        formatter_class=argparse.RawDescriptionHelpFormatter, description="""
          Data2bids is a script based on the SIMEXP lab script to convert nifti MRI files into BIDS format. This script has been modified to 
          also parse README data as well as include conversion of DICOM files to nifti. The script utilizes Chris Rorden's Dcm2niix program for 
          actual conversion. 
@@ -42,7 +43,8 @@ def get_parser():  # parses flags at onset of command
          so that you can make BIDS compliant event files.
 
          Data2bids documentation at https://github.com/SIMEXP/Data2Bids
-         Dcm2niix documentation at https://github.com/rordenlab/dcm2niix""", epilog="""
+         Dcm2niix documentation at https://github.com/rordenlab/dcm2niix""",
+        epilog="""
             Made by Aaron Earle-Richardson (ae166@duke.edu)
             """)
 
@@ -61,21 +63,25 @@ def get_parser():  # parses flags at onset of command
     group.add_argument("-d", "--DICOM_path", default=None, required=False,
                        help="Optional DICOM directory, Mutually exclusive with input directory option", )
 
-    parser.add_argument("-m", "--multi_echo", nargs='*', type=int, required=False, help="""
+    parser.add_argument("-m", "--multi_echo", nargs='*', type=int,
+                        required=False, help="""
         indicator of multi-echo dataset. Only necessary if NOT converting DICOMs. For example, if runs 3-6 were all multi-echo then the flag
         should look like: -m 3 4 5 6 . Additionally, the -m flag may be called by itself if you wish to let data2bids auto-detect multi echo data,
         but it will not be able to tell you if there is a mistake.""")
 
-    parser.add_argument("-ow", "--overwrite", required=False, action='store_true',
+    parser.add_argument("-ow", "--overwrite", required=False,
+                        action='store_true',
                         help="overwrite preexisting BIDS file structures in destination location", )
 
     parser.add_argument("-ch", "--channels", nargs='*', required=False, help="""
         Indicator of channels to keep from edf files. 
         """)
 
-    parser.add_argument("-s", "--stim_dir", required=False, default=None, help="directory containing stimuli files", )
+    parser.add_argument("-s", "--stim_dir", required=False, default=None,
+                        help="directory containing stimuli files", )
 
-    parser.add_argument("-v", "--verbose", required=False, action='store_true', help="verbosity", )
+    parser.add_argument("-v", "--verbose", required=False, action='store_true',
+                        help="verbosity", )
 
     return parser
 
@@ -92,7 +98,8 @@ def get_trigger(part_match, headers_dict) -> str:
 
 class Data2Bids:  # main conversion and file organization program
 
-    def __init__(self, input_dir=None, config=None, output_dir=None, DICOM_path=None, multi_echo=None, overwrite=False,
+    def __init__(self, input_dir=None, config=None, output_dir=None,
+                 DICOM_path=None, multi_echo=None, overwrite=False,
                  stim_dir=None, channels=None, verbose=False):
         # sets the .self globalization for self variables
         self._input_dir = None
@@ -116,17 +123,19 @@ class Data2Bids:  # main conversion and file organization program
 
     def check_ignore(self, file):
 
-        #assert os.path.isabs(file), file + "must be given with the absolute path including root"
+        # assert os.path.isabs(file), file + "must be given with the absolute path including root"
         if not os.path.exists(file):
             raise FileNotFoundError(file + " does not exist")
 
         ans = False
         for item in self._ignore:
-            if os.path.isfile(item) and Path(file).resolve() == Path(item).resolve():
+            if os.path.isfile(item) and Path(file).resolve() == Path(
+                    item).resolve():
                 ans = True
             elif os.path.isdir(item):
                 for root, dirs, files in os.walk(item):
-                    if os.path.basename(file) in files and Path(root).resolve() == Path(
+                    if os.path.basename(file) in files and Path(root).resolve(
+                        ) == Path(
                             os.path.dirname(file)).resolve():
                         ans = True
         return ans
@@ -143,7 +152,8 @@ class Data2Bids:  # main conversion and file organization program
         if not os.path.isdir(os.path.join(self._bids_dir, "stimuli")):
             os.mkdir(os.path.join(self._bids_dir, "stimuli"))
         for item in os.listdir(dir):
-            shutil.copyfile(os.path.join(dir, item), os.path.join(self._bids_dir, "stimuli", item))
+            shutil.copyfile(os.path.join(dir, item), os.path.join(
+                self._bids_dir, "stimuli", item))
         self.stim_dir = dir
         self._ignore.append(dir)
 
@@ -160,7 +170,8 @@ class Data2Bids:  # main conversion and file organization program
             self.channels[part_match] = [self.trigger[part_match]]
             for i, file in enumerate(files):
                 src = os.path.join(root, file)
-                if any(f in file for f in self._config["ieeg"]["channels"].keys()):
+                if any(f in file for f in self._config["ieeg"][
+                    "channels"].keys()):
                     self.make_channels_tsv(src, task_label_match)
 
                 for name, var in headers.items():
@@ -196,6 +207,11 @@ class Data2Bids:  # main conversion and file organization program
                     df = df.rename(columns={"lowpass_cutoff": "low_cutoff"})
         df["type"] = self._config["ieeg"]["type"]
         df["units"] = self._config["ieeg"]["units"]
+        df = df.append(
+            {"name": "Trigger", "high_cutoff": 1, "low_cutoff": 1000,
+             "type": "TRIG", "units": "uV"}, ignore_index=True)
+        df = pd.concat([df["name"], df["type"], df["units"], df["low_cutoff"],
+                        df["high_cutoff"]], axis=1)
         filename = os.path.join(self._bids_dir, "sub-{}".format(
             part_match_z), "sub-" + part_match_z + "_task-{}".format(
             task_label_match) + "_channels.tsv")
@@ -203,7 +219,6 @@ class Data2Bids:  # main conversion and file organization program
         df.to_csv(filename, sep="\t", index=False)
 
         # TODO: write coordsystem
-
 
     def set_overwrite(self, overwrite):
         self._is_overwrite = overwrite
@@ -262,8 +277,8 @@ class Data2Bids:  # main conversion and file organization program
                             SCAN_NUM=scan_num), shell=True, stdout=subprocess.PIPE)
                     # output = proc.stdout.read()
                     outs, errs = proc.communicate()
-                    prefix = re.match(".*/sub-{SUB_NUM}/(run{SCAN_NUM}".format(SUB_NUM=sub_num,
-                                                                               SCAN_NUM=scan_num) + r"[^ \(\"\\n\.]*).*",
+                    prefix = re.match(".*/sub-{SUB_NUM}/(run{SCAN_NUM}".format(
+                        SUB_NUM=sub_num, SCAN_NUM=scan_num) + r"[^ \(\"\\n\.]*).*",
                                       str(outs)).group(1)
                     for file in os.listdir(sub_dir):
                         mefile = re.match(r"run{SCAN_NUM}(\.e\d\d)\.nii".format(SCAN_NUM=scan_num), file)
@@ -382,7 +397,7 @@ class Data2Bids:  # main conversion and file organization program
         if part_match is None:
             part_match = match_regexp(self._config["partLabel"], filename)
             # TODO: figure out why find_a_match doesn't work
-            #part_match = self.find_a_match(filename, "partLabel")
+            # part_match = self.find_a_match(filename, "partLabel")
         if verbose is None:
             verbose = self._is_verbose
         try:
@@ -577,7 +592,8 @@ class Data2Bids:  # main conversion and file organization program
                             seqlist[i] = ", ".join(seqlist[i])
                     except KeyError:
                         seqlist.append(None)
-                [ScanningSequence, SequenceVariant, SequenceOptions, AquisitionType, SequenceName] = seqlist
+                [ScanningSequence, SequenceVariant, SequenceOptions,
+                 AquisitionType, SequenceName] = seqlist
                 try:
                     timings = []
                 except NameError:
@@ -609,7 +625,8 @@ class Data2Bids:  # main conversion and file organization program
                     else:
                         InStackPositionNumber += 1
                     InstanceNumber += 1
-                return (timings, echo, ScanningSequence, SequenceVariant, SequenceOptions, SequenceName)
+                return (timings, echo, ScanningSequence, SequenceVariant,
+                        SequenceOptions, SequenceName)
 
     def read_edf(self, file_name, channels=None, extra_arrays=None, extra_signal_headers=None):
         [edfname, dst_path, part_match] = self.generate_names(file_name, verbose=False)[0:3]
@@ -647,10 +664,12 @@ class Data2Bids:  # main conversion and file organization program
                 if (signal["label"] or i) == self.trigger[part_match]:
                     signal_headers[i]["label"] = "Trigger"
 
-            return dict(name=file_name, bids_name=edf_name, nsamples=array.shape[1], signal_headers=signal_headers,
+            return dict(name=file_name, bids_name=edf_name,
+                        nsamples=array.shape[1], signal_headers=signal_headers,
                         file_header=header, data=array, reader=f)
         elif channels:
-            highlevel.drop_channels(file_name, edf_name, channels, verbose=self._is_verbose)
+            highlevel.drop_channels(file_name, edf_name, channels,
+                                    verbose=self._is_verbose)
             return None
         else:
             shutil.copy(file_name, edf_name)
@@ -674,9 +693,11 @@ class Data2Bids:  # main conversion and file organization program
 
         if re.match(r"^[^\d]{1,3}", part_match):
             part_matches = re.split(r"([^\d]{1,3})", part_match, 1)
-            part_match_z = part_matches[1] + str(int(part_matches[2])).zfill(self._config["partLabel"]["fill"])
+            part_match_z = part_matches[1] + str(int(part_matches[2])).zfill(
+                self._config["partLabel"]["fill"])
         else:
-            part_match_z = str(int(part_match)).zfill(self._config["partLabel"]["fill"])
+            part_match_z = str(int(part_match)).zfill(
+                self._config["partLabel"]["fill"])
 
         return part_match, part_match_z
 
@@ -696,12 +717,13 @@ class Data2Bids:  # main conversion and file organization program
         file = fobj.file_name
         part_match = self.part_check(filename=file)[0]
         if any(len(mat2df(os.path.join(root, fname))) == fobj.samples_in_file(
-                0) for fname in[i for i in all_files if i.endswith(
+                0) for fname in [i for i in all_files if i.endswith(
             ".mat")]) or any(len(mat2df(os.path.join(
             root, fname))) == fobj.samples_in_file(0) for fname in
-            [i for i in mat_files if i.endswith(".mat")]):
+                             [i for i in mat_files if i.endswith(".mat")]):
 
-            for fname in [i for i in all_files + mat_files if i.endswith(".mat")]:
+            for fname in [i for i in all_files + mat_files if
+                          i.endswith(".mat")]:
                 sig_len = fobj.samples_in_file(0)
                 if not os.path.isfile(fname):
                     fname = os.path.join(root, fname)
@@ -720,9 +742,9 @@ class Data2Bids:  # main conversion and file organization program
                                 os.path.splitext(os.path.basename(fname))[0],
                                 sample_rate=self.sample_rate[part_match]))
                 elif sig_len * 0.99 <= len(mat2df(fname)) <= sig_len * 1.01:
-                    raise BufferError(
-                         file + "of size" + sig_len + "is not the same size as" + fname + "of size" + len(
-                            mat2df(fname)))
+                    raise BufferError(file + "of size" + sig_len +
+                                      "is not the same size as" + fname +
+                                      "of size" + len(mat2df(fname)))
         return extra_arrays, extra_signal_headers
 
     def mri_file_transfer(self, source, destination, new_name):
@@ -824,20 +846,32 @@ class Data2Bids:  # main conversion and file organization program
                     signal_headers,
                     digital=self._config["ieeg"]["digital"])
             except OSError as e:
-                print(
-                    "eeg file is either not detailed well enough in config file or file type not yet "
-                    "supported")
+                print("eeg file is either not detailed well enough in config file or file type not yet "
+                      "supported")
                 raise e
         else:
             raise FileNotFoundError(
                 "{file} header could not be found".format(file=file))
         return remove_src_edf
 
+    def make_coordsystem(self, txt_df_dict: dict, part_match_z: str):
+        if txt_df_dict["error"] is not None:
+            raise txt_df_dict["error"]
+        df = txt_df_dict["data"]
+        df.columns = ["name1", "name2", "x", "y", "z", "hemisphere", "del"]
+        df["name"] = df["name1"] + df["name2"].astype(str).str.zfill(2)
+        df["hemisphere"] = df["hemisphere"] + df["del"]
+        df = df.drop(columns=["name1", "name2", "del"])
+        df = pd.concat(
+            [df["name"], df["x"], df["y"], df["z"], df["hemisphere"]], axis=1)
+        df.to_csv(
+            self._bids_dir + "/sub-" + part_match_z + "/sub-" + part_match_z +
+            "_space-Talairach_electrodes.tsv",sep="\t", index=False)
+
     def run(self):  # main function
 
         # First we check that every parameters are configured
-        if (
-                self._data_dir is not None and self._config_path is not None and self._config is not None and self._bids_dir is not None):
+        if (self._data_dir is not None and self._config_path is not None and self._config is not None and self._bids_dir is not None):
 
             print("---- data2bids starting ----")
             print(self._data_dir)
@@ -893,7 +927,8 @@ class Data2Bids:  # main conversion and file organization program
             part_match_z = None
             for root, _, files in os.walk(self._data_dir, topdown=True):
                 # each loop is a new participant so long as participant is top level
-                files[:] = [f for f in files if not self.check_ignore(os.path.join(root, f))]
+                files[:] = [f for f in files if not self.check_ignore(
+                    os.path.join(root, f))]
                 eeg = []
                 dst_file_path_list = []
                 names_list = []
@@ -911,13 +946,16 @@ class Data2Bids:  # main conversion and file organization program
                 i = 0
                 while part_match is None:
                     try:
-                        part_match, part_match_z = self.part_check(filename=files[i])
+                        part_match, part_match_z = self.part_check(
+                            filename=files[i])
                     except:
                         i += 1
                         continue
                 if self.channels:
-                    if self._is_verbose and self.channels[part_match] is not None:
-                        print("Channels for participant " + part_match + " are")
+                    if self._is_verbose and self.channels[
+                        part_match] is not None:
+                        print("Channels for participant {} are".format(
+                            part_match))
                         print(self.channels[part_match])
                         for i in self._ignore:
                             if part_match in i:
@@ -937,24 +975,30 @@ class Data2Bids:  # main conversion and file organization program
                             files.append(file)
                         else:
                             try:
-                                df = pd.read_table(src_file_path, header=None, sep="\s+")
+                                df = pd.read_table(src_file_path, header=None,
+                                                   sep="\s+")
                                 e = None
                             except Exception as e:
                                 df = None
-                            txt_df_list.append(dict(name=file, data=df, error=e))
+                            txt_df_list.append(
+                                dict(name=file, data=df, error=e))
                         continue
-                    elif not any(re.match(".*?" + ext, file) for ext in curr_ext):
+                    elif not any(re.match(".*?" + ext, file) for ext in
+                                 curr_ext):
                         print("Warning : Skipping %s" % src_file_path)
                         continue
                     if self._is_verbose:
                         print("trying %s" % src_file_path)
                     try:
-                        (new_name, dst_file_path, part_match, run_match, acq_match, echo_match, sess_match, ce_match,
-                         data_type_match, task_label_match, _) = self.generate_names(src_file_path,
-                                                                                     part_match=part_match)
+                        (new_name, dst_file_path, part_match, run_match,
+                         acq_match, echo_match, sess_match, ce_match,
+                         data_type_match, task_label_match,
+                         _) = self.generate_names(src_file_path,
+                                                  part_match=part_match)
                     except TypeError as problem:  #
                         print("\nIssue in generate names")
-                        print("problem with %s:" % src_file_path, problem, "\n")
+                        print("problem with %s:" % src_file_path, problem,
+                              "\n")
 
                         continue
 
@@ -964,7 +1008,8 @@ class Data2Bids:  # main conversion and file organization program
 
                     # print(data_type_match)
                     # finally, if the file is not nifti
-                    if dst_file_path.endswith("/func") or dst_file_path.endswith("/anat"):
+                    if dst_file_path.endswith(
+                            "/func") or dst_file_path.endswith("/anat"):
                         self.mri_file_transfer(
                             src_file_path, dst_file_path, new_name)
 
@@ -972,7 +1017,8 @@ class Data2Bids:  # main conversion and file organization program
                         remove_src_edf = self.force_to_edf(
                             src_file_path, files)
 
-                        f = EdfReader(os.path.splitext(src_file_path)[0] + ".edf")
+                        f = EdfReader(
+                            os.path.splitext(src_file_path)[0] + ".edf")
                         # check for extra channels in data, not working in other file modalities
                         extra_arrays, extra_signal_headers = \
                             self.check_for_mat_channels(
@@ -999,7 +1045,9 @@ class Data2Bids:  # main conversion and file organization program
                         pass
 
                 if d_list:
-                    self.convert_1D(run_list, d_list, tsv_fso_runs, tsv_condition_runs, names_list, dst_file_path_list)
+                    self.convert_1D(run_list, d_list, tsv_fso_runs,
+                                    tsv_condition_runs, names_list,
+                                    dst_file_path_list)
 
                 if mat_list:  # deal with remaining .mat files
                     self.mat2tsv(mat_list)
@@ -1007,17 +1055,7 @@ class Data2Bids:  # main conversion and file organization program
                 if txt_df_list:
                     for txt_df_dict in txt_df_list:
                         if self._config["coordsystem"] in txt_df_dict["name"]:
-                            if txt_df_dict["error"] is not None:
-                                raise txt_df_dict["error"]
-                            df = txt_df_dict["data"]
-                            df.columns = ["name1", "name2", "x", "y", "z", "hemisphere", "del"]
-                            df["name"] = df["name1"] + df["name2"].astype(str).str.zfill(2)
-                            df["hemisphere"] = df["hemisphere"] + df["del"]
-                            df = df.drop(columns=["name1", "name2", "del"])
-                            df = pd.concat([df["name"], df["x"], df["y"], df["z"], df["hemisphere"]], axis=1)
-                            df.to_csv(
-                                self._bids_dir + "/sub-" + part_match_z + "/sub-" + part_match_z + "_space-Talairach_electrodes.tsv",
-                                sep="\t", index=False)
+                            self.make_coordsystem(txt_df_dict, part_match_z)
                         elif self._config["eventFormat"]["AudioCorrection"] in txt_df_dict["name"]:
                             if txt_df_dict["error"] is not None:
                                 raise txt_df_dict["error"]
@@ -1034,22 +1072,27 @@ class Data2Bids:  # main conversion and file organization program
                     if task_match:
                         task_label_match = task_match.group(1)
                     # split any edfs according to tsvs
-                    pattern = "{}(?:_acq-{})?_run-{}_events\.tsv".format(new_name.split("_ieeg")[0].split("/", 1)[1],
-                                                                         self._config["acq"]["content"][0],
-                                                                         self._config["runIndex"]["content"][0])
-                    match_set = [re.match(pattern, set_file) for set_file in os.listdir(file_path)]
-                    if new_name.endswith("_ieeg") and any(match_set):  # if edf is not yet split
+                    pattern = "{}(?:_acq-{})?_run-{}_events\.tsv".format(
+                        new_name.split("_ieeg")[0].split("/", 1)[1],
+                        self._config["acq"]["content"][0],
+                        self._config["runIndex"]["content"][0])
+                    match_set = [re.match(pattern, set_file) for set_file in
+                                 os.listdir(file_path)]
+                    if new_name.endswith("_ieeg") and any(
+                            match_set):  # if edf is not yet split
 
                         if self._is_verbose:
                             print("Reading for split... ")
                         if full_name in [i["bids_name"] for i in eeg]:
-                            eeg_dict = eeg[[i["bids_name"] for i in eeg].index(full_name)]
+                            eeg_dict = eeg[
+                                [i["bids_name"] for i in eeg].index(full_name)]
                         else:
                             raise LookupError(
                                 "This error should not have been raised, was edf file " + full_name + " ever written?",
                                 [i["name"] for i in eeg])
-                        [array, signal_headers, header] = [eeg_dict["data"], eeg_dict["signal_headers"],
-                                                           eeg_dict["file_header"]]
+                        array = eeg_dict["data"]
+                        signal_headers = eeg_dict["signal_headers"]
+                        header = eeg_dict["file_header"]
                         start_nums = []
                         matches = []
                         for file in sorted(os.listdir(file_path)):
@@ -1057,7 +1100,8 @@ class Data2Bids:  # main conversion and file organization program
                                                  self._config["acq"]["content"][0] + ")?_run-(" +
                                                  self._config["runIndex"]["content"][0] + ")_events.tsv", file)
                             if match_tsv:
-                                df = pd.read_csv(os.path.join(file_path, file), sep="\t", header=0)
+                                df = pd.read_csv(os.path.join(file_path, file),
+                                                 sep="\t", header=0)
                                 # converting signal start and end to correct sample rate for data
                                 eval_col = eval_df(df, self._config["eventFormat"]["Timing"]["end"], self.stim_dir)
                                 end_num = str2num(eval_col.iloc[-1])
@@ -1097,8 +1141,7 @@ class Data2Bids:  # main conversion and file organization program
                                 end = start_nums[i + 1][0]
                             new_array = np.split(array, [start, end], axis=1)[1]
                             tsv_name: str = os.path.join(file_path, matches[i].string)
-                            edf_name: str = os.path.join(file_path,
-                                                         matches[i].string.split("_events.tsv", 1)[0] + "_ieeg.edf")
+                            edf_name: str = os.path.join(file_path, matches[i].string.split("_events.tsv", 1)[0] + "_ieeg.edf")
                             full_name = os.path.join(file_path, new_name.split("/", 1)[1] + ".edf")
                             if self._is_verbose:
                                 print(full_name + "(Samples[" + str(start) + ":" + str(end) + "]) ---> " + edf_name)
@@ -1124,7 +1167,8 @@ class Data2Bids:  # main conversion and file organization program
                     json_list = dict()
                 for jfile, contents in json_list.items():
                     print(part_match_z, task_label_match, jfile)
-                    file_name = os.path.join(self._bids_dir, "sub-" + part_match_z,
+                    file_name = os.path.join(self._bids_dir,
+                                             "sub-" + part_match_z,
                                              "sub-" + part_match_z + "_task-" + task_label_match + "_" + jfile)
                     with open(file_name, "w") as fst:
                         json.dump(contents, fst)
@@ -1138,7 +1182,8 @@ class Data2Bids:  # main conversion and file organization program
             print("Warning: No parameters are defined !")
 
     def write_sidecar(self, full_file):
-        if full_file.endswith(".tsv"):  # need to search BIDS specs for list of possible known BIDS columns
+        if full_file.endswith(
+                ".tsv"):  # need to search BIDS specs for list of possible known BIDS columns
             data = dict()
             df = pd.read_csv(full_file, sep="\t")
             return
@@ -1158,11 +1203,15 @@ class Data2Bids:  # main conversion and file organization program
                 print("description:", description)
             else:
                 raise SyntaxError(full_file + "was not annotated correctly")
-            signals = [sig for sig in f.getSignalLabels() if "Trigger" not in sig]
-            data = dict(TaskName=entities['task'], InstitutionName=self._config["institution"],
-                        iEEGReference=description, SamplingFrequency=int(f.getSignalHeader(0)["sample_rate"]),
-                        PowerLineFrequency=60, SoftwareFilters="n/a", ECOGChannelCount=len(signals),
-                        TriggerChannelCount=1, RecordingDuration=f.file_duration)
+            signals = [sig for sig in f.getSignalLabels()]
+            data = dict(TaskName=entities['task'],
+                        InstitutionName=self._config["institution"],
+                        iEEGReference=description, SamplingFrequency=int(
+                    f.getSignalHeader(0)["sample_rate"]),
+                        PowerLineFrequency=60, SoftwareFilters="n/a",
+                        ECOGChannelCount=len(signals),
+                        TriggerChannelCount=1,
+                        RecordingDuration=f.file_duration)
 
         elif os.path.dirname(full_file).endswith("/anat"):
             entities = layout.parse_file_entities(full_file + ".nii.gz")
@@ -1171,7 +1220,8 @@ class Data2Bids:  # main conversion and file organization program
             elif entities["suffix"] == "T1w":
                 data = {}
             else:
-                raise NotImplementedError(full_file + "is not yet accounted for")
+                raise NotImplementedError(
+                    full_file + "is not yet accounted for")
         else:
             data = {}
         if not os.path.isfile(os.path.splitext(full_file)[0] + ".json"):
@@ -1194,7 +1244,8 @@ class Data2Bids:  # main conversion and file organization program
                 else:
                     temp_df[key] = eval_df(df, value)
             if "trial_num" not in temp_df.columns:
-                temp_df["trial_num"] = [1 + i for i in list(range(temp_df.shape[0]))]
+                temp_df["trial_num"] = [1 + i for i in
+                                        list(range(temp_df.shape[0]))]
             '''
             if "duration" not in temp_df.columns:
                 if "stim_file" in temp_df.columns:
@@ -1240,11 +1291,14 @@ class Data2Bids:  # main conversion and file organization program
                 new_df = new_df.append(temp_df, ignore_index=True, sort=False)
 
         for name in ["onset", "duration"]:
-            if not (pd.api.types.is_float_dtype(new_df[name]) or pd.api.types.is_integer_dtype(new_df[name])):
+            if not (pd.api.types.is_float_dtype(
+                    new_df[name]) or pd.api.types.is_integer_dtype(
+                    new_df[name])):
                 new_df[name] = pd.to_numeric(new_df[name], errors="coerce")
         if data_sample_rate is None:
             # onset is timing of even onset (in seconds)
-            new_df["onset"] = new_df["onset"] / self._config["eventFormat"]["SampleRate"]
+            new_df["onset"] = new_df["onset"] / self._config["eventFormat"][
+                "SampleRate"]
         else:
             # sample is in exact sample of event onset (at eeg sample rate)
             new_df["sample"] = (new_df["onset"] / self._config["eventFormat"][
@@ -1252,14 +1306,19 @@ class Data2Bids:  # main conversion and file organization program
             # onset is timing of even onset (in seconds)
             new_df["onset"] = new_df["sample"] / data_sample_rate
             # round sample to nearest frame
-            new_df["sample"] = pd.to_numeric(new_df["sample"].round(), errors="coerce", downcast="integer")
+            new_df["sample"] = pd.to_numeric(new_df["sample"].round(),
+                                             errors="coerce",
+                                             downcast="integer")
         # duration is duration of event (in seconds)
-        new_df["duration"] = new_df["duration"] / self._config["eventFormat"]["SampleRate"]
+        new_df["duration"] = new_df["duration"] / self._config["eventFormat"][
+            "SampleRate"]
 
         if self._is_verbose:
-            print(new_df.sort_values(["trial_num", "event_order"]).drop(columns="event_order"))
+            print(new_df.sort_values(["trial_num", "event_order"]).drop(
+                columns="event_order"))
 
-        return new_df.sort_values(["trial_num", "event_order"]).drop(columns="event_order")
+        return new_df.sort_values(["trial_num", "event_order"]).drop(
+            columns="event_order")
 
     def mat2tsv(self, mat_files):
         part_match = None
@@ -1271,24 +1330,35 @@ class Data2Bids:  # main conversion and file organization program
                                 mat_file) == part_match:  # initialize dataframe if new participant
                 if written:
                     df = pd.DataFrame()
-                elif not part_match == match_regexp(self._config["partLabel"], mat_file):
-                    b_index = [j not in df.columns.values.tolist() for j in self._config["eventFormat"]["Sep"]].index(
+                elif not part_match == match_regexp(self._config["partLabel"],
+                                                    mat_file):
+                    b_index = [j not in df.columns.values.tolist() for j in
+                               self._config["eventFormat"]["Sep"]].index(
                         True)
-                    raise FileNotFoundError("{config} variable was not found in {part}'s event files".format(
-                        config=list(self._config["eventFormat"]["Sep"].values())[b_index], part=part_match))
+                    raise FileNotFoundError(
+                        "{config} variable was not found in {part}'s event files".format(
+                            config=
+                            list(self._config["eventFormat"]["Sep"].values())[
+                                b_index], part=part_match))
             try:
                 part_match = match_regexp(self._config["partLabel"], mat_file)
             except AssertionError:
-                raise SyntaxError("file: {filename} has no matching {config}\n".format(filename=mat_file, config=
-                self._config["content"][:][0]))
+                raise SyntaxError(
+                    "file: {filename} has no matching {config}\n".format(
+                        filename=mat_file, config=
+                        self._config["content"][:][0]))
             df_new = mat2df(mat_file, self._config["eventFormat"]["Labels"])
             # check to see if new data is introduced. If not then keep searching
             if isinstance(df_new, pd.Series):
                 df_new = pd.DataFrame(df_new)
             if df_new.shape[0] > df.shape[0]:
-                df = pd.concat([df[df.columns.difference(df_new.columns)], df_new], axis=1)  # auto filters duplicates
+                df = pd.concat(
+                    [df[df.columns.difference(df_new.columns)], df_new],
+                    axis=1)  # auto filters duplicates
             elif df_new.shape[0] == df.shape[0]:
-                df = pd.concat([df, df_new[df_new.columns.difference(df.columns)]], axis=1)  # auto filters duplicates
+                df = pd.concat(
+                    [df, df_new[df_new.columns.difference(df.columns)]],
+                    axis=1)  # auto filters duplicates
             else:
                 continue
             written = False
@@ -1296,17 +1366,23 @@ class Data2Bids:  # main conversion and file organization program
             if self._is_verbose:
                 print(df)
             try:
-                if self._config["eventFormat"]["IDcol"] in df.columns.values.tolist():  # test if edfs should be
+                if self._config["eventFormat"][
+                    "IDcol"] in df.columns.values.tolist():  # test if edfs should be
                     # separated by block or not
-                    if len(df[self._config["eventFormat"]["IDcol"]].unique()) == 1 and self._config["split"][
-                        "Sep"] not in ["all", True] or not self._config["split"]["Sep"]:
+                    if len(df[self._config["eventFormat"][
+                        "IDcol"]].unique()) == 1 and self._config["split"][
+                        "Sep"] not in ["all", True] or not \
+                    self._config["split"]["Sep"]:
                         # CHANGE this in case literal name doesn't change
                         is_separate = False
-                        print("Warning: data may have been lost if file ID didn't change but the recording session did")
+                        print(
+                            "Warning: data may have been lost if file ID didn't change but the recording session did")
                         # construct fake orig data name to run through name generator
                         # fix this as well so it works for all data types and modalities
-                        match_name = mat_file.split(os.path.basename(mat_file))[0] + \
-                                     df[self._config["eventFormat"]["IDcol"]][0] + self._config["ieeg"]["content"][0][1]
+                        match_name = \
+                        mat_file.split(os.path.basename(mat_file))[0] + \
+                        df[self._config["eventFormat"]["IDcol"]][0] + \
+                        self._config["ieeg"]["content"][0][1]
                     else:  # this means there was more than one recording session. In this case we will separate each
                         # trial block into a separate "run"
                         is_separate = True
@@ -1318,21 +1394,26 @@ class Data2Bids:  # main conversion and file organization program
             # write the tsv from the dataframe
             # if not changed: check to see if there is anything new to write
             if is_separate:
-                if not all(j in df.columns.values.tolist() for j in self._config["eventFormat"]["Sep"].values()):
+                if not all(j in df.columns.values.tolist() for j in
+                           self._config["eventFormat"]["Sep"].values()):
                     if self._is_verbose:
                         print(mat_file)
                     continue
 
                 # make sure numbers do not repeat when not wanted
-                df_unique = df.filter(self._config["eventFormat"]["Sep"].values()).drop_duplicates()
+                df_unique = df.filter(self._config["eventFormat"][
+                                          "Sep"].values()).drop_duplicates()
                 for i in range(df_unique.shape[0])[1:]:
                     for j in self._config["eventFormat"]["Sep"].keys():
                         jval = self._config["eventFormat"]["Sep"][j]
                         try:
                             if self._config[j]["repeat"] is False:
                                 try:  # making sure actual key errors get caught
-                                    if df_unique[jval].iat[i] in df_unique[jval].tolist()[:i]:
-                                        df_unique[jval].iat[i] = str(int(max(df_unique[jval].tolist())) + 1)
+                                    if df_unique[jval].iat[i] in df_unique[
+                                                                     jval].tolist()[
+                                                                 :i]:
+                                        df_unique[jval].iat[i] = str(int(max(
+                                            df_unique[jval].tolist())) + 1)
                                 except KeyError as e:
                                     raise ValueError(e)
                             else:
@@ -1341,36 +1422,58 @@ class Data2Bids:  # main conversion and file organization program
                             continue
 
                 tupelist = list(
-                    df.filter(self._config["eventFormat"]["Sep"].values()).drop_duplicates().itertuples(index=False))
+                    df.filter(self._config["eventFormat"][
+                                  "Sep"].values()).drop_duplicates().itertuples(
+                        index=False))
                 for i in range(len(tupelist)):  # iterate through every block
                     nindex = (df.where(
-                        df.filter(self._config["eventFormat"]["Sep"].values()) == tupelist[i]) == df).filter(
-                        self._config["eventFormat"]["Sep"].values()).all(axis=1)
-                    match_name = mat_file.split(os.path.basename(mat_file))[0] + str(
-                        df[self._config["eventFormat"]["IDcol"]][nindex].iloc[0])
+                        df.filter(
+                            self._config["eventFormat"]["Sep"].values()) ==
+                        tupelist[i]) == df).filter(
+                        self._config["eventFormat"]["Sep"].values()).all(
+                        axis=1)
+                    match_name = mat_file.split(os.path.basename(mat_file))[
+                                     0] + str(
+                        df[self._config["eventFormat"]["IDcol"]][nindex].iloc[
+                            0])
                     for k in self._config["eventFormat"]["Sep"].keys():
                         if k in self._config.keys():
-                            data = str(df_unique[self._config["eventFormat"]["Sep"][k]].iloc[i])
-                            match_name = match_name + gen_match_regexp(self._config[k], data)
+                            data = str(df_unique[
+                                           self._config["eventFormat"]["Sep"][
+                                               k]].iloc[i])
+                            match_name = match_name + gen_match_regexp(
+                                self._config[k], data)
 
                     # fix this to check for data type
-                    match_name = match_name + self._config["ieeg"]["content"][0][1]
+                    match_name = match_name + \
+                                 self._config["ieeg"]["content"][0][1]
                     item = self.generate_names(match_name, verbose=False)
                     if item is not None:
                         (new_name, dst_file_path) = item[0:2]
                     else:
-                        self.generate_names(match_name, verbose=True, debug=True)
+                        self.generate_names(match_name, verbose=True,
+                                            debug=True)
                         raise
                     writedf = df.loc[nindex]
                     if self._is_verbose:
-                        print(mat_file, "--->", dst_file_path + new_name.split("ieeg")[0] + "events.tsv")
-                    writedf.to_csv(dst_file_path + new_name.split("ieeg")[0] + "events.tsv", sep="\t", index=False)
+                        print(mat_file, "--->",
+                              dst_file_path + new_name.split("ieeg")[
+                                  0] + "events.tsv")
+                    writedf.to_csv(dst_file_path + new_name.split("ieeg")[
+                        0] + "events.tsv", sep="\t", index=False)
             else:
-                (new_name, dst_file_path) = self.generate_names(match_name, verbose=False)[0:2]
+                (new_name, dst_file_path) = self.generate_names(match_name,
+                                                                verbose=False)[
+                                            0:2]
                 if self._is_verbose:
-                    print(mat_file, "--->", dst_file_path + new_name.split("ieeg")[0] + "events.tsv")
-                df.to_csv(dst_file_path + new_name.split("ieeg")[0] + "events.tsv", sep="\t", index=False)
+                    print(mat_file, "--->",
+                          dst_file_path + new_name.split("ieeg")[
+                              0] + "events.tsv")
+                df.to_csv(
+                    dst_file_path + new_name.split("ieeg")[0] + "events.tsv",
+                    sep="\t", index=False)
             written = True
+
     """
     def convert_1D(self, run_list, d_list, tsv_fso_runs, tsv_condition_runs, names_list, dst_file_path_list):
         # This section is for converting .1D files to tsv event files. If you have the 1D files that's great,
@@ -1457,6 +1560,7 @@ class Data2Bids:  # main conversion and file organization program
                                 tsv_writer.writerow(
                                     [fields[j][i - 1], duration, categories[j][i - 1]])  # ,TRfields[j][i-1]])
     """
+
 
 def main():
     args = get_parser().parse_args()
