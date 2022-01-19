@@ -125,7 +125,6 @@ class Data2Bids:  # main conversion and file organization program
 
     def check_ignore(self, file: PathLike):
 
-        # assert op.isabs(file), file + "must be given with the absolute path including root"
         if not op.exists(file):
             raise FileNotFoundError(file + " does not exist")
 
@@ -143,9 +142,9 @@ class Data2Bids:  # main conversion and file organization program
 
     def set_stim_dir(self, dir: PathLike):
         if dir is None:
-            if "stimuli" in os.listdir(self._data_dir):  # data2bids can be called at the parent folder
+            if "stimuli" in os.listdir(self._data_dir):
                 dir = op.join(self._data_dir, "stimuli")
-            elif "stimuli" in os.listdir(op.dirname(self._data_dir)):  # or subject folder level
+            elif "stimuli" in os.listdir(op.dirname(self._data_dir)):
                 dir = op.join(op.dirname(self._data_dir), "stimuli")
             else:
                 self.stim_dir = None
@@ -268,14 +267,17 @@ class Data2Bids:  # main conversion and file organization program
                     os.remove(op.join(sub_dir, prefix + ".json"))
                 else:
                     proc = subprocess.Popen(
-                        "dcm2niix -z y -f run{SCAN_NUM}_%p_%t_sub{SUB_NUM} -o {OUTPUT_DIR} -b y {DATA_DIR}".format(
-                            OUTPUT_DIR=sub_dir, SUB_NUM=sub_num, DATA_DIR=subdir, SCAN_NUM=scan_num), shell=True,
-                        stdout=subprocess.PIPE)
+                        "dcm2niix -z y -f run{SCAN_NUM}_%p_%t_sub{SUB_NUM} -o "
+                        "{OUTPUT_DIR} -b y {DATA_DIR}".format(
+                            OUTPUT_DIR=sub_dir, SUB_NUM=sub_num,
+                            DATA_DIR=subdir, SCAN_NUM=scan_num), shell=True,
+                            stdout=subprocess.PIPE)
                     outs, errs = proc.communicate()
                 sys.stdout.write(outs.decode("utf-8"))
 
             self._multi_echo = runlist
-            self._data_dir = op.join(op.dirname(self._bids_dir), "sub-{SUB_NUM}".format(SUB_NUM=sub_num))
+            self._data_dir = op.join(op.dirname(
+                self._bids_dir), "sub-{SUB_NUM}".format(SUB_NUM=sub_num))
         self._DICOM_path = ddir
 
     def get_data_dir(self):
@@ -311,7 +313,8 @@ class Data2Bids:  # main conversion and file organization program
                 self._config_path = op.join(os.getcwd(), "config.json")
             # Otherwise taking the default config
             else:
-                self._config_path = op.join(op.dirname(__file__), "config.json")
+                self._config_path = op.join(op.dirname(__file__),
+                                            "config.json")
         else:
             self._config_path = config_path
 
@@ -326,7 +329,8 @@ class Data2Bids:  # main conversion and file organization program
             try:
                 newdir = op.join(self._data_dir, "BIDS")
             except TypeError:
-                print("Error: Please provide input data directory if no BIDS directory...")
+                print("Error: Please provide input data directory if no "
+                      "BIDS directory...")
 
         # deleting old BIDS to make room for new
         elif not op.basename(bids_dir) == "BIDS":
@@ -340,17 +344,18 @@ class Data2Bids:  # main conversion and file organization program
             os.mkdir(newdir)
         self._bids_dir = newdir
         self._ignore.append(newdir)
-        # as of BIDS ver 1.6.0, CT is not a part of BIDS, so check for CT files and add to .bidsignore
+        # as of BIDS ver 1.6.0, CT is not a part of BIDS, so check for CT files
+        # and add to .bidsignore
         self.bidsignore("*_CT.*")
 
     def get_bids_version(self):
         return self._bids_version
 
     def bids_validator(self):
-        assert self._bids_dir is not None, "Cannot launch bids-validator without specifying bids directory !"
-        # try:
+        assert self._bids_dir is not None, "Cannot launch bids-validator wit" \
+                                           "hout specifying bids directory !"
         subprocess.check_call(['bids-validator',
-                               self._bids_dir])  # except FileNotFoundError:
+                               self._bids_dir])
 
     def find_a_match(self, files: Union[List[str], str],
                      config_key: str) -> str:
@@ -505,7 +510,16 @@ class Data2Bids:  # main conversion and file organization program
                 continue
         raise AssertionError("No matching data types could be found")
 
-    def multi_echo_check(self, runnum, src_file=""):  # check to see if run is multi echo based on input
+    def multi_echo_check(self, runnum, src_file=""):
+        """check to see if run is multi echo based on input
+
+        :param runnum:
+        :type runnum:
+        :param src_file:
+        :type src_file:
+        :return:
+        :rtype:
+        """
         if self.is_multi_echo:
             if int(runnum) in self._multi_echo:
                 return True
@@ -591,15 +605,18 @@ class Data2Bids:  # main conversion and file organization program
 
     def read_edf(self, file_name: PathLike, channels: List[Union[int, str]]=None,
                  extra_arrays=None, extra_signal_headers=None):
-        [edfname, dst_path, part_match] = self.generate_names(file_name, verbose=False)[0:3]
-        header = highlevel.make_header(patientname=part_match, startdate=datetime.datetime(1, 1, 1))
+        [edfname, dst_path, part_match] = self.generate_names(
+            file_name, verbose=False)[0:3]
+        header = highlevel.make_header(patientname=part_match,
+                                       startdate=datetime.datetime(1, 1, 1))
         edf_name = op.join(dst_path, edfname + ".edf")
         d = {str: [], int: []}
         for i in channels:
             d[type(i)].append(i)
 
         f = EdfReader(file_name)
-        chn_nums = d[int] + [i for i, x in enumerate(f.getSignalLabels()) if x in channels]
+        chn_nums = d[int] + [i for i, x in enumerate(f.getSignalLabels())
+                             if x in channels]
         f.close()
         chn_nums.sort()
 
@@ -675,7 +692,8 @@ class Data2Bids:  # main conversion and file organization program
 
     def check_for_mat_channels(self, fobj: pyedflib.EdfReader, root: PathLike,
                                all_files: List[PathLike],
-                               mat_files: List[PathLike]):
+                               mat_files: List[PathLike]
+                               ) -> Tuple[List[np.ndarray], List[dict]]:
         extra_arrays = []
         extra_signal_headers = []
         file = fobj.file_name
@@ -685,7 +703,6 @@ class Data2Bids:  # main conversion and file organization program
             ".mat")]) or any(len(mat2df(op.join(
             root, fname))) == fobj.samples_in_file(0) for fname in
                              [i for i in mat_files if i.endswith(".mat")]):
-
             for fname in [i for i in all_files + mat_files if
                           i.endswith(".mat")]:
                 sig_len = fobj.samples_in_file(0)
@@ -753,7 +770,8 @@ class Data2Bids:  # main conversion and file organization program
             # saving the image
             nib.save(nifti_img, final_file + ".gz")
 
-        # if it is already a nifti file, no need to convert it so we just copy rename
+        # if it is already a nifti file, no need to convert it so we just copy
+        # rename
         if file.endswith(".nii.gz"):
             shutil.copy(source, final_file + ".gz")
         elif file.endswith(".nii"):
@@ -767,7 +785,7 @@ class Data2Bids:  # main conversion and file organization program
                         shutil.copyfileobj(f_in, f_out)
                 os.remove(final_file)
 
-    def force_to_edf(self, source: PathLike, files: List[PathLike]):
+    def force_to_edf(self, source: PathLike, files: List[PathLike]) -> bool:
         remove_src_edf = True
         file = op.basename(source)
         part_match = self.part_check(filename=file)[0]
@@ -1032,7 +1050,8 @@ class Data2Bids:  # main conversion and file organization program
                 json.dump(data, fst)
 
     def frame2bids(self, df: pd.DataFrame, events: Union[dict, List[dict]],
-                   data_sample_rate=None, audio_correction=None, start_at=0):
+                   data_sample_rate=None, audio_correction=None,
+                   start_at=0) -> pd.DataFrame:
         new_df = None
         if isinstance(events, dict):
             events = list(events)
@@ -1129,7 +1148,9 @@ class Data2Bids:  # main conversion and file organization program
         written = True
         is_separate = None
         for mat_file in mat_files:
-            if not match_regexp(self._config["partLabel"], mat_file) == part_match:  # initialize dataframe if new participant
+            # initialize dataframe if new participant
+            if not match_regexp(self._config["partLabel"], mat_file
+                                ) == part_match:
                 if written:
                     df = pd.DataFrame()
                 elif not part_match == match_regexp(self._config["partLabel"],
@@ -1150,7 +1171,8 @@ class Data2Bids:  # main conversion and file organization program
                         filename=mat_file, config=
                         self._config["content"][:][0]))
             df_new = mat2df(mat_file, self._config["eventFormat"]["Labels"])
-            # check to see if new data is introduced. If not then keep searching
+            # check to see if new data is introduced. If not then keep
+            # searching
             if isinstance(df_new, pd.Series):
                 df_new = pd.DataFrame(df_new)
             if df_new.shape[0] > df.shape[0]:
@@ -1184,7 +1206,8 @@ class Data2Bids:  # main conversion and file organization program
                         mat_file.split(op.basename(mat_file))[0] + \
                         df[self._config["eventFormat"]["IDcol"]][0] + \
                         self._config["ieeg"]["content"][0][1]
-                    else:  # this means there was more than one recording session. In this case we will separate each
+                    else:  # this means there was more than one recording
+                        # session. In this case we will separate each
                         # trial block into a separate "run"
                         is_separate = True
                 else:
@@ -1286,6 +1309,8 @@ class Data2Bids:  # main conversion and file organization program
     def make_subdirs(self, files: List[str], debug: bool=False):
         """Makes all subdirectories for file list
 
+        :param debug:
+        :type debug:
         :param files:
         :type files:
         :return:
@@ -1322,232 +1347,227 @@ class Data2Bids:  # main conversion and file organization program
     def run(self):  # main function
 
         # First we check that every parameters are configured
-        if (
-                self._data_dir is not None and self._config_path is not None and self._config is not None and self._bids_dir is not None):
+        if (self._data_dir is None or
+                self._config_path is None or
+                self._config is None or
+                self._bids_dir is None):
+            raise FileNotFoundError("Not all parameters are defined !")
 
-            print("---- data2bids starting ----")
-            print(self._data_dir)
-            print("\n BIDS version:")
-            print(self._bids_version)
-            print("\n Config from file :")
-            print(self._config_path)
-            print("\n Ouptut BIDS directory:")
-            print(self._bids_dir)
-            print("\n")
+        print("---- data2bids starting ----")
+        print(self._data_dir)
+        print("\n BIDS version:")
+        print(self._bids_version)
+        print("\n Config from file :")
+        print(self._config_path)
+        print("\n Ouptut BIDS directory:")
+        print(self._bids_dir)
+        print("\n")
 
-            # Create the output BIDS directory
-            if not op.exists(self._bids_dir):
-                os.makedirs(self._bids_dir)
-            # else
-            #    shutil.rmtree(self._bids_dir)
+        # Create the output BIDS directory
+        if not op.exists(self._bids_dir):
+            os.makedirs(self._bids_dir)
 
-            # What is the base format to convert to
-            curr_ext = self._config["dataFormat"]
+        # What is the base format to convert to
+        curr_ext = self._config["dataFormat"]
 
-            # delay time in TR unit (if delay_time = 1, delay_time = repetition_time)
-            delaytime = self._config["delayTimeInSec"]
+        # delay time in TR unit if delay_time = 1, delay_time = repetition_time
+        delaytime = self._config["delayTimeInSec"]
 
-            # dataset_description.json must be included in the folder root foolowing BIDS specs
-            description = op.join(self._bids_dir, "dataset_description.json")
-            if op.exists(description):
-                # with open(dst_file_path + new_name + ".json", 'w') as fst:
-
-                with open(description, "r") as fst:
-                    filedata = json.load(fst)
-                with open(description, 'w') as fst:
-                    data = {'Name': self._dataset_name,
-                            'BIDSVersion': self._bids_version}
-                    filedata.update(data)
-                    json.dump(filedata, fst, ensure_ascii=False, indent=4)
-            else:
-                with open(description, 'w') as fst:
-                    data = {'Name': self._dataset_name,
-                            'BIDSVersion': self._bids_version}
-                    json.dump(data, fst, ensure_ascii=False, indent=4)
-
-            try:
-                for key, data in self._config["JSON_files"].items():
-                    with open(op.join(self._bids_dir, key), 'w') as fst:
-                        json.dump(data, fst, ensure_ascii=False, indent=4)
-            except KeyError:
-                pass
-
-            # add a README file
-            readme = op.join(self._bids_dir, "README")
-            if not op.exists(readme):
-                with open(readme, 'w') as fst:
-                    data = ""
-                    fst.write(data)
-
-            # now we can scan all files and rearrange them
-            for root, _, files in os.walk(self._data_dir, topdown=True):
-                # each loop is a new participant so long as participant is top level
-                files[:] = [f for f in files if not self.check_ignore(
-                    op.join(root, f))]
-                if not files:
-                    continue
-                files.sort()
-                eeg = []
-                dst_file_path_list = []
-                names_list = []
-                mat_list = []
-                run_list = []
-                txt_df_list = []
-                correct = None
-                part_match = self.find_a_match(files, "partLabel")
-                part_match_z = self.part_check(part_match)[1]
-                task_label_match = self.find_a_match(files, "task")
-                self.make_subdirs(files)
-                if self.channels:
-                    self.announce_channels(part_match)
-                    self.make_channels_tsv(self._channels_file[part_match],
-                                           task_label_match)
-                if self._is_verbose:
-                    print(files)
-                while files:  # loops over each participant file
-                    file = files.pop(0)
-                    if self._is_verbose:
-                        print(file)
-                    src_file_path = op.join(root, file)
-                    if re.match(".*?" + "\\.mat", file):
-                        mat_list.append(src_file_path)
-                        continue  # if the file doesn't match the extension, we skip it
-                    elif re.match(".*?" + "\\.txt", file):
-                        try:
-                            df = pd.read_table(src_file_path, header=None,
-                                               sep="\s+")
-                            e = None
-                        except Exception as e:
-                            df = None
-                        txt_df_list.append(dict(name=file, data=df, error=e))
-                        continue
-                    elif not any(re.match(".*?" + ext, file) for ext in
-                                 curr_ext):
-                        print("Warning : Skipping %s" % src_file_path)
-                        continue
-                    if self._is_verbose:
-                        print("trying %s" % src_file_path)
-                    try:
-                        (new_name, dst_file_path, part_match, run_match,
-                         acq_match, echo_match, sess_match, ce_match,
-                         data_type_match, task_label_match,
-                         _) = self.generate_names(src_file_path,
-                                                  part_match=part_match)
-                    except TypeError as problem:  #
-                        print("\nIssue in generate names")
-                        print("problem with %s:" % src_file_path, problem,
-                              "\n")
-                        continue
-
-                    # finally, if the file is not nifti
-                    if dst_file_path.endswith(
-                            "func") or dst_file_path.endswith("anat"):
-                        self.mri_file_transfer(
-                            src_file_path, dst_file_path, new_name)
-
-                    elif dst_file_path.endswith("ieeg"):
-                        remove_src_edf = self.force_to_edf(
-                            src_file_path, files)
-
-                        f = EdfReader(
-                            op.splitext(src_file_path)[0] + ".edf")
-                        # check for extra channels in data, not working in other file modalities
-                        extra_arrays, extra_signal_headers = \
-                            self.check_for_mat_channels(
-                                f, root, files, mat_list)
-
-                        f.close()
-                        # read edf and either copy data to BIDS file or save data as dict for writing later
-                        eeg.append(self.read_edf(op.splitext(
-                            src_file_path)[0] + ".edf", self.channels[
-                            part_match], extra_arrays, extra_signal_headers))
-
-                        if remove_src_edf:
-                            if self._is_verbose:
-                                print("Removing " + op.splitext(src_file_path)[
-                                    0] + ".edf")
-                            os.remove(op.splitext(src_file_path)[0] + ".edf")
-
-                    # move the sidecar from input to output
-                    names_list.append(new_name)
-                    dst_file_path_list.append(dst_file_path)
-                    try:
-                        if run_match is not None:
-                            run_list.append(int(run_match))
-                    except UnboundLocalError:
-                        pass
-
-                if mat_list:  # deal with remaining .mat files
-                    self.mat2tsv(mat_list)
-
-                if txt_df_list:
-                    for txt_df_dict in txt_df_list:
-                        if self._config["coordsystem"] in txt_df_dict["name"]:
-                            self.make_coordsystem(txt_df_dict, part_match_z)
-                        elif self._config["eventFormat"]["AudioCorrection"] in \
-                                txt_df_dict["name"]:
-                            if txt_df_dict["error"] is not None:
-                                raise txt_df_dict["error"]
-                            correct = txt_df_dict["data"]
-                        else:
-                            print("skipping " + txt_df_dict["name"])
-
-                # check final file set
-                for new_name in names_list:
-                    print(new_name)
-                    file_path = dst_file_path_list[names_list.index(new_name)]
-                    full_name = op.join(file_path, new_name + ".edf")
-                    task_match = re.match(".*_task-(\w*)_.*", full_name)
-                    if task_match:
-                        task_label_match = task_match.group(1)
-                    # split any edfs according to tsvs
-                    pattern = "{}(?:_acq-{})?_run-{}_events\.tsv".format(
-                        new_name.split("_ieeg")[0],
-                        self._config["acq"]["content"][0],
-                        self._config["runIndex"]["content"][0])
-                    match_set = [re.match(pattern, set_file) for set_file in
-                                 os.listdir(file_path)]
-                    if new_name.endswith("_ieeg") and any(match_set):
-                        # if edf is not yet split
-                        if self._is_verbose:
-                            print("Reading for split... ")
-                        if full_name in [i["bids_name"] for i in eeg]:
-                            eeg_dict = eeg[
-                                [i["bids_name"] for i in eeg].index(full_name)]
-                        else:
-                            raise LookupError(
-                                "This error should not have been raised, was edf file " + full_name + " ever written?",
-                                [i["name"] for i in eeg])
-                        self.write_edf(eeg_dict["data"],
-                                       eeg_dict["signal_headers"],
-                                       eeg_dict["file_header"],
-                                       eeg_dict["name"],
-                                       correct)
-                        continue
-                    # write JSON file for any missing files
-                    self.write_sidecar(op.join(file_path, new_name),
-                                       part_match)
-
-                # write any indicated .json files
-                try:
-                    json_list = self._config["JSON_files"]
-                except KeyError:
-                    json_list = dict()
-                for jfile, contents in json_list.items():
-                    print(part_match_z, task_label_match, jfile)
-                    file_name = op.join(self._bids_dir,
-                                        "sub-" + part_match_z, "ieeg",
-                                        "sub-" + part_match_z + "_task-" + task_label_match + "_" + jfile)
-                    with open(file_name, "w") as fst:
-                        json.dump(contents, fst)
-            # Output
-            if self._is_verbose:
-                tree(self._bids_dir)
-
-            # Finally, we check with bids_validator if everything went alright (This wont work)  # self.bids_validator()
-
+        # dataset_description.json must be included in the BIDS folder
+        description = op.join(self._bids_dir, "dataset_description.json")
+        if op.exists(description):
+            with open(description, "r") as fst:
+                filedata = json.load(fst)
+            with open(description, 'w') as fst:
+                data = {'Name': self._dataset_name,
+                        'BIDSVersion': self._bids_version}
+                filedata.update(data)
+                json.dump(filedata, fst, ensure_ascii=False, indent=4)
         else:
-            print("Warning: No parameters are defined !")
+            with open(description, 'w') as fst:
+                data = {'Name': self._dataset_name,
+                        'BIDSVersion': self._bids_version}
+                json.dump(data, fst, ensure_ascii=False, indent=4)
+
+        try:
+            for key, data in self._config["JSON_files"].items():
+                with open(op.join(self._bids_dir, key), 'w') as fst:
+                    json.dump(data, fst, ensure_ascii=False, indent=4)
+        except KeyError:
+            pass
+
+        # add a README file
+        readme = op.join(self._bids_dir, "README")
+        if not op.exists(readme):
+            with open(readme, 'w') as fst:
+                data = ""
+                fst.write(data)
+
+        # now we can scan all files and rearrange them
+        for root, _, files in os.walk(self._data_dir, topdown=True):
+            # each loop is a new participant so long as participant is top lev
+            files[:] = [f for f in files if not self.check_ignore(
+                op.join(root, f))]
+            if not files:
+                continue
+            files.sort()
+            eeg = []
+            dst_file_path_list = []
+            names_list = []
+            mat_list = []
+            run_list = []
+            txt_df_list = []
+            correct = None
+            part_match = self.find_a_match(files, "partLabel")
+            part_match_z = self.part_check(part_match)[1]
+            task_label_match = self.find_a_match(files, "task")
+            self.make_subdirs(files)
+            if self.channels:
+                self.announce_channels(part_match)
+                self.make_channels_tsv(self._channels_file[part_match],
+                                       task_label_match)
+            if self._is_verbose:
+                print(files)
+            while files:  # loops over each participant file
+                file = files.pop(0)
+                if self._is_verbose:
+                    print(file)
+                src_file_path = op.join(root, file)
+                if re.match(".*?" + "\\.mat", file):
+                    mat_list.append(src_file_path)
+                    continue
+                elif re.match(".*?" + "\\.txt", file):
+                    try:
+                        df = pd.read_table(src_file_path, header=None,
+                                           sep="\s+")
+                        e = None
+                    except Exception as e:
+                        df = None
+                    txt_df_list.append(dict(name=file, data=df, error=e))
+                    continue
+                elif not any(re.match(".*?" + ext, file) for ext in curr_ext):
+                    # if the file doesn't match the extension, we skip it
+                    print("Warning : Skipping %s" % src_file_path)
+                    continue
+                if self._is_verbose:
+                    print("trying %s" % src_file_path)
+                try:
+                    (new_name, dst_file_path, part_match, run_match,
+                     acq_match, echo_match, sess_match, ce_match,
+                     data_type_match, task_label_match,
+                     _) = self.generate_names(src_file_path,
+                                              part_match=part_match)
+                except TypeError as problem:
+                    print("\nIssue in generate names")
+                    print("problem with %s:" % src_file_path, problem, "\n")
+                    continue
+
+                # finally, if the file is not nifti
+                if dst_file_path.endswith(
+                        "func") or dst_file_path.endswith("anat"):
+                    self.mri_file_transfer(
+                        src_file_path, dst_file_path, new_name)
+
+                elif dst_file_path.endswith("ieeg"):
+                    remove_src_edf = self.force_to_edf(
+                        src_file_path, files)
+
+                    f = EdfReader(op.splitext(src_file_path)[0] + ".edf")
+                    # check for extra channels in data, not working in other
+                    # file modalities
+                    extra_arrays, extra_signal_headers = \
+                        self.check_for_mat_channels(
+                            f, root, files, mat_list)
+
+                    f.close()
+                    # read edf and either copy data to BIDS file or save data
+                    # as dict for writing later
+                    eeg.append(self.read_edf(op.splitext(
+                        src_file_path)[0] + ".edf", self.channels[
+                        part_match], extra_arrays, extra_signal_headers))
+
+                    if remove_src_edf:
+                        if self._is_verbose:
+                            print("Removing " + op.splitext(src_file_path)[
+                                0] + ".edf")
+                        os.remove(op.splitext(src_file_path)[0] + ".edf")
+
+                # move the sidecar from input to output
+                names_list.append(new_name)
+                dst_file_path_list.append(dst_file_path)
+                try:
+                    if run_match is not None:
+                        run_list.append(int(run_match))
+                except UnboundLocalError:
+                    pass
+
+            if mat_list:  # deal with remaining .mat files
+                self.mat2tsv(mat_list)
+
+            if txt_df_list:
+                for txt_df_dict in txt_df_list:
+                    if self._config["coordsystem"] in txt_df_dict["name"]:
+                        self.make_coordsystem(txt_df_dict, part_match_z)
+                    elif self._config["eventFormat"]["AudioCorrection"] in \
+                            txt_df_dict["name"]:
+                        if txt_df_dict["error"] is not None:
+                            raise txt_df_dict["error"]
+                        correct = txt_df_dict["data"]
+                    else:
+                        print("skipping " + txt_df_dict["name"])
+
+            # check final file set
+            for new_name in names_list:
+                print(new_name)
+                file_path = dst_file_path_list[names_list.index(new_name)]
+                full_name = op.join(file_path, new_name + ".edf")
+                task_match = re.match(".*_task-(\w*)_.*", full_name)
+                if task_match:
+                    task_label_match = task_match.group(1)
+                # split any edfs according to tsvs
+                pattern = "{}(?:_acq-{})?_run-{}_events\.tsv".format(
+                    new_name.split("_ieeg")[0],
+                    self._config["acq"]["content"][0],
+                    self._config["runIndex"]["content"][0])
+                match_set = [re.match(pattern, str(set_file)) for set_file in
+                             os.listdir(file_path)]
+                if new_name.endswith("_ieeg") and any(match_set):
+                    # if edf is not yet split
+                    if self._is_verbose:
+                        print("Reading for split... ")
+                    if full_name in [i["bids_name"] for i in eeg]:
+                        eeg_dict = eeg[
+                            [i["bids_name"] for i in eeg].index(full_name)]
+                    else:
+                        raise LookupError(
+                            "This error should not have been raised, was edf file " + full_name + " ever written?",
+                            [i["name"] for i in eeg])
+                    self.write_edf(eeg_dict["data"],
+                                   eeg_dict["signal_headers"],
+                                   eeg_dict["file_header"],
+                                   eeg_dict["name"],
+                                   correct)
+                    continue
+                # write JSON file for any missing files
+                self.write_sidecar(op.join(file_path, new_name),
+                                   part_match)
+
+            # write any indicated .json files
+            try:
+                json_list = self._config["JSON_files"]
+            except KeyError:
+                json_list = dict()
+            for jfile, contents in json_list.items():
+                print(part_match_z, task_label_match, jfile)
+                file_name = op.join(
+                    self._bids_dir, "sub-" + part_match_z, "ieeg",
+                    "sub-{}_task-{}_{}".format(
+                        part_match_z, task_label_match, jfile))
+                with open(file_name, "w") as fst:
+                    json.dump(contents, fst)
+        # Output
+        if self._is_verbose:
+            tree(self._bids_dir)
 
 
 def main():
