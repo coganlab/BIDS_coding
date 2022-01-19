@@ -10,7 +10,7 @@ import json
 import os.path as op
 import subprocess
 import sys
-from typing import Union, List, TypeVar, Dict
+from typing import Union, List, TypeVar, Dict, Tuple
 
 import nibabel as nib
 import pydicom as dicom
@@ -163,6 +163,7 @@ class Data2Bids:  # main conversion and file organization program
         self.channels = {}
         self.sample_rate = {}
         self.trigger = {}
+        self._channels_file = {}
         for root, _, files in os.walk(self._data_dir):
             # ignore BIDS directories and stimuli
             task_label_match = self.find_a_match(files, "task")
@@ -173,7 +174,7 @@ class Data2Bids:  # main conversion and file organization program
                 src = op.join(root, file)
                 if any(f in file for f in self._config["ieeg"][
                     "channels"].keys()):
-                    self.make_channels_tsv(src, task_label_match)
+                    self._channels_file[part_match] = src
 
                 for name, var in headers.items():
                     if re.match(".*?" + part_match + ".*?" + name, src):  # some sort of checking for .mat or txt files?
@@ -195,31 +196,6 @@ class Data2Bids:  # main conversion and file organization program
             if channels is not None:
                 self.channels[part_match] = self.channels[part_match] + [
                     c for c in channels if c not in self.channels[part_match]]
-
-    def make_channels_tsv(self, file_path: PathLike, task_label_match: str):
-        part_match, part_match_z = self.part_check(filename=file_path)
-        df = None
-        for name, var in self._config["ieeg"]["channels"].items():
-            if name in file_path:
-                df = mat2df(file_path, var)
-                if "highpass_cutoff" in df.columns.to_list():
-                    df = df.rename(columns={"highpass_cutoff": "high_cutoff"})
-                if "lowpass_cutoff" in df.columns.to_list():
-                    df = df.rename(columns={"lowpass_cutoff": "low_cutoff"})
-        df["type"] = self._config["ieeg"]["type"]
-        df["units"] = self._config["ieeg"]["units"]
-        df = df.append(
-            {"name": "Trigger", "high_cutoff": 1, "low_cutoff": 1000,
-             "type": "TRIG", "units": "uV"}, ignore_index=True)
-        df = pd.concat([df["name"], df["type"], df["units"], df["low_cutoff"],
-                        df["high_cutoff"]], axis=1)
-        filename = op.join(self._bids_dir, "sub-{}".format(
-            part_match_z), "sub-" + part_match_z + "_task-{}".format(
-            task_label_match) + "_channels.tsv")
-        os.mkdir(op.dirname(filename))
-        df.to_csv(filename, sep="\t", index=False)
-
-        # TODO: write coordsystem
 
     def set_overwrite(self, overwrite: bool):
         self._is_overwrite = overwrite
@@ -399,38 +375,21 @@ class Data2Bids:  # main conversion and file organization program
             part_match, part_match_z = self.part_check(filename=filename)
         else:
             part_match_z = self.part_check(part_match)[1]
-            # TODO: figure out why find_a_match doesn't work
-            # part_match = self.find_a_match(filename, "partLabel")
         if verbose is None:
             verbose = self._is_verbose
         dst_file_path = op.join(self._bids_dir, "sub-" + part_match_z)
         new_name = "sub-" + part_match_z
         SeqType = None
         # Matching the session
-        try:
-            if sess_match is None:
-                sess_match = match_regexp(self._config["sessLabel"], filename)
+        sess_match, _ = self.check_label(
+            sess_match, filename, new_name, "sessLabel",
+            "No session found for %s" % src_file_path, verbose)
+        if sess_match is not None:
             dst_file_path = op.join(dst_file_path, "ses-" + sess_match)
-            new_name = new_name + "_ses-" + sess_match
-        except AssertionError:
-            if verbose:
-                print("No session found for %s" % src_file_path)
 
         # Matching the run number
-        try:
-            if run_match is None:
-                run_match = match_regexp(self._config["runIndex"], filename)
-            try:
-                if re.match(r"^[^\d]{1,3}", run_match):
-                    run_matches = re.split(r"([^\d]{1,3})", run_match, 1)
-                    run_match = run_matches[1] + str(int(run_matches[2])).zfill(self._config["runIndex"]["fill"])
-                else:
-                    run_match = str(int(run_match)).zfill(self._config["runIndex"]["fill"])
-            except KeyError:
-                pass
-
-        except AssertionError:
-            pass
+        run_match, _ = self.check_label(
+            run_match, filename, new_name, "runIndex", verbose=verbose)
 
         # Matching the data type
         try:
@@ -441,15 +400,9 @@ class Data2Bids:  # main conversion and file organization program
                 print("No data type found")
 
         # Matching the task
-        try:
-            if task_label_match is None:
-                task_label_match = match_regexp(self._config["task"],
-                                                filename, subtype=True)
-            new_name = new_name + "_task-" + task_label_match
-        except AssertionError as e:
-            print("No task found for %s" % src_file_path)
-            if debug:
-                raise e
+        task_label_match, new_name = self.check_label(
+            task_label_match, filename, new_name, "task",
+            "no task found for " + src_file_path, verbose, debug)
 
         # if is an MRI
         if dst_file_path.endswith("func") or dst_file_path.endswith("anat"):
@@ -463,39 +416,18 @@ class Data2Bids:  # main conversion and file organization program
                 if verbose:
                     print("pulse sequence not listed for %s, will look for in"
                           " file header" % src_file_path)
-            try:
-                if echo_match is None:
-                    echo_match = match_regexp(self._config["echo"], filename)
-                new_name = new_name + "_echo-" + echo_match
-            except AssertionError:
-                if verbose:
-                    print("No echo found for %s" % src_file_path)
+            echo_match, new_name = self.check_label(
+                echo_match, filename, new_name, "echo",
+                "No echo found for %s" % src_file_path, verbose)
 
         # check for optional labels
-        try:
-            if acq_match is None:
-                acq_match = match_regexp(self._config["acq"], filename)
-            try:
-                if re.match(r"^[^\d]{1,3}", acq_match):
-                    acq_matches = re.split(r"([^\d]{1,3})", acq_match, 1)
-                    acq_match = acq_matches[1] + str(int(acq_matches[2])).zfill(self._config["acq"]["fill"])
-                else:
-                    acq_match = str(int(acq_match)).zfill(self._config["acq"]["fill"])
-            except KeyError:
-                pass
+        acq_match, new_name = self.check_label(
+            acq_match, filename, new_name, "acq",
+            "no optional labels for " + src_file_path, verbose)
 
-            new_name = new_name + "_acq-" + acq_match
-        except (AssertionError, KeyError) as e:
-            if verbose:
-                print("no optional labels for %s" % src_file_path)
-        try:
-            if ce_match is None:
-                ce_match = match_regexp(self._config["ce"], filename)
-            new_name = new_name + "_ce-" + ce_match
-
-        except (AssertionError, KeyError) as e:
-            if verbose:
-                print("no special contrast labels for %s" % src_file_path)
+        ce_match, new_name = self.check_label(
+            ce_match, filename, new_name, "ce",
+            "no special contrast labels for " + src_file_path, verbose)
 
         if run_match is not None:
             new_name = new_name + "_run-" + run_match
@@ -506,6 +438,51 @@ class Data2Bids:  # main conversion and file organization program
         return (new_name, dst_file_path, part_match, run_match, acq_match,
                 echo_match, sess_match, ce_match,
                 data_type_match, task_label_match, SeqType)
+
+    def check_label(self, match: str, filename: str, new_name: str, tag: str,
+                    message: str = None, verbose: bool = False,
+                    debug: bool = False) -> Tuple[str, str]:
+        """Workhorse function for generate_names to find config tag matches
+
+        :param match:
+        :type match:
+        :param filename:
+        :type filename:
+        :param new_name:
+        :type new_name:
+        :param tag:
+        :type tag:
+        :param message:
+        :type message:
+        :param verbose:
+        :type verbose:
+        :param debug:
+        :type debug:
+        :return:
+        :rtype:
+        """
+        try:
+            try:
+                subtype = isinstance(self._config[tag]["content"][0], list)
+            except KeyError as e:
+                debug = True
+                raise e
+            if match is None:
+                match = match_regexp(self._config[tag], filename, subtype)
+            if "fill" in self._config[tag].keys():
+                if re.match(r"^[^\d]{1,3}", match):
+                    matches = re.split(r"([^\d]{1,3})", match, 1)
+                    match = matches[1] + str(int(matches[2])).zfill(
+                        self._config[tag]["fill"])
+                else:
+                    match = str(int(match)).zfill(self._config[tag]["fill"])
+            new_name = "{}_{}-{}".format(new_name, tag, match)
+        except (AssertionError, KeyError) as e:
+            if verbose and message is not None:
+                print(message)
+            if debug:
+                raise e
+        return match, new_name
 
     def assess_data_type(self, filename: str, dst: str):
         """checks data type and creates corresponding directory
@@ -522,8 +499,6 @@ class Data2Bids:  # main conversion and file organization program
                 data_subtype = match_regexp(self._config[data_type], filename,
                                             subtype=True)
                 dst_file_path = op.join(dst, data_type)
-                if not op.isdir(dst_file_path):
-                    os.mkdir(dst_file_path)
                 self._data_types[data_type] = True
                 return data_subtype, dst_file_path
             except (AssertionError, KeyError):
@@ -843,6 +818,22 @@ class Data2Bids:  # main conversion and file organization program
                 "{file} header could not be found".format(file=file))
         return remove_src_edf
 
+    def tsv_all_eeg(self, fname: PathLike, df: pd.DataFrame):
+        """Writes tsv files into each folder containing eeg data
+
+        :param fname:
+        :type fname:
+        :param df:
+        :type df:
+        :return:
+        :rtype:
+        """
+        for d_type in self._data_types.keys():
+            if not ("eeg" in d_type and self._data_types[d_type]):
+                continue
+            file_name = op.join(op.dirname(fname), d_type, op.basename(fname))
+            df.to_csv(file_name, sep="\t", index=False)
+
     def make_coordsystem(self,
                          txt_df_dict: Dict[str, Union[pd.DataFrame, str]],
                          part_match_z: str):
@@ -855,10 +846,32 @@ class Data2Bids:  # main conversion and file organization program
         df = df.drop(columns=["name1", "name2", "del"])
         df = pd.concat(
             [df["name"], df["x"], df["y"], df["z"], df["hemisphere"]], axis=1)
-        file_name = op.join(self._bids_dir, "sub-" + part_match_z,
-                                 "sub-{}_space-Talairach_electrodes.tsv"
-                                 "".format(part_match_z))
-        df.to_csv(file_name, sep="\t", index=False)
+        filename = op.join(self._bids_dir, "sub-" + part_match_z,
+                            "sub-{}_space-Talairach_electrodes.tsv"
+                            "".format(part_match_z))
+        self.tsv_all_eeg(filename, df)
+
+    def make_channels_tsv(self, file_path: PathLike, task: str):
+        part_match, part_match_z = self.part_check(filename=file_path)
+        df = None
+        for name, var in self._config["ieeg"]["channels"].items():
+            if name in file_path:
+                df = mat2df(file_path, var)
+                if "highpass_cutoff" in df.columns.to_list():
+                    df = df.rename(columns={"highpass_cutoff": "high_cutoff"})
+                if "lowpass_cutoff" in df.columns.to_list():
+                    df = df.rename(columns={"lowpass_cutoff": "low_cutoff"})
+        df["type"] = self._config["ieeg"]["type"]
+        df["units"] = self._config["ieeg"]["units"]
+        df = df.append(
+            {"name": "Trigger", "high_cutoff": 1, "low_cutoff": 1000,
+             "type": "TRIG", "units": "uV"}, ignore_index=True)
+        df = pd.concat([df["name"], df["type"], df["units"], df["low_cutoff"],
+                        df["high_cutoff"]], axis=1)
+        filename = op.join(self._bids_dir, "sub-{}".format(part_match_z),
+                           "sub-" + part_match_z + "_task-{}".format(
+                task) + "_channels.tsv")
+        self.tsv_all_eeg(filename, df)
 
     def write_edf(self, array: np.ndarray, signal_headers: List[dict],
                   header: dict, old_name: PathLike, correct):
@@ -1036,7 +1049,8 @@ class Data2Bids:  # main conversion and file organization program
             if "trial_num" not in temp_df.columns:
                 temp_df["trial_num"] = [1 + i for i in
                                         list(range(temp_df.shape[0]))]
-            '''
+                # TODO: make code below work for non correction case
+            ''' 
             if "duration" not in temp_df.columns:
                 if "stim_file" in temp_df.columns:
                     temp = []
@@ -1115,7 +1129,6 @@ class Data2Bids:  # main conversion and file organization program
         written = True
         is_separate = None
         for mat_file in mat_files:
-
             if not match_regexp(self._config["partLabel"], mat_file) == part_match:  # initialize dataframe if new participant
                 if written:
                     df = pd.DataFrame()
@@ -1235,28 +1248,76 @@ class Data2Bids:  # main conversion and file organization program
                     # fix this to check for data type
                     match_name = match_name + \
                                  self._config["ieeg"]["content"][0][1]
-                    item = self.generate_names(match_name, verbose=False)
-                    if item is not None:
-                        (new_name, dst_file_path) = item[0:2]
-                    else:
-                        self.generate_names(match_name, verbose=True,
-                                            debug=True)
-                        raise
-                    writedf = df.loc[nindex]
-                    file_name = op.join(dst_file_path, new_name.split(
-                        "ieeg")[0] + "events.tsv")
+                    file_name = self.write_events(match_name, df, nindex)
                     if self._is_verbose:
                         print(mat_file, "--->", file_name)
-                    writedf.to_csv(file_name, sep="\t", index=False)
             else:
-                (new_name, dst_file_path) = self.generate_names(
-                    match_name, verbose=False)[0:2]
-                file_name = op.join(dst_file_path, new_name.split(
-                    "ieeg")[0] + "events.tsv")
+                file_name = self.write_events(match_name, df)
                 if self._is_verbose:
                     print(mat_file, "--->", file_name)
-                df.to_csv(file_name, sep="\t", index=False)
             written = True
+
+    def write_events(self, match: str, df: pd.DataFrame,
+                     nindex: int = None) -> PathLike:
+        """Workhorse for writing the events.tsv sidecar file
+
+        :param match:
+        :type match:
+        :param df:
+        :type df:
+        :param nindex:
+        :type nindex:
+        :return:
+        :rtype:
+        """
+        item = self.generate_names(match, verbose=False)
+        if item is not None:
+            (new_name, dst_file_path) = item[0:2]
+        else:
+            self.generate_names(match, verbose=True, debug=True)
+            raise
+        if nindex is not None:
+            df = df.loc[nindex]
+        file_name = op.join(dst_file_path, new_name.split(
+            "ieeg")[0] + "events.tsv")
+        df.to_csv(file_name, sep="\t", index=False)
+        return file_name
+
+    def make_subdirs(self, files: List[str], debug: bool=False):
+        """Makes all subdirectories for file list
+
+        :param files:
+        :type files:
+        :return:
+        :rtype:
+        """
+        dst_file_path = self._bids_dir
+        for file in files:
+            try:
+                item = self.generate_names(file, verbose=False, debug=debug)
+                if item is not None:
+                    dst_file_path = item[1]
+            except TypeError as e:
+                if debug:
+                    raise e
+                continue
+            if not op.exists(dst_file_path):
+                os.makedirs(dst_file_path)
+
+    def announce_channels(self, part_match: str):
+        """Prints read in channels if verbosity is set
+
+        :param part_match:
+        :type part_match:
+        :return:
+        :rtype:
+        """
+        if self._is_verbose and self.channels[part_match] is not None:
+            print("Channels for {} are".format(part_match))
+            print(self.channels[part_match])
+            for i in self._ignore:
+                if part_match in i:
+                    print("From " + i)
 
     def run(self):  # main function
 
@@ -1323,6 +1384,9 @@ class Data2Bids:  # main conversion and file organization program
                 # each loop is a new participant so long as participant is top level
                 files[:] = [f for f in files if not self.check_ignore(
                     op.join(root, f))]
+                if not files:
+                    continue
+                files.sort()
                 eeg = []
                 dst_file_path_list = []
                 names_list = []
@@ -1330,20 +1394,14 @@ class Data2Bids:  # main conversion and file organization program
                 run_list = []
                 txt_df_list = []
                 correct = None
-                if not files:
-                    continue
-                files.sort()
                 part_match = self.find_a_match(files, "partLabel")
                 part_match_z = self.part_check(part_match)[1]
+                task_label_match = self.find_a_match(files, "task")
+                self.make_subdirs(files)
                 if self.channels:
-                    if self._is_verbose and self.channels[
-                        part_match] is not None:
-                        print("Channels for participant {} are".format(
-                            part_match))
-                        print(self.channels[part_match])
-                        for i in self._ignore:
-                            if part_match in i:
-                                print("From " + i)
+                    self.announce_channels(part_match)
+                    self.make_channels_tsv(self._channels_file[part_match],
+                                           task_label_match)
                 if self._is_verbose:
                     print(files)
                 while files:  # loops over each participant file
@@ -1355,17 +1413,13 @@ class Data2Bids:  # main conversion and file organization program
                         mat_list.append(src_file_path)
                         continue  # if the file doesn't match the extension, we skip it
                     elif re.match(".*?" + "\\.txt", file):
-                        if part_match is None:
-                            files.append(file)
-                        else:
-                            try:
-                                df = pd.read_table(src_file_path, header=None,
-                                                   sep="\s+")
-                                e = None
-                            except Exception as e:
-                                df = None
-                            txt_df_list.append(
-                                dict(name=file, data=df, error=e))
+                        try:
+                            df = pd.read_table(src_file_path, header=None,
+                                               sep="\s+")
+                            e = None
+                        except Exception as e:
+                            df = None
+                        txt_df_list.append(dict(name=file, data=df, error=e))
                         continue
                     elif not any(re.match(".*?" + ext, file) for ext in
                                  curr_ext):
@@ -1383,14 +1437,8 @@ class Data2Bids:  # main conversion and file organization program
                         print("\nIssue in generate names")
                         print("problem with %s:" % src_file_path, problem,
                               "\n")
-
                         continue
 
-                    # Creating the directory where to store the new file
-                    if not op.exists(dst_file_path):
-                        os.makedirs(dst_file_path)
-
-                    # print(data_type_match)
                     # finally, if the file is not nifti
                     if dst_file_path.endswith(
                             "func") or dst_file_path.endswith("anat"):
@@ -1412,8 +1460,7 @@ class Data2Bids:  # main conversion and file organization program
                         # read edf and either copy data to BIDS file or save data as dict for writing later
                         eeg.append(self.read_edf(op.splitext(
                             src_file_path)[0] + ".edf", self.channels[
-                                                     part_match], extra_arrays,
-                                                 extra_signal_headers))
+                            part_match], extra_arrays, extra_signal_headers))
 
                         if remove_src_edf:
                             if self._is_verbose:

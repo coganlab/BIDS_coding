@@ -28,7 +28,7 @@
             , "type": "ECOG"
             , "units": "uV"
             }
-, "task": {"left" : "_"
+, "task": {"left" : "_?"
             , "right" : ".*?"
             , "content" : [ ["PhonemeSequence","PHONEMESEQUENCE"]
                             ,["PhonemeSequence", "PhonemeSequence"]
@@ -59,7 +59,7 @@
                 , "repeat" : false
                 }
 , "partLabel" : {"left" : ".*?"
-                , "right" : "[_ (\\.edf)]"
+                , "right" : "[_ (\\.edf)]?"
                 , "content" : ["D[0-9]{1,4}"]
                 , "fill": 4
                 }
