@@ -1,7 +1,7 @@
 #!/bin/bash
 
 ORIG_DATA_DIR="$HOME/Box/CoganLab"
-SUB_IDS=(D29) # D29 D31 D35 D40 D41 D42 D48 D52)
+SUB_IDS=(D42) # D29 D31 D35 D40 D41 D42 D48 D52)
 TASKS=("Uniqueness_point")
 
 #declare -l mylist[30]

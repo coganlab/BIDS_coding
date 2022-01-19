@@ -269,7 +269,6 @@ def force_remove(mypath):
 
 def eval_df(df: pd.DataFrame, exp: str,
             file_dir=""):  # input a df and expression and return a single dataframe column
-    temp_df = pd.DataFrame()
     for name in [i for i in re.split(r"[ +\-/*%]", exp) if i != '']:
         if name in df.columns:
             if is_number(df[name]):

@@ -28,7 +28,7 @@
             , "type": "ECOG"
             , "units": "uV"
             }
-, "ieeg.task": {"left" : "_"
+, "task": {"left" : "_"
             , "right" : ".*?"
             , "content" : [ ["PhonemeSequence","PHONEMESEQUENCE"]
                             ,["PhonemeSequence", "PhonemeSequence"]
@@ -113,7 +113,7 @@
                                     }
                                   }
                                 },
-                "coordsystem.json": {"IntendedFor": "sub-$SUB_ID\\anat\\sub-$_T1w.nii.gz",
+                "coordsystem.json": {"IntendedFor": "sub-$SUB_ID\\anat\\sub-$SUB_ID_T1w.nii.gz",
                                     "iEEGCoordinateSystem": "ACPC",
                                     "iEEGCoordinateUnits": "mm"
                                       }
