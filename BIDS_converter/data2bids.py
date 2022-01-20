@@ -1147,6 +1147,7 @@ class Data2Bids:  # main conversion and file organization program
         part_match = None
         written = True
         is_separate = None
+        nindex = None
         for mat_file in mat_files:
             # initialize dataframe if new participant
             if not match_regexp(self._config["partLabel"], mat_file
@@ -1156,12 +1157,11 @@ class Data2Bids:  # main conversion and file organization program
                 elif not part_match == match_regexp(self._config["partLabel"],
                                                     mat_file):
                     b_index = [j not in df.columns.values.tolist() for j in
-                               self._config["eventFormat"]["Sep"]].index(
-                        True)
+                               self._config["eventFormat"]["Sep"]].index(True)
                     raise FileNotFoundError(
-                        "{config} variable was not found in {part}'s event files".format(
-                            config=
-                            list(self._config["eventFormat"]["Sep"].values())[
+                        "{config} variable was not found in {part}'s event "
+                        "files".format(config=list(
+                            self._config["eventFormat"]["Sep"].values())[
                                 b_index], part=part_match))
             try:
                 part_match = match_regexp(self._config["partLabel"], mat_file)
@@ -1190,18 +1190,19 @@ class Data2Bids:  # main conversion and file organization program
             if self._is_verbose:
                 print(df)
             try:
-                if self._config["eventFormat"][
-                    "IDcol"] in df.columns.values.tolist():  # test if edfs should be
+                if self._config["eventFormat"]["IDcol"] in df.columns.values.\
+                        tolist():  # test if edfs should be
                     # separated by block or not
-                    if len(df[self._config["eventFormat"][
-                        "IDcol"]].unique()) == 1 and self._config["split"][
-                        "Sep"] not in ["all", True] or not \
-                    self._config["split"]["Sep"]:
+                    if len(df[self._config["eventFormat"]["IDcol"]].unique(
+                        )) == 1 and self._config["split"]["Sep"] not in [
+                        "all", True] or not self._config["split"]["Sep"]:
                         # CHANGE this in case literal name doesn't change
                         is_separate = False
-                        print("Warning: data may have been lost if file ID didn't change but the recording session did")
-                        # construct fake orig data name to run through name generator
-                        # fix this as well so it works for all data types and modalities
+                        print("Warning: data may have been lost if file ID d"
+                              "idn't change but the recording session did")
+                        # construct fake orig data name to run through name
+                        # generator
+                        # TODO: fix this as well so it works for all data types
                         match_name = \
                         mat_file.split(op.basename(mat_file))[0] + \
                         df[self._config["eventFormat"]["IDcol"]][0] + \
@@ -1217,73 +1218,65 @@ class Data2Bids:  # main conversion and file organization program
 
             # write the tsv from the dataframe
             # if not changed: check to see if there is anything new to write
-            if is_separate:
-                if not all(j in df.columns.values.tolist() for j in
-                           self._config["eventFormat"]["Sep"].values()):
-                    if self._is_verbose:
-                        print(mat_file)
-                    continue
+            if not is_separate:
+                self.write_events(match_name, df, mat_file)
+                written = True
+                continue
 
-                # make sure numbers do not repeat when not wanted
-                df_unique = df.filter(self._config["eventFormat"][
-                                          "Sep"].values()).drop_duplicates()
-                for i in range(df_unique.shape[0])[1:]:
-                    for j in self._config["eventFormat"]["Sep"].keys():
-                        jval = self._config["eventFormat"]["Sep"][j]
-                        try:
-                            if self._config[j]["repeat"] is False:
-                                try:  # making sure actual key errors get caught
-                                    if df_unique[jval].iat[i] in df_unique[
-                                                                     jval].tolist()[
-                                                                 :i]:
-                                        df_unique[jval].iat[i] = str(int(max(
-                                            df_unique[jval].tolist())) + 1)
-                                except KeyError as e:
-                                    raise ValueError(e)
-                            else:
-                                continue
-                        except KeyError:
-                            continue
-
-                tupelist = list(
-                    df.filter(self._config["eventFormat"][
-                                  "Sep"].values()).drop_duplicates().itertuples(
-                        index=False))
-                for i in range(len(tupelist)):  # iterate through every block
-                    nindex = (df.where(
-                        df.filter(
-                            self._config["eventFormat"]["Sep"].values()) ==
-                        tupelist[i]) == df).filter(
-                        self._config["eventFormat"]["Sep"].values()).all(
-                        axis=1)
-                    match_name = mat_file.split(op.basename(mat_file))[
-                                     0] + str(
-                        df[self._config["eventFormat"]["IDcol"]][nindex].iloc[
-                            0])
-                    for k in self._config["eventFormat"]["Sep"].keys():
-                        if k in self._config.keys():
-                            data = str(df_unique[
-                                           self._config["eventFormat"]["Sep"][
-                                               k]].iloc[i])
-                            match_name = match_name + gen_match_regexp(
-                                self._config[k], data)
-
-                    # fix this to check for data type
-                    match_name = match_name + \
-                                 self._config["ieeg"]["content"][0][1]
-                    file_name = self.write_events(match_name, df, nindex)
-                    if self._is_verbose:
-                        print(mat_file, "--->", file_name)
-            else:
-                file_name = self.write_events(match_name, df)
+            if not all(j in df.columns.values.tolist() for j in
+                       self._config["eventFormat"]["Sep"].values()):
                 if self._is_verbose:
-                    print(mat_file, "--->", file_name)
+                    print(mat_file)
+                continue
+
+            # make sure numbers do not repeat when not wanted
+            df_unique = df.filter(self._config["eventFormat"][
+                                      "Sep"].values()).drop_duplicates()
+            for i in range(df_unique.shape[0])[1:]:
+                for j in self._config["eventFormat"]["Sep"].keys():
+                    jval = self._config["eventFormat"]["Sep"][j]
+                    try:
+                        if self._config[j]["repeat"] is False:
+                            try:  # making sure actual key errors get caught
+                                if df_unique[jval].iat[i] in \
+                                        df_unique[jval].tolist()[:i]:
+                                    df_unique[jval].iat[i] = str(int(max(
+                                        df_unique[jval].tolist())) + 1)
+                            except KeyError as e:
+                                raise ValueError(e)
+                        else:
+                            continue
+                    except KeyError:
+                        continue
+
+            tupelist = list(df.filter(self._config[
+                "eventFormat"]["Sep"].values()).drop_duplicates().itertuples(
+                index=False))
+            for i in range(len(tupelist)):  # iterate through every block
+                nindex = (df.where(
+                    df.filter(self._config["eventFormat"]["Sep"].values()) ==
+                    tupelist[i]) == df).filter(
+                    self._config["eventFormat"]["Sep"].values()).all(axis=1)
+                match_name = mat_file.split(op.basename(mat_file))[0] + str(
+                    df[self._config["eventFormat"]["IDcol"]][nindex].iloc[0])
+                for k in self._config["eventFormat"]["Sep"].keys():
+                    if k in self._config.keys():
+                        data = str(df_unique[self._config["eventFormat"][
+                            "Sep"][k]].iloc[i])
+                        match_name = match_name + gen_match_regexp(
+                            self._config[k], data)
+
+                # fix this to check for data type
+                match_name = match_name + self._config["ieeg"]["content"][0][1]
+                self.write_events(match_name, df, mat_file, nindex)
             written = True
 
     def write_events(self, match: str, df: pd.DataFrame,
-                     nindex: int = None) -> PathLike:
+                     mat_file: str, nindex: int = None):
         """Workhorse for writing the events.tsv sidecar file
 
+        :param mat_file:
+        :type mat_file:
         :param match:
         :type match:
         :param df:
@@ -1303,8 +1296,9 @@ class Data2Bids:  # main conversion and file organization program
             df = df.loc[nindex]
         file_name = op.join(dst_file_path, new_name.split(
             "ieeg")[0] + "events.tsv")
+        if self._is_verbose:
+            print(mat_file, "--->", file_name)
         df.to_csv(file_name, sep="\t", index=False)
-        return file_name
 
     def make_subdirs(self, files: List[str], debug: bool=False):
         """Makes all subdirectories for file list
