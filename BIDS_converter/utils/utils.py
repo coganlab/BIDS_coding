@@ -10,10 +10,15 @@ from pathlib import Path
 
 import exrex as ex
 import numpy as np
+import pandas as pd
 from pyedflib import EdfReader
+from scipy.io import wavfile
 
 
-class DisplayablePath:  # this code simply creates a tree visual to explain the BIDS file organization
+class DisplayablePath:
+    """this code creates a tree visual to explain the BIDS file organization
+
+    """
     display_filename_prefix_middle = '├──'
     display_filename_prefix_last = '└──'
     display_parent_prefix_middle = '    '
@@ -92,7 +97,6 @@ def match_regexp(config_regexp, filename, subtype=False):
 
     if subtype:
         for to_match in config_regexp["content"]:
-            # print(".*?" + delimiter_left + '(' + to_match[1] + ')' + delimiter_right + ".*?")
             if re.match(".*?"
                         + delimiter_left
                         + '(' + to_match[1] + ')'
@@ -117,7 +121,19 @@ def match_regexp(config_regexp, filename, subtype=False):
     return match
 
 
-def gen_match_regexp(config_regexp, data, subtype=False):  # takes a match config and generates a matching string
+def gen_match_regexp(config_regexp, data,
+                     subtype=False):
+    """takes a match config and generates a matching string
+
+    :param config_regexp:
+    :type config_regexp:
+    :param data:
+    :type data:
+    :param subtype:
+    :type subtype:
+    :return:
+    :rtype:
+    """
     if data.startswith("0"):
         data = data.lstrip("0")
     match_found = False
@@ -126,7 +142,8 @@ def gen_match_regexp(config_regexp, data, subtype=False):  # takes a match confi
             match_found = True
     if not match_found:
         raise AssertionError(
-            "{newname} doesn't match config criteria {given}".format(newname=data, given=config_regexp["content"]))
+            "{newname} doesn't match config criteria {given}".format(
+                newname=data, given=config_regexp["content"]))
     left = ex.getone(config_regexp["left"])
     right = ex.getone(config_regexp["right"])
     newname = left + data + right
@@ -135,12 +152,14 @@ def gen_match_regexp(config_regexp, data, subtype=False):  # takes a match confi
         if data == match_regexp(config_regexp, newname, subtype=subtype):
             return newname
         else:
-            raise ValueError("{newname} doesn't match config criteria".format(newname=newname))
+            raise ValueError("{newname} doesn't match config criteria".format(
+                newname=newname))
     except AssertionError:
         # return self.gen_match_regexp(config_regexp, data.lstrip("0"),subtype)
         # except RecursionError:
         raise AssertionError(
-            "{newname} doesn't match config criteria {given}".format(newname=newname, given=config_regexp))
+            "{newname} doesn't match config criteria {given}".format(
+                newname=newname, given=config_regexp))
 
 
 def cat_edf(filename):
@@ -181,10 +200,21 @@ def rot_z(alpha):
 
 
 def is_number(s):
-    try:
-        float(s)
+    if isinstance(s, str):
+        try:
+            float(s)
+            return True
+        except ValueError:
+            return False
+    elif isinstance(s, (np.number, int, float)):
         return True
-    except ValueError:
+    elif isinstance(s, pd.DataFrame):
+        try:
+            s.astype(float)
+            return True
+        except Exception:
+            return False
+    else:
         return False
 
 
@@ -193,6 +223,7 @@ def str2num(s):
         return float(s)
     else:
         return s
+
 
 def slice_time_calc(TR, sNum, totNum, delay):
     intervaltime = (TR - delay) / totNum
@@ -244,6 +275,64 @@ def force_remove(mypath):
                 shutil.rmtree(mypath, ignore_errors=True)
         if x >= 1000:
             if e is not None:
-                raise RuntimeError(mypath + " could not remove all files or directories because of " + e)
+                raise RuntimeError(
+                    mypath + " could not remove all files or directories becau"
+                             "se of " + e)
             else:
                 raise
+
+
+def eval_df(df: pd.DataFrame, exp: str,
+            file_dir=""):
+    """input a df and expression and return a single dataframe column
+
+    :param df:
+    :type df:
+    :param exp:
+    :type exp:
+    :param file_dir:
+    :type file_dir:
+    :return:
+    :rtype:
+    """
+    for name in [i for i in re.split(r"[ +\-/*%]", exp) if i != '']:
+        if name in df.columns:
+            if is_number(df[name]):
+                df[name] = df[name].astype(float)
+            elif os.path.isfile(os.path.join(file_dir, str(df[name].iloc[0]))):
+                for i, (_, fname) in enumerate(df[name].iteritems()):
+                    fname = os.path.join(file_dir, fname)
+                    frames, data = wavfile.read(fname)
+                    duration = data.size / frames
+                    df[name].iat[i] = duration
+                df[name] = df[name].astype(float)
+            else:
+                df[name] = df[name]
+        elif not is_number(name):
+            df[name] = pd.Series([name] * df.shape[0])
+    return df.eval(exp).squeeze()
+
+
+def trigger_from_excel(filename, participant):
+    """replace trigger channels with trigger label
+
+    :param filename:
+    :type filename:
+    :param participant:
+    :type participant:
+    :return:
+    :rtype:
+    """
+    xls_file = filename
+    xls_df = pd.ExcelFile(filename).parse(participant)
+
+    if any("Trigger" in column for column in xls_df):
+        for column in xls_df:
+            if "Trigger" in column:
+                trig_label = xls_df[column].iloc[0]
+                if is_number(trig_label):
+                    return int(trig_label)
+                else:
+                    return trig_label
+    else:
+        raise KeyError("'Trigger' not found in " + xls_file)

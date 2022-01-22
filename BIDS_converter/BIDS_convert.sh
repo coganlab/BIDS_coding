@@ -1,15 +1,18 @@
 #!/bin/bash
 
 ORIG_DATA_DIR="$HOME/Desktop/share/Box/CoganLab"
-SUB_IDS=(D22 D23 D24 D25 D28 D29 D31 D35 D39 D40 D41 D42 D45 D49 D53 D54 D55 D56 D57 D58)
-TASKS=(Phoneme_sequencing)
+
+SUB_IDS=(D28 D29 D42 D53 D54 D57 D59) #(D22 D23 D24 D25 D28 D29 D31 D35 D39 D40 D41 D42 D45 D49 D53 D54 D55 D56 D58)
+TASKS=(Uniqueness_point)
+
 
 BIDS_DIR="$OUTPUT_DIR/$TASK/BIDS"
 for TASK in "${TASKS[@]}"
  do
 
-    OUTPUT_DIR="$HOME/Desktop/Workspace/sourcedata/$TASK"
-    BIDS_DIR="$HOME/Desktop/share/Box/CoganLab/BIDS_1.2-$TASK/BIDS"
+    OUTPUT_DIR="$ORIG_DATA_DIR/BIDS-1.0_Uniqueness_point/Error" #"$HOME/Desktop/Workspace/sourcedata/$TASK"
+    BIDS_DIR="$ORIG_DATA_DIR/BIDS-1.0_Uniqueness_point/BIDS"
+
     ZIP=false
 
     if [ -d $OUTPUT_DIR ]
