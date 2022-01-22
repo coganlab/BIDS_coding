@@ -10,7 +10,7 @@ import json
 import os.path as op
 import subprocess
 import sys
-from typing import Union, List, TypeVar, Dict, Tuple
+from typing import Union, List, TypeVar, Dict, Tuple, Any, Optional
 
 import nibabel as nib
 import pydicom as dicom
@@ -19,7 +19,7 @@ from bids import layout
 from matgrab import mat2df
 from pyedflib import highlevel
 
-from utils import *
+from BIDS_converter.utils import *
 
 PathLike = TypeVar("PathLike", str, os.PathLike)
 
@@ -27,57 +27,78 @@ PathLike = TypeVar("PathLike", str, os.PathLike)
 def get_parser():  # parses flags at onset of command
     parser = argparse.ArgumentParser(
         formatter_class=argparse.RawDescriptionHelpFormatter, description="""
-         Data2bids is a script based on the SIMEXP lab script to convert nifti MRI files into BIDS format. This script has been modified to 
-         also parse README data as well as include conversion of DICOM files to nifti. The script utilizes Chris Rorden's Dcm2niix program for 
-         actual conversion. 
+        Data2bids is a script based on the SIMEXP lab script to convert nifti
+        MRI files into BIDS format. This script has been modified to
+        also parse README data as well as include conversion of DICOM files to
+        nifti. The script utilizes Chris Rorden's Dcm2niix program for
+        actual conversion.
 
-         This script takes one of two formats for conversion. The first is a series of DICOM files in sequence with an optional \"medata\" folder which
-         contains any number of single or multi-echo uncompressed nifti files (.nii). Note that nifti files in this case must also have a corresponding 
-         DICOM scan run, but not necessarily scan echo (for example, one DICOM scan for run 5 but three nifti files which are echoes 1, 2, and 3 of
-         run 5). The other format is a series of nifti files and a README.txt file formatted the same way as it is in the example. Both formats are 
-         shown in the examples folder.
+        This script takes one of two formats for conversion. The first is a se
+        ries of DICOM files in sequence with an optional \"medata\" folder whi
+        ch contains any number of single or multi-echo uncompressed nifti file
+        s (.nii). Note that nifti files in this case must also have a correspo
+        nding DICOM scan run, but not necessarily scan echo (for example, one
+        DICOM scan for run 5 but three nifti files which are echoes 1, 2, and
+        3 of run 5). The other format is a series of nifti files and a README.
+        txt file formatted the same way as it is in the example. Both formats
+        are shown in the examples folder.
 
-         Both formats use a .json config file that maps either DICOM tags or text within the nifti file name to BIDS metadata. The syntax and formatting of this .json file 
-         can be found here https://github.com/SIMEXP/Data2Bids#heuristic.
+        Both formats use a .json config file that maps either DICOM tags or te
+        xt within the nifti file name to BIDS metadata. The syntax and formatt
+        ing of this .json file can be found here
+        https://github.com/SIMEXP/Data2Bids#heuristic.
 
-         The only thing this script does not account for is event files. If you have the 1D files that's taken care of, but chances are you have some other 
-         format. If this is the case, I recommend https://bids-specification.readthedocs.io/en/stable/04-modality-specific-files/05-task-events.html
-         so that you can make BIDS compliant event files.
+        The only thing this script does not account for is event files. If you
+        have the 1D files that's taken care of, but chances are you have some
+        other format. If this is the case, I recommend
+        https://bids-specification.readthedocs.io/en/stable/04-modality-specif
+        ic-files/05-task-events.html so that you can make BIDS compliant event
+        files.
 
-         Data2bids documentation at https://github.com/SIMEXP/Data2Bids
-         Dcm2niix documentation at https://github.com/rordenlab/dcm2niix""",
+        Data2bids documentation at https://github.com/SIMEXP/Data2Bids
+        Dcm2niix documentation at https://github.com/rordenlab/dcm2niix""",
         epilog="""
-            Made by Aaron Earle-Richardson (ae166@duke.edu)
-            """)
+        Made by Aaron Earle-Richardson (ae166@duke.edu)
+        """)
 
     group = parser.add_mutually_exclusive_group(required=True)
-    group.add_argument("-i", "--input_dir", required=False, default=None, help="""
-        Input data directory(ies), must include a readme.txt file formatted like example under examples folder. 
-        Mutually exclusive with DICOM directory option. Default: current directory
+    group.add_argument("-i", "--input_dir", required=False, default=None,
+                       help="""
+        Input data directory(ies), must include a readme.txt file formatted lik
+        e example under examples folder. Mutually exclusive with DICOM director
+        y option. Default: current directory
         """, )
 
     parser.add_argument("-c", "--config", required=False, default=None,
-                        help="JSON configuration file (see https://github.com/SIMEXP/Data2Bids/blob/master/example/config.json)", )
+                        help="JSON configuration file (see https://github.com/"
+                             "SIMEXP/Data2Bids/blob/master/example/config.json"
+                             ")")
 
     parser.add_argument("-o", "--output_dir", required=False, default=None,
-                        help="Output BIDS directory, Default: Inside current directory ", )
+                        help="Output BIDS directory, Default: Inside current "
+                             "directory ")
 
     group.add_argument("-d", "--DICOM_path", default=None, required=False,
-                       help="Optional DICOM directory, Mutually exclusive with input directory option", )
+                       help="Optional DICOM directory, Mutually exclusive with"
+                            " input directory option")
 
     parser.add_argument("-m", "--multi_echo", nargs='*', type=int,
                         required=False, help="""
-        indicator of multi-echo dataset. Only necessary if NOT converting DICOMs. For example, if runs 3-6 were all multi-echo then the flag
-        should look like: -m 3 4 5 6 . Additionally, the -m flag may be called by itself if you wish to let data2bids auto-detect multi echo data,
+        indicator of multi-echo dataset. Only necessary if NOT converting DICOM
+        s. For example, if runs 3-6 were all multi-echo then the flag
+        should look like: -m 3 4 5 6 . Additionally, the -m flag may be called
+        by itself if you wish to let data2bids auto-detect multi echo data,
         but it will not be able to tell you if there is a mistake.""")
 
     parser.add_argument("-ow", "--overwrite", required=False,
                         action='store_true',
-                        help="overwrite preexisting BIDS file structures in destination location", )
+                        help="overwrite preexisting BIDS file structures in de"
+                             "stination location")
 
-    parser.add_argument("-ch", "--channels", nargs='*', required=False, help="""
-        Indicator of channels to keep from edf files. 
-        """)
+    parser.add_argument("-ch", "--channels", nargs='*', required=False,
+                        help="""
+                        Indicator of channels to keep from edf files.
+                        """)
 
     parser.add_argument("-s", "--stim_dir", required=False, default=None,
                         help="directory containing stimuli files", )
@@ -136,7 +157,7 @@ class Data2Bids:  # main conversion and file organization program
             elif op.isdir(item):
                 for root, dirs, files in os.walk(item):
                     if op.basename(file) in files and Path(root).resolve(
-                        ) == Path(op.dirname(file)).resolve():
+                    ) == Path(op.dirname(file)).resolve():
                         ans = True
         return ans
 
@@ -171,25 +192,32 @@ class Data2Bids:  # main conversion and file organization program
             self.channels[part_match] = [self.trigger[part_match]]
             for i, file in enumerate(files):
                 src = op.join(root, file)
-                if any(f in file for f in self._config["ieeg"][
-                    "channels"].keys()):
+                if any(f in file for f in
+                       self._config["ieeg"]["channels"].keys()):
                     self._channels_file[part_match] = src
 
                 for name, var in headers.items():
-                    if re.match(".*?" + part_match + ".*?" + name, src):  # some sort of checking for .mat or txt files?
+                    if re.match(".*?" + part_match + ".*?" + name, src):
+                        # some sort of checking for .mat or txt files?
                         if name.endswith(".mat"):
-                            self.channels[part_match] = self.channels[part_match] + mat2df(src, var).tolist()
-                            self.sample_rate[part_match] = int(mat2df(src, self._config['ieeg']['sampleRate']).iloc[0])
+                            self.channels[part_match] = \
+                                self.channels[part_match] + \
+                                mat2df(src, var).tolist()
+                            self.sample_rate[part_match] = int(mat2df(
+                                src, self._config['ieeg']['sampleRate']).iloc[
+                                                                   0])
                             self._ignore.append(src)
                         elif name.endswith((".txt", ".csv", ".tsv")):
                             f = open(name, 'r')
                             content = f.read()
                             f.close()
-                            self.channels[part_match] = self.channels[part_match] + content.split()
+                            self.channels[part_match] = \
+                                self.channels[part_match] + content.split()
                         elif name.endswith(tuple(self._config['dataFormat'])):
                             raise NotImplementedError(
-                                src + "\nthis file format does not yet support {ext} files for "
-                                      "channel labels".format(ext=op.splitext(src)[1]))
+                                src + "\nthis file format does not yet support"
+                                      " {ext} files for channel labels"
+                                      "".format(ext=op.splitext(src)[1]))
             if isinstance(channels, str):
                 channels = list(channels)
             if channels is not None:
@@ -212,20 +240,24 @@ class Data2Bids:  # main conversion and file organization program
             else:
                 self._multi_echo = multi_echo
 
-    def set_DICOM(self, ddir):  # triggers only if dicom flag is called and therefore _data_dir is None
+    def set_DICOM(self, ddir):  # triggers only if dicom flag is called and
+        # therefore _data_dir is None
         if self._data_dir is None:
             self._data_dir = op.dirname(self._bids_dir)
             subdirs = [x[0] for x in os.walk(ddir)]
             files = [x[2] for x in os.walk(ddir)]
-            sub_num = str(dicom.read_file(op.join(subdirs[1], files[1][0]))[0x10, 0x20].value).split("_", 1)[1]
+            sub_num = str(dicom.read_file(op.join(subdirs[1], files[1][0]))[
+                              0x10, 0x20].value).split("_", 1)[1]
             sub_dir = op.join(op.dirname(self._bids_dir),
-                                   "sub-{SUB_NUM}".format(SUB_NUM=sub_num))  # destination subdirectory
+                              "sub-{SUB_NUM}".format(SUB_NUM=sub_num))
+            # destination subdirectory
             if op.isdir(sub_dir):
-                proc = subprocess.Popen("rm -rf {file}".format(file=sub_dir), shell=True, stdout=subprocess.PIPE)
+                proc = subprocess.Popen("rm -rf {file}".format(file=sub_dir),
+                                        shell=True, stdout=subprocess.PIPE)
                 proc.communicate()
             os.mkdir(sub_dir)
 
-            if any("medata" in x for x in subdirs):  # copy over and list me data
+            if any("medata" in x for x in subdirs):  # copy over + list me data
                 melist = [x[2] for x in os.walk(op.join(ddir, "medata"))][0]
                 runlist = []
                 for me in melist:
@@ -234,35 +266,47 @@ class Data2Bids:  # main conversion and file organization program
                     runmatch = re.match(r".*run(\d{2}).*", me).group(1)
                     if str(int(runmatch)) not in runlist:
                         runlist.append(str(int(runmatch)))
-                    shutil.copyfile(op.join(ddir, "medata", me), op.join(sub_dir, me))
-                self.is_multi_echo = True  # will trigger even if single echo data is in medata folder. Should still  # be okay
-            for subdir in subdirs[1:]:  # not including parent folder or /medata, run dcm2niix on non me data
+                    shutil.copyfile(op.join(ddir, "medata", me), op.join(
+                        sub_dir, me))
+                self.is_multi_echo = True
+                # will trigger even if single echo data is in medata folder.
+                # Should still be okay
+            for subdir in subdirs[1:]:
+                # not including parent folder or /medata, run dcm2niix on non
+                # me data
                 try:
-                    fobj = dicom.read_file(op.join(subdir, list(os.walk(subdir))[0][2][0]),
-                                           force=True)  # first dicom file of the scan
+                    fobj = dicom.read_file(op.join(subdir, list(os.walk(
+                        subdir))[0][2][0]), force=True)
+                    # first dicom file of the scan
                     scan_num = str(int(op.basename(subdir))).zfill(2)
                 except ValueError:
                     continue
                 firstfile = [x[2] for x in os.walk(subdir)][0][0]
                 # print(str(fobj[0x20, 0x11].value), runlist)
-                # running dcm2niix, 
+                # running dcm2niix
                 if str(fobj[0x20, 0x11].value) in runlist:
                     proc = subprocess.Popen(
-                        "dcm2niix -z y -f run{SCAN_NUM}_%p_%t_sub{SUB_NUM} -o {OUTPUT_DIR} -s y -b y {DATA_DIR}".format(
-                            OUTPUT_DIR=sub_dir, SUB_NUM=sub_num, DATA_DIR=op.join(subdir, firstfile),
-                            SCAN_NUM=scan_num), shell=True, stdout=subprocess.PIPE)
-                    # output = proc.stdout.read()
+                        "dcm2niix -z y -f run{SCAN_NUM}_%p_%t_sub{SUB_NUM} -o "
+                        "{OUTPUT_DIR} -s y -b y {DATA_DIR}".format(
+                            OUTPUT_DIR=sub_dir, SUB_NUM=sub_num,
+                            DATA_DIR=op.join(subdir, firstfile),
+                            SCAN_NUM=scan_num), shell=True,
+                        stdout=subprocess.PIPE)
                     outs, errs = proc.communicate()
                     prefix = re.match(".*/sub-{SUB_NUM}/(run{SCAN_NUM}".format(
-                        SUB_NUM=sub_num, SCAN_NUM=scan_num) + r"[^ \(\"\\n\.]*).*",
-                                      str(outs)).group(1)
+                        SUB_NUM=sub_num, SCAN_NUM=scan_num
+                    ) + r"[^ \(\"\\n\.]*).*", str(outs)).group(1)
                     for file in os.listdir(sub_dir):
-                        mefile = re.match(r"run{SCAN_NUM}(\.e\d\d)\.nii".format(SCAN_NUM=scan_num), file)
-                        if re.match(r"run{SCAN_NUM}\.e\d\d.nii".format(SCAN_NUM=scan_num), file):
+                        mefile = re.match(r"run{SCAN_NUM}(\.e\d\d)\.nii"
+                                          r"".format(SCAN_NUM=scan_num), file)
+                        if re.match(r"run{SCAN_NUM}\.e\d\d.nii".format(
+                                SCAN_NUM=scan_num), file):
                             shutil.move(op.join(sub_dir, file),
-                                        op.join(sub_dir, prefix + mefile.group(1) + ".nii"))
+                                        op.join(sub_dir, prefix + mefile.group(
+                                            1) + ".nii"))
                             shutil.copy(op.join(sub_dir, prefix + ".json"),
-                                        op.join(sub_dir, prefix + mefile.group(1) + ".json"))
+                                        op.join(sub_dir, prefix + mefile.group(
+                                            1) + ".json"))
                     os.remove(op.join(sub_dir, prefix + ".nii.gz"))
                     os.remove(op.join(sub_dir, prefix + ".json"))
                 else:
@@ -271,7 +315,7 @@ class Data2Bids:  # main conversion and file organization program
                         "{OUTPUT_DIR} -b y {DATA_DIR}".format(
                             OUTPUT_DIR=sub_dir, SUB_NUM=sub_num,
                             DATA_DIR=subdir, SCAN_NUM=scan_num), shell=True,
-                            stdout=subprocess.PIPE)
+                        stdout=subprocess.PIPE)
                     outs, errs = proc.communicate()
                 sys.stdout.write(outs.decode("utf-8"))
 
@@ -371,9 +415,42 @@ class Data2Bids:  # main conversion and file organization program
         raise FileNotFoundError("There was no file matching the config key {}"
                                 "".format(config_key))
 
-    def generate_names(self, src_file_path: PathLike, filename: str = None,  # function to run through name text and generate metadata
-                       part_match=None, sess_match=None, ce_match=None, acq_match=None, echo_match=None,
-                       data_type_match=None, task_label_match=None, run_match=None, verbose=None, debug=False):
+    def generate_names(self, src_file_path: PathLike, filename: str = None,
+                       part_match=None, sess_match=None, ce_match=None,
+                       acq_match=None, echo_match=None, data_type_match=None,
+                       task_label_match=None, run_match=None, verbose=None,
+                       debug=False) -> Tuple[
+        Union[str, Any], Union[str, bytes], Any, Optional[str], str, Union[
+            str, Any], Optional[str], str, Any, str, Optional[str]]:
+        """function to run through name text and generate metadata
+
+        :param src_file_path:
+        :type src_file_path:
+        :param filename:
+        :type filename:
+        :param part_match:
+        :type part_match:
+        :param sess_match:
+        :type sess_match:
+        :param ce_match:
+        :type ce_match:
+        :param acq_match:
+        :type acq_match:
+        :param echo_match:
+        :type echo_match:
+        :param data_type_match:
+        :type data_type_match:
+        :param task_label_match:
+        :type task_label_match:
+        :param run_match:
+        :type run_match:
+        :param verbose:
+        :type verbose:
+        :param debug:
+        :type debug:
+        :return:
+        :rtype:
+        """
         if filename is None:
             filename = op.basename(src_file_path)
         if part_match is None:
@@ -535,7 +612,8 @@ class Data2Bids:  # main conversion and file organization program
         else:
             return False
 
-    def get_params(self, folder, echo_num, run_num):  # function to run through DICOMs and get metadata
+    def get_params(self, folder, echo_num, run_num):  # function to run through
+        # DICOMs and get metadata
         # threading?
         if self.is_multi_echo and run_num in self._multi_echo:
             vols_per_time = len(self._config['delayTimeInSec']) - 1
@@ -575,7 +653,8 @@ class Data2Bids:  # main conversion and file organization program
                     timings = [None] * int(ImagesInAcquisition / vols_per_time)
 
                 RepetitionTime = (
-                    (float(fobj[0x18, 0x80].value) / 1000))  # TR value extracted in milliseconds, converted to seconds
+                    (float(fobj[0x18, 0x80].value) / 1000))  # TR value extract
+                # ed in milliseconds, converted to seconds
                 try:
                     acquisition_series = self._config['series']
                 except KeyError:
@@ -588,14 +667,19 @@ class Data2Bids:  # main conversion and file organization program
                 InstanceNumber = 0
                 while None in timings:
                     if timings[InStackPositionNumber - 1] is None:
-                        timings[InStackPositionNumber - 1] = slice_time_calc(RepetitionTime, InstanceNumber,
-                                                                             int(ImagesInAcquisition / vols_per_time),
-                                                                             echo)
-                    if acquisition_series == "odd-interleaved" or acquisition_series == "even-interleaved":
+                        timings[InStackPositionNumber - 1] = slice_time_calc(
+                            RepetitionTime, InstanceNumber, int(
+                                ImagesInAcquisition / vols_per_time), echo)
+                    if acquisition_series == "odd-interleaved" or \
+                            acquisition_series == "even-interleaved":
                         InStackPositionNumber += 2
-                        if InStackPositionNumber > ImagesInAcquisition / vols_per_time and acquisition_series == "odd-interleaved":
+                        if InStackPositionNumber > ImagesInAcquisition / \
+                                vols_per_time and acquisition_series == \
+                                "odd-interleaved":
                             InStackPositionNumber = 2
-                        elif InStackPositionNumber > ImagesInAcquisition / vols_per_time and acquisition_series == "even-interleaved":
+                        elif InStackPositionNumber > ImagesInAcquisition / \
+                                vols_per_time and acquisition_series == \
+                                "even-interleaved":
                             InStackPositionNumber = 1
                     else:
                         InStackPositionNumber += 1
@@ -603,7 +687,8 @@ class Data2Bids:  # main conversion and file organization program
                 return (timings, echo, ScanningSequence, SequenceVariant,
                         SequenceOptions, SequenceName)
 
-    def read_edf(self, file_name: PathLike, channels: List[Union[int, str]]=None,
+    def read_edf(self, file_name: PathLike,
+                 channels: List[Union[int, str]] = None,
                  extra_arrays=None, extra_signal_headers=None):
         [edfname, dst_path, part_match] = self.generate_names(
             file_name, verbose=False)[0:3]
@@ -654,7 +739,7 @@ class Data2Bids:  # main conversion and file organization program
             shutil.copy(file_name, edf_name)
             return None
 
-    def part_check(self, part_match: str=None, filename: str=None):
+    def part_check(self, part_match: str = None, filename: str = None):
         # Matching the participant label to determine if
         # there exists therein delete previously created BIDS subject files
         assert part_match or filename
@@ -698,13 +783,10 @@ class Data2Bids:  # main conversion and file organization program
         extra_signal_headers = []
         file = fobj.file_name
         part_match = self.part_check(filename=file)[0]
-        if any(len(mat2df(op.join(root, fname))) == fobj.samples_in_file(
-                0) for fname in [i for i in all_files if i.endswith(
-            ".mat")]) or any(len(mat2df(op.join(
-            root, fname))) == fobj.samples_in_file(0) for fname in
-                             [i for i in mat_files if i.endswith(".mat")]):
-            for fname in [i for i in all_files + mat_files if
-                          i.endswith(".mat")]:
+        mats = [i for i in all_files + mat_files if i.endswith(".mat")]
+        f_length = [len(mat2df(op.join(root, fname))) for fname in mats]
+        if fobj.samples_in_file(0) in f_length:
+            for fname in mats:
                 sig_len = fobj.samples_in_file(0)
                 if not op.isfile(fname):
                     fname = op.join(root, fname)
@@ -805,7 +887,8 @@ class Data2Bids:  # main conversion and file organization program
         elif headers_dict and any(".mat" in i for i in files) and \
                 self.sample_rate[part_match] is not None:
             # assume has binary encoding
-            try:  # open binary file and write decoded numbers as array where rows = channels
+            try:  # open binary file and write decoded numbers as array where
+                # rows = channels
                 # check if zipped
                 if file.endswith(".gz"):
                     with gzip.open(source, 'rb',
@@ -865,8 +948,8 @@ class Data2Bids:  # main conversion and file organization program
         df = pd.concat(
             [df["name"], df["x"], df["y"], df["z"], df["hemisphere"]], axis=1)
         filename = op.join(self._bids_dir, "sub-" + part_match_z,
-                            "sub-{}_space-Talairach_electrodes.tsv"
-                            "".format(part_match_z))
+                           "sub-{}_space-Talairach_electrodes.tsv"
+                           "".format(part_match_z))
         self.tsv_all_eeg(filename, df)
 
     def make_channels_tsv(self, file_path: PathLike, task: str):
@@ -888,7 +971,7 @@ class Data2Bids:  # main conversion and file organization program
                         df["high_cutoff"]], axis=1)
         filename = op.join(self._bids_dir, "sub-{}".format(part_match_z),
                            "sub-" + part_match_z + "_task-{}".format(
-                task) + "_channels.tsv")
+                               task) + "_channels.tsv")
         self.tsv_all_eeg(filename, df)
 
     def write_edf(self, array: np.ndarray, signal_headers: List[dict],
@@ -930,14 +1013,14 @@ class Data2Bids:  # main conversion and file organization program
                 start = 0
                 practice = op.join(file_path, "practice", new_name.split(
                     "_ieeg", 1)[0] + "_ieeg.edf")
-                if not op.isfile(practice) and self._config["split"][
-                    "practice"]:
+                if not op.isfile(practice) and self._config["split"]["practice"
+                                                                      ]:
                     os.makedirs(op.join(file_path, "practice"),
                                 exist_ok=True)
                     highlevel.write_edf(practice, np.split(array, [
                         0, start_nums[0][0]], axis=1)[1], signal_headers,
                                         header, digital=self._config["ieeg"][
-                                            "digital"])
+                            "digital"])
                     self.bidsignore("*practice*")
             else:
                 start = start_nums[i - 1][1]
@@ -1023,7 +1106,7 @@ class Data2Bids:  # main conversion and file organization program
                 print("description:", description)
             else:
                 raise SyntaxError(full_file + "was not annotated correctly")
-            signals = [sig for sig in f.getSignalLabels()]
+            signals = [s for s in f.getSignalLabels() if not s == "Trigger"]
             data = dict(TaskName=entities['task'],
                         InstitutionName=self._config["institution"],
                         iEEGReference=description,
@@ -1070,7 +1153,7 @@ class Data2Bids:  # main conversion and file organization program
                                         list(range(temp_df.shape[0]))]
                 # TODO: make code below work for non correction case
             ''' 
-            if "duration" not in temp_df.columns:
+                if "duration" not in temp_df.columns:
                 if "stim_file" in temp_df.columns:
                     temp = []
                     t_correct = []
@@ -1084,27 +1167,34 @@ class Data2Bids:  # main conversion and file organization program
                             try:
                                 frames, data = wavfile.read(fname)
                             except FileNotFoundError as e:
-                                print(fname + " not found in current directory or in " + dir)
+                                print(fname + " not found in current directory
+                                 or in " + dir)
                                 raise e
                             if audio_correction is not None:
-                                correct = audio_correction.set_index(0).squeeze()[op.basename(
-                                    op.splitext(fname)[0])] * self._config["eventFormat"]["SampleRate"]
+                                correct = audio_correction.set_index(0).squeeze
+                                ()[op.basename(
+                                    op.splitext(fname)[0])] * self._config["eve
+                                    ntFormat"]["SampleRate"]
                             else:
                                 correct = 0
-                            duration = (data.size / frames) * self._config["eventFormat"]["SampleRate"]
+                            duration = (data.size / frames) * self._config["eve
+                            ntFormat"]["SampleRate"]
                         else:
-                            raise NotImplementedError("current build only supports .wav stim files")
+                            raise NotImplementedError("current build only suppo
+                            rts .wav stim files")
                         temp.append(duration)
                         t_correct.append(correct)
                     temp_df["duration"] = temp
                     # audio correction
                     if t_correct:
                         temp_df["correct"] = t_correct
-                        temp_df["duration"] = temp_df.eval("duration - correct")
+                        temp_df["duration"] = temp_df.eval("duration - correct"
+                        )
                         temp_df["onset"] = temp_df.eval("onset + correct")
                         temp_df = temp_df.drop(columns=["correct"])
                 else:
-                    raise LookupError("duration of event or copy of audio file required but not found in " +
+                    raise LookupError("duration of event or copy of audio file 
+                    required but not found in " +
                                       self._config_path)
             '''
             temp_df["event_order"] = event_order
@@ -1116,7 +1206,7 @@ class Data2Bids:  # main conversion and file organization program
         for name in ["onset", "duration"]:
             if not (pd.api.types.is_float_dtype(
                     new_df[name]) or pd.api.types.is_integer_dtype(
-                    new_df[name])):
+                new_df[name])):
                 new_df[name] = pd.to_numeric(new_df[name], errors="coerce")
         if data_sample_rate is None:
             # onset is timing of even onset (in seconds)
@@ -1162,7 +1252,7 @@ class Data2Bids:  # main conversion and file organization program
                         "{config} variable was not found in {part}'s event "
                         "files".format(config=list(
                             self._config["eventFormat"]["Sep"].values())[
-                                b_index], part=part_match))
+                            b_index], part=part_match))
             try:
                 part_match = match_regexp(self._config["partLabel"], mat_file)
             except AssertionError:
@@ -1190,11 +1280,11 @@ class Data2Bids:  # main conversion and file organization program
             if self._is_verbose:
                 print(df)
             try:
-                if self._config["eventFormat"]["IDcol"] in df.columns.values.\
+                if self._config["eventFormat"]["IDcol"] in df.columns.values. \
                         tolist():  # test if edfs should be
                     # separated by block or not
                     if len(df[self._config["eventFormat"]["IDcol"]].unique(
-                        )) == 1 and self._config["split"]["Sep"] not in [
+                    )) == 1 and self._config["split"]["Sep"] not in [
                         "all", True] or not self._config["split"]["Sep"]:
                         # CHANGE this in case literal name doesn't change
                         is_separate = False
@@ -1204,9 +1294,9 @@ class Data2Bids:  # main conversion and file organization program
                         # generator
                         # TODO: fix this as well so it works for all data types
                         match_name = \
-                        mat_file.split(op.basename(mat_file))[0] + \
-                        df[self._config["eventFormat"]["IDcol"]][0] + \
-                        self._config["ieeg"]["content"][0][1]
+                            mat_file.split(op.basename(mat_file))[0] + \
+                            df[self._config["eventFormat"]["IDcol"]][0] + \
+                            self._config["ieeg"]["content"][0][1]
                     else:  # this means there was more than one recording
                         # session. In this case we will separate each
                         # trial block into a separate "run"
@@ -1250,8 +1340,9 @@ class Data2Bids:  # main conversion and file organization program
                         continue
 
             tupelist = list(df.filter(self._config[
-                "eventFormat"]["Sep"].values()).drop_duplicates().itertuples(
-                index=False))
+                                          "eventFormat"][
+                                          "Sep"].values()).drop_duplicates(
+            ).itertuples(index=False))
             for i in range(len(tupelist)):  # iterate through every block
                 nindex = (df.where(
                     df.filter(self._config["eventFormat"]["Sep"].values()) ==
@@ -1300,7 +1391,7 @@ class Data2Bids:  # main conversion and file organization program
             print(mat_file, "--->", file_name)
         df.to_csv(file_name, sep="\t", index=False)
 
-    def make_subdirs(self, files: List[str], debug: bool=False):
+    def make_subdirs(self, files: List[str], debug: bool = False):
         """Makes all subdirectories for file list
 
         :param debug:
@@ -1478,7 +1569,8 @@ class Data2Bids:  # main conversion and file organization program
                     # as dict for writing later
                     eeg.append(self.read_edf(op.splitext(
                         src_file_path)[0] + ".edf", self.channels[
-                        part_match], extra_arrays, extra_signal_headers))
+                                                 part_match], extra_arrays,
+                                             extra_signal_headers))
 
                     if remove_src_edf:
                         if self._is_verbose:
@@ -1534,7 +1626,8 @@ class Data2Bids:  # main conversion and file organization program
                             [i["bids_name"] for i in eeg].index(full_name)]
                     else:
                         raise LookupError(
-                            "This error should not have been raised, was edf file " + full_name + " ever written?",
+                            "This error should not have been raised, was edf "
+                            "file " + full_name + " ever written?",
                             [i["name"] for i in eeg])
                     self.write_edf(eeg_dict["data"],
                                    eeg_dict["signal_headers"],

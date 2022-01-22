@@ -51,4 +51,3 @@ def test_sub(sub):
             raise error
         else:
             return files
-

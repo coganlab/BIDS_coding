@@ -15,7 +15,10 @@ from pyedflib import EdfReader
 from scipy.io import wavfile
 
 
-class DisplayablePath:  # this code simply creates a tree visual to explain the BIDS file organization
+class DisplayablePath:
+    """this code creates a tree visual to explain the BIDS file organization
+
+    """
     display_filename_prefix_middle = '├──'
     display_filename_prefix_last = '└──'
     display_parent_prefix_middle = '    '
@@ -119,7 +122,18 @@ def match_regexp(config_regexp, filename, subtype=False):
 
 
 def gen_match_regexp(config_regexp, data,
-                     subtype=False):  # takes a match config and generates a matching string
+                     subtype=False):
+    """takes a match config and generates a matching string
+
+    :param config_regexp:
+    :type config_regexp:
+    :param data:
+    :type data:
+    :param subtype:
+    :type subtype:
+    :return:
+    :rtype:
+    """
     if data.startswith("0"):
         data = data.lstrip("0")
     match_found = False
@@ -262,13 +276,25 @@ def force_remove(mypath):
         if x >= 1000:
             if e is not None:
                 raise RuntimeError(
-                    mypath + " could not remove all files or directories because of " + e)
+                    mypath + " could not remove all files or directories becau"
+                             "se of " + e)
             else:
                 raise
 
 
 def eval_df(df: pd.DataFrame, exp: str,
-            file_dir=""):  # input a df and expression and return a single dataframe column
+            file_dir=""):
+    """input a df and expression and return a single dataframe column
+
+    :param df:
+    :type df:
+    :param exp:
+    :type exp:
+    :param file_dir:
+    :type file_dir:
+    :return:
+    :rtype:
+    """
     for name in [i for i in re.split(r"[ +\-/*%]", exp) if i != '']:
         if name in df.columns:
             if is_number(df[name]):
@@ -288,7 +314,15 @@ def eval_df(df: pd.DataFrame, exp: str,
 
 
 def trigger_from_excel(filename, participant):
-    # replace trigger channels with trigger label ("DC1")
+    """replace trigger channels with trigger label
+
+    :param filename:
+    :type filename:
+    :param participant:
+    :type participant:
+    :return:
+    :rtype:
+    """
     xls_file = filename
     xls_df = pd.ExcelFile(filename).parse(participant)
 
