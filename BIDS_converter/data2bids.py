@@ -945,8 +945,10 @@ class Data2Bids:  # main conversion and file organization program
         df["name"] = df["name1"] + df["name2"].astype(str).str.zfill(2)
         df["hemisphere"] = df["hemisphere"] + df["del"]
         df = df.drop(columns=["name1", "name2", "del"])
+        df["size"] = self._config["ieeg"]["size"]
         df = pd.concat(
-            [df["name"], df["x"], df["y"], df["z"], df["hemisphere"]], axis=1)
+            [df["name"], df["x"], df["y"], df["z"], df["size"],
+             df["hemisphere"]], axis=1)
         filename = op.join(self._bids_dir, "sub-" + part_match_z,
                            "sub-{}_space-Talairach_electrodes.tsv"
                            "".format(part_match_z))

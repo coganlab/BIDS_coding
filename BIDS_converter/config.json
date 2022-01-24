@@ -27,6 +27,7 @@
             , "digital": true
             , "type": "ECOG"
             , "units": "uV"
+            ,  "size": 0.2
             }
 , "task": {"left" : "_?"
             , "right" : ".*?"
