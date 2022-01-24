@@ -19,7 +19,7 @@ from bids import layout
 from matgrab import mat2df
 from pyedflib import highlevel
 
-from BIDS_converter.utils import *
+from utils import *
 
 PathLike = TypeVar("PathLike", str, os.PathLike)
 
@@ -1014,7 +1014,7 @@ class Data2Bids:  # main conversion and file organization program
                 practice = op.join(file_path, "practice", new_name.split(
                     "_ieeg", 1)[0] + "_ieeg.edf")
                 if not op.isfile(practice) and self._config["split"]["practice"
-                                                                      ]:
+                ]:
                     os.makedirs(op.join(file_path, "practice"),
                                 exist_ok=True)
                     highlevel.write_edf(practice, np.split(array, [
@@ -1152,51 +1152,45 @@ class Data2Bids:  # main conversion and file organization program
                 temp_df["trial_num"] = [1 + i for i in
                                         list(range(temp_df.shape[0]))]
                 # TODO: make code below work for non correction case
-            ''' 
                 if "duration" not in temp_df.columns:
-                if "stim_file" in temp_df.columns:
-                    temp = []
-                    t_correct = []
-                    for _, fname in temp_df["stim_file"].iteritems():
-                        if fname.endswith(".wav"):
-                            if self.stim_dir is not None:
-                                fname = op.join(self.stim_dir, fname)
-                                dir = self.stim_dir
+                    if "stim_file" in temp_df.columns:
+                        temp = []
+                        t_correct = []
+                        for _, fname in temp_df["stim_file"].iteritems():
+                            if fname.endswith(".wav"):
+                                if self.stim_dir is not None:
+                                    fname = op.join(self.stim_dir, fname)
+                                    dir = self.stim_dir
+                                else:
+                                    dir = self._data_dir
+                                try:
+                                    frames, data = wavfile.read(fname)
+                                except FileNotFoundError as e:
+                                    print(fname + " not found in current directory or in " + dir)
+                                    raise e
+                                if audio_correction is not None:
+                                    correct = audio_correction.set_index(0).squeeze()[op.basename(
+                                        op.splitext(fname)[0])] * self._config["eventFormat"]["SampleRate"]
+                                else:
+                                    correct = 0
+                                duration = (data.size / frames) * self._config["eventFormat"]["SampleRate"]
                             else:
-                                dir = self._data_dir
-                            try:
-                                frames, data = wavfile.read(fname)
-                            except FileNotFoundError as e:
-                                print(fname + " not found in current directory
-                                 or in " + dir)
-                                raise e
-                            if audio_correction is not None:
-                                correct = audio_correction.set_index(0).squeeze
-                                ()[op.basename(
-                                    op.splitext(fname)[0])] * self._config["eve
-                                    ntFormat"]["SampleRate"]
-                            else:
-                                correct = 0
-                            duration = (data.size / frames) * self._config["eve
-                            ntFormat"]["SampleRate"]
-                        else:
-                            raise NotImplementedError("current build only suppo
-                            rts .wav stim files")
-                        temp.append(duration)
-                        t_correct.append(correct)
-                    temp_df["duration"] = temp
-                    # audio correction
-                    if t_correct:
-                        temp_df["correct"] = t_correct
-                        temp_df["duration"] = temp_df.eval("duration - correct"
-                        )
-                        temp_df["onset"] = temp_df.eval("onset + correct")
-                        temp_df = temp_df.drop(columns=["correct"])
+                                raise NotImplementedError("current build only "
+                                                          "supports .wav stim "
+                                                          "files")
+                            temp.append(duration)
+                            t_correct.append(correct)
+                        temp_df["duration"] = temp
+                        # audio correction
+                        if t_correct:
+                            temp_df["correct"] = t_correct
+                            temp_df["duration"] = temp_df.eval("duration - correct")
+                            temp_df["onset"] = temp_df.eval("onset + correct")
+                            temp_df = temp_df.drop(columns=["correct"])
                 else:
-                    raise LookupError("duration of event or copy of audio file 
-                    required but not found in " +
-                                      self._config_path)
-            '''
+                    raise LookupError("duration of event or copy of audio file"
+                                      " required but not found in ".format(
+                        self._config_path))
             temp_df["event_order"] = event_order
             if new_df is None:
                 new_df = temp_df
@@ -1205,8 +1199,7 @@ class Data2Bids:  # main conversion and file organization program
 
         for name in ["onset", "duration"]:
             if not (pd.api.types.is_float_dtype(
-                    new_df[name]) or pd.api.types.is_integer_dtype(
-                new_df[name])):
+                    new_df[name]) or pd.api.types.is_integer_dtype(new_df[name])):
                 new_df[name] = pd.to_numeric(new_df[name], errors="coerce")
         if data_sample_rate is None:
             # onset is timing of even onset (in seconds)
@@ -1280,18 +1273,14 @@ class Data2Bids:  # main conversion and file organization program
             if self._is_verbose:
                 print(df)
             try:
-                if self._config["eventFormat"]["IDcol"] in df.columns.values. \
-                        tolist():  # test if edfs should be
+                if self._config["eventFormat"]["IDcol"] in df.columns.values.tolist():  # test if edfs should be
                     # separated by block or not
-                    if len(df[self._config["eventFormat"]["IDcol"]].unique(
-                    )) == 1 and self._config["split"]["Sep"] not in [
-                        "all", True] or not self._config["split"]["Sep"]:
+                    if len(df[self._config["eventFormat"]["IDcol"]].unique()) == 1 and self._config["split"]["Sep"] not in ["all", True] or not self._config["split"]["Sep"]:
                         # CHANGE this in case literal name doesn't change
                         is_separate = False
                         print("Warning: data may have been lost if file ID d"
                               "idn't change but the recording session did")
-                        # construct fake orig data name to run through name
-                        # generator
+                        # construct fake orig data name to run through name generator
                         # TODO: fix this as well so it works for all data types
                         match_name = \
                             mat_file.split(op.basename(mat_file))[0] + \
