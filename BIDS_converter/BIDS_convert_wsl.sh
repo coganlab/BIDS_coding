@@ -28,10 +28,9 @@ for TASK in "${TASKS[@]}"
     mkdir -p $BIDS_DIR
     mkdir -p "$OUTPUT_DIR/stimuli"
     # shellcheck disable=SC2038
-    find "$ORIG_DATA_DIR/task_stimuli" -iname "$TASK" -type d -exec echo "{}/." \; | xargs -I{} cp -afv {} "$OUTPUT_DIR/stimuli/"
-    #TASKLOWER=$(echo $TASK | tr '[:upper:]' '[:lower:]')
-    #echo "$ORIG_DATA_DIR/task_stimuli/$TASKLOWER/."
-    #cp -av "$ORIG_DATA_DIR/task_stimuli/$TASKLOWER/." "$BIDS_DIR/stimuli/"
+    # find "$ORIG_DATA_DIR/task_stimuli" -iname "$TASK" -type d -exec echo "{}/." \; | xargs -I{} cp -afv {} "$OUTPUT_DIR/stimuli/"
+    find "$ORIG_DATA_DIR/task_stimuli" -iname "$TASK" -type d -exec echo "{}/" \; | xargs -I{} rsync -avP {} "$OUTPUT_DIR/stimuli/"
+    #rsync -a "$(find "$ORIG_DATA_DIR/task_stimuli" -iname "$TASK" -type d)/" "$OUTPUT_DIR/stimuli/"
 
     for SUB_ID in "${SUB_IDS[@]}"
     do 
@@ -58,19 +57,28 @@ for TASK in "${TASKS[@]}"
             cp -v "$ORIG_DATA_DIR/ECoG_Task_Data/response_coding/PhonemeSequencingStimStarts.txt" "$OUTPUT_DIR/$SUB_ID/${SUB_ID}_PhonemeSequencingStimStarts.txt"
         fi
         #eeg files
-        if ! find "$ORIG_DATA_DIR/D_Data/$TASK/$SUB_ID" -regex ".*\.edf" -exec false {} +  ; then #search for edf files
-            find "$ORIG_DATA_DIR/D_Data/$TASK/$SUB_ID" -regex ".*\.edf" -exec cp -v -t "$OUTPUT_DIR/$SUB_ID/" {} +
-            if $ZIP ; then
-                find "$ORIG_DATA_DIR/D_Data/$TASK/$SUB_ID" -regex ".*\.edf" | xargs -I{} basename {} | xargs -I{} echo "$OUTPUT_DIR/$SUB_ID/{}" | xargs -I{} gzip -6 -v {}
-            fi
-        else #if no edf files find binary files
+
+        if find "$ORIG_DATA_DIR/D_Data/$TASK/$SUB_ID" -regex ".*\.edf" -exec false {} +  ; then #search for edf files
+            #    find "$ORIG_DATA_DIR/D_Data/$TASK/$SUB_ID" -regex ".*\.edf" -exec cp -v -t "$OUTPUT_DIR/$SUB_ID/" {} +
+            #    if $ZIP ; then
+            #        find "$ORIG_DATA_DIR/D_Data/$TASK/$SUB_ID" -regex ".*\.edf" | xargs -I{} basename {} | xargs -I{} echo "$OUTPUT_DIR/$SUB_ID/{}" | xargs -I{} gzip -6 -v {}
+            #    fi
+            # else #if no edf files find binary files
             x=( $(find "$ORIG_DATA_DIR/D_Data/$TASK/$SUB_ID" -regex ".*$SUB_ID.*\.ieeg.dat" -type f | rev | sed -r "s|/|_|" | sed -r "s|/|noisseS/|" | rev | xargs -n 1 basename | sed -r "s|${SUB_ID}_||") )
             y=( $(find "$ORIG_DATA_DIR/D_Data/$TASK/$SUB_ID" -regex ".*$SUB_ID.*\.ieeg.dat") )
             z=${#x[@]}
             if $ZIP ; then
                 for((i=0;i<=$z-1;i+=1));  do gzip -c -6 -v ${y[$i]} > "$OUTPUT_DIR/$SUB_ID/${SUB_ID}_${x[$i]}.gz" ; done
             else 
-                for((i=0;i<=$z-1;i+=1));  do cp -v ${y[$i]} "$OUTPUT_DIR/$SUB_ID/${SUB_ID}_${x[$i]}" ; done
+                for((i=0;i<=$z-1;i+=1));  do rsync -vP ${y[$i]} "$OUTPUT_DIR/$SUB_ID/${SUB_ID}_${x[$i]}" ; done
+            fi
+        else
+
+            if $ZIP ; then
+                find "$ORIG_DATA_DIR/D_Data/$TASK/$SUB_ID" -regex ".*\.edf" | xargs -I{} basename {} | xargs -I{} echo "$OUTPUT_DIR/$SUB_ID/{}" | xargs -I{} gzip -6 -v {}
+            else
+                find "$ORIG_DATA_DIR/D_Data/$TASK/$SUB_ID" -regex ".*\.edf" -exec rsync -vP {} "$OUTPUT_DIR/$SUB_ID/" \;
+
             fi
         fi
         #find "$ORIG_DATA_DIR/D_Data/$TASK/$SUB_ID" -type f -regex ".*$SUB_ID.*\.ieeg\.dat" | xargs -n 1 basename | xargs -I{} cp "$OUTPUT_DIR/$SUB_ID/{}" "$OUTPUT_DIR/$SUB_ID/${SUB_ID}_{}"
@@ -86,7 +94,7 @@ for TASK in "${TASKS[@]}"
         #the big bad python code to convert the renamed files to BIDS
         #requires numpy, nibabel, and pathlib modules
         python3 data2bids.py -c config.json -i "$OUTPUT_DIR/$SUB_ID" -o $BIDS_DIR -v || { echo "BIDS conversion for $SUB_ID failed, trying next subject" ; continue; }
-		rm -rf "$OUTPUT_DIR/$SUB_ID"
+		    rm -rf "$OUTPUT_DIR/$SUB_ID"
 
         [[ $RAN_SUBS =~ (^| )$SUB_ID( |$) ]] || RAN_SUBS+=${SUB_ID}" "
         [[ $RAN_TASKS =~ (^| )$TASK( |$) ]] || RAN_TASKS+=${TASK}" "
