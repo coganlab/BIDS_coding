@@ -10,7 +10,7 @@ import json
 import os.path as op
 import subprocess
 import sys
-from typing import Union, List, TypeVar, Dict, Tuple, Any, Optional
+from typing import Union, List, Dict, Tuple, Any, Optional
 
 import nibabel as nib
 import pydicom as dicom
@@ -20,8 +20,6 @@ from matgrab import mat2df
 from pyedflib import highlevel
 
 from utils import *
-
-PathLike = TypeVar("PathLike", str, os.PathLike)
 
 
 def get_parser():  # parses flags at onset of command
@@ -178,13 +176,17 @@ class Data2Bids:  # main conversion and file organization program
         self.stim_dir = dir
         self._ignore.append(dir)
 
-    def set_channels(self, channels: list):
+    def set_channels(self, channels: list): #TODO: modularize
         headers: dict = self._config["ieeg"]["headerData"]
         self.channels = {}
         self.sample_rate = {}
         self.trigger = {}
         self._channels_file = {}
         for root, _, files in os.walk(self._data_dir):
+            files[:] = [f for f in files if not self.check_ignore(
+                op.join(root, f))]
+            if not files:
+                continue
             # ignore BIDS directories and stimuli
             task_label_match = self.find_a_match(files, "task")
             part_match = self.find_a_match(files, "partLabel")
@@ -406,20 +408,21 @@ class Data2Bids:  # main conversion and file organization program
         subtype = isinstance(self._config[config_key]["content"][0], list)
         if isinstance(files, str):
             files: List[str] = list(files)
-
+        e = None
         for file in files:
             try:
                 return match_regexp(self._config[config_key], file, subtype)
-            except AssertionError:
+            except AssertionError as e:
                 continue
         raise FileNotFoundError("There was no file matching the config key {}"
-                                "".format(config_key))
+                                "\n".format(config_key), e)
 
     def generate_names(self, src_file_path: PathLike, filename: str = None,
-                       part_match=None, sess_match=None, ce_match=None,
-                       acq_match=None, echo_match=None, data_type_match=None,
-                       task_label_match=None, run_match=None, verbose=None,
-                       debug=False) -> Tuple[
+                       part_match: str = None, sess_match: str = None,
+                       ce_match: str = None, acq_match: str = None,
+                       echo_match: str = None, data_type_match: str = None,
+                       task_label_match: str = None, run_match: str = None,
+                       verbose: bool = None, debug: bool = False) -> Tuple[
         Union[str, Any], Union[str, bytes], Any, Optional[str], str, Union[
             str, Any], Optional[str], str, Any, str, Optional[str]]:
         """function to run through name text and generate metadata
@@ -739,7 +742,8 @@ class Data2Bids:  # main conversion and file organization program
             shutil.copy(file_name, edf_name)
             return None
 
-    def part_check(self, part_match: str = None, filename: str = None):
+    def part_check(self, part_match: str = None, filename: str = None) -> \
+            Tuple[str, str]:
         # Matching the participant label to determine if
         # there exists therein delete previously created BIDS subject files
         assert part_match or filename
@@ -1042,6 +1046,7 @@ class Data2Bids:  # main conversion and file organization program
                                 digital=self._config["ieeg"]["digital"])
             df = pd.read_csv(tsv_name, sep="\t", header=0)
             os.remove(tsv_name)
+            df.replace("[]", np.NaN, inplace=True)
             # all column manipulation and math in frame2bids
             df_new = self.frame2bids(df, self._config["eventFormat"]["Events"],
                                      self.sample_rate[part_match], correct,
@@ -1136,7 +1141,7 @@ class Data2Bids:  # main conversion and file organization program
 
     def frame2bids(self, df: pd.DataFrame, events: Union[dict, List[dict]],
                    data_sample_rate=None, audio_correction=None,
-                   start_at=0) -> pd.DataFrame:
+                   start_at=0) -> pd.DataFrame: # TODO: modularize
         new_df = None
         if isinstance(events, dict):
             events = list(events)
@@ -1228,7 +1233,7 @@ class Data2Bids:  # main conversion and file organization program
         return new_df.sort_values(["trial_num", "event_order"]).drop(
             columns="event_order")
 
-    def mat2tsv(self, mat_files: List[PathLike]):
+    def mat2tsv(self, mat_files: List[PathLike]): # TODO: modularize
         part_match = None
         written = True
         is_separate = None

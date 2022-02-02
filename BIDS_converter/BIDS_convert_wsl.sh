@@ -28,9 +28,8 @@ for TASK in "${TASKS[@]}"
     mkdir -p $BIDS_DIR
     mkdir -p "$OUTPUT_DIR/stimuli"
     # shellcheck disable=SC2038
-    # find "$ORIG_DATA_DIR/task_stimuli" -iname "$TASK" -type d -exec echo "{}/." \; | xargs -I{} cp -afv {} "$OUTPUT_DIR/stimuli/"
-    find "$ORIG_DATA_DIR/task_stimuli" -iname "$TASK" -type d -exec echo "{}/" \; | xargs -I{} rsync -avP {} "$OUTPUT_DIR/stimuli/"
-    #rsync -a "$(find "$ORIG_DATA_DIR/task_stimuli" -iname "$TASK" -type d)/" "$OUTPUT_DIR/stimuli/"
+    find "$ORIG_DATA_DIR/task_stimuli" -iname "$TASK" -type d -exec echo "{}/." \; | xargs -I{} cp -anfv {} "$OUTPUT_DIR/stimuli/"
+    find "$ORIG_DATA_DIR/task_stimuli" -iname "$TASK" -type d -exec echo "{}/" \; | xargs -I{} rsync -aP {} "$OUTPUT_DIR/stimuli/"
 
     for SUB_ID in "${SUB_IDS[@]}"
     do 
@@ -46,15 +45,20 @@ for TASK in "${TASKS[@]}"
         mkdir -p "$OUTPUT_DIR/$SUB_ID"
 
         #CT scan .nii
-        find "$ORIG_DATA_DIR/ECoG_Recon_Full/$SUB_ID/elec_recon" -name "postInPre.nii.gz" -type f -exec cp -v {} "$OUTPUT_DIR/$SUB_ID/${SUB_ID}_CT.nii.gz" \;
+        find "$ORIG_DATA_DIR/ECoG_Recon_Full/$SUB_ID/elec_recon" -name "postInPre.nii.gz" -type f -exec cp -vn {} "$OUTPUT_DIR/$SUB_ID/${SUB_ID}_CT.nii.gz" \;
+        find "$ORIG_DATA_DIR/ECoG_Recon_Full/$SUB_ID/elec_recon" -name "postInPre.nii.gz" -type f -exec rsync -P {} "$OUTPUT_DIR/$SUB_ID/${SUB_ID}_CT.nii.gz" \;
+
         #electrode locations .txt
-        find "$ORIG_DATA_DIR/../ECoG_Recon/$SUB_ID/elec_recon" -name "${SUB_ID}_elec_locations_RAS.txt" -type f -exec cp -v {} "$OUTPUT_DIR/$SUB_ID/" \;
+        find "$ORIG_DATA_DIR/../ECoG_Recon/$SUB_ID/elec_recon" -name "${SUB_ID}_elec_locations_RAS.txt" -type f -exec cp -vn {} "$OUTPUT_DIR/$SUB_ID/" \;
+        find "$ORIG_DATA_DIR/../ECoG_Recon/$SUB_ID/elec_recon" -name "${SUB_ID}_elec_locations_RAS.txt" -type f -exec rsync -P {} "$OUTPUT_DIR/$SUB_ID/" \;
         #T1 MRI file .mgz
-        find "$ORIG_DATA_DIR/ECoG_Recon_Full/$SUB_ID/elec_recon" -name "T1.nii.gz" -type f -exec cp {} "$OUTPUT_DIR/$SUB_ID/${SUB_ID}_T1w.nii.gz" \; | head -1
+        find "$ORIG_DATA_DIR/ECoG_Recon_Full/$SUB_ID/elec_recon" -name "T1.nii.gz" -type f -exec cp -vn {} "$OUTPUT_DIR/$SUB_ID/${SUB_ID}_T1w.nii.gz" \; | head -1
+        find "$ORIG_DATA_DIR/ECoG_Recon_Full/$SUB_ID/elec_recon" -name "T1.nii.gz" -type f -exec rsync -P {} "$OUTPUT_DIR/$SUB_ID/${SUB_ID}_T1w.nii.gz" \; | head -1
         #stim file corrections
         if [ $TASK == "Phoneme_sequencing" ]
         then
-            cp -v "$ORIG_DATA_DIR/ECoG_Task_Data/response_coding/PhonemeSequencingStimStarts.txt" "$OUTPUT_DIR/$SUB_ID/${SUB_ID}_PhonemeSequencingStimStarts.txt"
+            cp -vn "$ORIG_DATA_DIR/ECoG_Task_Data/response_coding/PhonemeSequencingStimStarts.txt" "$OUTPUT_DIR/$SUB_ID/${SUB_ID}_PhonemeSequencingStimStarts.txt"
+            rsync -P "$ORIG_DATA_DIR/ECoG_Task_Data/response_coding/PhonemeSequencingStimStarts.txt" "$OUTPUT_DIR/$SUB_ID/${SUB_ID}_PhonemeSequencingStimStarts.txt"
         fi
         #eeg files
 

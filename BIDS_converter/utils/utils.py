@@ -7,12 +7,16 @@ import shutil
 import stat
 import threading
 from pathlib import Path
+from typing import TypeVar, Union, Generic, get_type_hints, get_args
 
 import exrex as ex
 import numpy as np
 import pandas as pd
 from pyedflib import EdfReader
 from scipy.io import wavfile
+
+
+PathLike = TypeVar("PathLike", str, os.PathLike)
 
 
 class DisplayablePath:
@@ -214,6 +218,12 @@ def is_number(s):
             return True
         except Exception:
             return False
+    elif isinstance(s, pd.Series):
+        try:
+            pd.to_numeric(s)
+            return True
+        except Exception:
+            return False
     else:
         return False
 
@@ -283,7 +293,7 @@ def force_remove(mypath):
 
 
 def eval_df(df: pd.DataFrame, exp: str,
-            file_dir=""):
+            file_dir: PathLike = ""):
     """input a df and expression and return a single dataframe column
 
     :param df:
@@ -295,10 +305,13 @@ def eval_df(df: pd.DataFrame, exp: str,
     :return:
     :rtype:
     """
+
+    assert isinstance(file_dir, (os.PathLike, str))
+
     for name in [i for i in re.split(r"[ +\-/*%]", exp) if i != '']:
         if name in df.columns:
             if is_number(df[name]):
-                df[name] = df[name].astype(float)
+                df[name] = pd.to_numeric(df[name])
             elif os.path.isfile(os.path.join(file_dir, str(df[name].iloc[0]))):
                 for i, (_, fname) in enumerate(df[name].iteritems()):
                     fname = os.path.join(file_dir, fname)
