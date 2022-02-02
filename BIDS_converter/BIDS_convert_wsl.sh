@@ -29,6 +29,7 @@ for TASK in "${TASKS[@]}"
     mkdir -p "$OUTPUT_DIR/stimuli"
     # shellcheck disable=SC2038
     find "$ORIG_DATA_DIR/task_stimuli" -iname "$TASK" -type d -exec echo "{}/." \; | xargs -I{} cp -anfv {} "$OUTPUT_DIR/stimuli/"
+    # shellcheck disable=SC2038
     find "$ORIG_DATA_DIR/task_stimuli" -iname "$TASK" -type d -exec echo "{}/" \; | xargs -I{} rsync -aP {} "$OUTPUT_DIR/stimuli/"
 
     for SUB_ID in "${SUB_IDS[@]}"
@@ -47,7 +48,11 @@ for TASK in "${TASKS[@]}"
         #CT scan .nii
         find "$ORIG_DATA_DIR/ECoG_Recon_Full/$SUB_ID/elec_recon" -name "postInPre.nii.gz" -type f -exec cp -vn {} "$OUTPUT_DIR/$SUB_ID/${SUB_ID}_CT.nii.gz" \;
         find "$ORIG_DATA_DIR/ECoG_Recon_Full/$SUB_ID/elec_recon" -name "postInPre.nii.gz" -type f -exec rsync -P {} "$OUTPUT_DIR/$SUB_ID/${SUB_ID}_CT.nii.gz" \;
-
+        if [ ! -f "$OUTPUT_DIR/$SUB_ID/${SUB_ID}_CT.nii.gz" ]
+        then
+          find "$ORIG_DATA_DIR/ECoG_Recon_Full/$SUB_ID/elec_recon" -regex ".*${SUB_ID}_CT.*" -type f -exec cp -vn {} "$OUTPUT_DIR/$SUB_ID/" \;
+          find "$ORIG_DATA_DIR/ECoG_Recon_Full/$SUB_ID/elec_recon" -regex ".*${SUB_ID}_CT.*" -type f -exec rsync -P {} "$OUTPUT_DIR/$SUB_ID/" \;
+        fi
         #electrode locations .txt
         find "$ORIG_DATA_DIR/../ECoG_Recon/$SUB_ID/elec_recon" -name "${SUB_ID}_elec_locations_RAS.txt" -type f -exec cp -vn {} "$OUTPUT_DIR/$SUB_ID/" \;
         find "$ORIG_DATA_DIR/../ECoG_Recon/$SUB_ID/elec_recon" -name "${SUB_ID}_elec_locations_RAS.txt" -type f -exec rsync -P {} "$OUTPUT_DIR/$SUB_ID/" \;

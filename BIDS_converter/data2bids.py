@@ -1120,7 +1120,7 @@ class Data2Bids:  # main conversion and file organization program
                         SamplingFrequency=self.sample_rate[part_match],
                         PowerLineFrequency=60,
                         SoftwareFilters="n/a",
-                        ECOGChannelCount=len(signals),
+                        SEEGChannelCount=len(signals),
                         TriggerChannelCount=1,
                         RecordingDuration=f.file_duration)
 
