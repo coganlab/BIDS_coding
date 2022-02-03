@@ -405,10 +405,10 @@ class Data2Bids:  # main conversion and file organization program
 
     def find_a_match(self, files: Union[List[str], str],
                      config_key: str) -> str:
+        e = ""
         subtype = isinstance(self._config[config_key]["content"][0], list)
         if isinstance(files, str):
             files: List[str] = list(files)
-        e = None
         for file in files:
             try:
                 return match_regexp(self._config[config_key], file, subtype)
@@ -1120,9 +1120,9 @@ class Data2Bids:  # main conversion and file organization program
                         SamplingFrequency=self.sample_rate[part_match],
                         PowerLineFrequency=60,
                         SoftwareFilters="n/a",
-                        SEEGChannelCount=len(signals),
                         TriggerChannelCount=1,
                         RecordingDuration=f.file_duration)
+            data[self._config["ieeg"]["type"] + "ChannelCount"] = len(signals)
 
         elif op.dirname(full_file).endswith("anat"):
             entities = layout.parse_file_entities(full_file + ".nii.gz")

@@ -32,6 +32,8 @@
 , "task": {"left" : "_?"
             , "right" : ".*?"
             , "content" : [ ["PhonemeSequence","PHONEMESEQUENCE"]
+                            ,["PhonemeSequence","PHONEME SEQUENCE"]
+                            ,["PhonemeSequence","PHONEMESEQUENCING"]
                             ,["PhonemeSequence", "PhonemeSequence"]
                             ,["PhonemeSequence", "PhonemeSequencing"]
                             ,["PhonemeSequence", "Phoneme_Sequencing"]
