@@ -10,7 +10,7 @@ import json
 import os.path as op
 import subprocess
 import sys
-from typing import Union, List, Dict, Tuple, Any, Optional
+from typing import List, Dict, Tuple, Any, Optional
 
 import nibabel as nib
 import pydicom as dicom
@@ -19,7 +19,7 @@ from bids import layout
 from matgrab import mat2df
 from pyedflib import highlevel
 
-from utils import *
+from .utils import *
 
 
 def get_parser():  # parses flags at onset of command
@@ -123,6 +123,7 @@ class Data2Bids:  # main conversion and file organization program
                  DICOM_path=None, multi_echo=None, overwrite=False,
                  stim_dir=None, channels=None, verbose=False):
         # sets the .self globalization for self variables
+        self._is_multi_echo = None
         self._input_dir = None
         self._config_path = None
         self._config = None
@@ -176,7 +177,7 @@ class Data2Bids:  # main conversion and file organization program
         self.stim_dir = dir
         self._ignore.append(dir)
 
-    def set_channels(self, channels: list): #TODO: modularize
+    def set_channels(self, channels: list):  # TODO: modularize
         headers: dict = self._config["ieeg"]["headerData"]
         self.channels = {}
         self.sample_rate = {}
@@ -234,9 +235,9 @@ class Data2Bids:  # main conversion and file organization program
 
     def set_multi_echo(self, multi_echo):  # if -m flag is called
         if multi_echo is None:
-            self.is_multi_echo = False
+            self._is_multi_echo = False
         else:
-            self.is_multi_echo = True
+            self._is_multi_echo = True
             if not multi_echo:
                 self._multi_echo = 0
             else:
@@ -270,7 +271,7 @@ class Data2Bids:  # main conversion and file organization program
                         runlist.append(str(int(runmatch)))
                     shutil.copyfile(op.join(ddir, "medata", me), op.join(
                         sub_dir, me))
-                self.is_multi_echo = True
+                self._is_multi_echo = True
                 # will trigger even if single echo data is in medata folder.
                 # Should still be okay
             for subdir in subdirs[1:]:
@@ -600,7 +601,7 @@ class Data2Bids:  # main conversion and file organization program
         :return:
         :rtype:
         """
-        if self.is_multi_echo:
+        if self._is_multi_echo:
             if int(runnum) in self._multi_echo:
                 return True
             else:
@@ -618,7 +619,7 @@ class Data2Bids:  # main conversion and file organization program
     def get_params(self, folder, echo_num, run_num):  # function to run through
         # DICOMs and get metadata
         # threading?
-        if self.is_multi_echo and run_num in self._multi_echo:
+        if self._is_multi_echo and run_num in self._multi_echo:
             vols_per_time = len(self._config['delayTimeInSec']) - 1
             echo = self._config['delayTimeInSec'][echo_num]
         else:
@@ -946,7 +947,7 @@ class Data2Bids:  # main conversion and file organization program
             raise txt_df_dict["error"]
         df: pd.DataFrame = txt_df_dict["data"]
         df.columns = ["name1", "name2", "x", "y", "z", "hemisphere", "del"]
-        df["name"] = df["name1"] + df["name2"].astype(str).str.zfill(2)
+        df["name"] = df["name1"] + df["name2"].astype(str)
         df["hemisphere"] = df["hemisphere"] + df["del"]
         df = df.drop(columns=["name1", "name2", "del"])
         df["size"] = self._config["ieeg"]["size"]

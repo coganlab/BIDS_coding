@@ -11,8 +11,8 @@ TASKS=("Phoneme_Sequencing")
 for TASK in "${TASKS[@]}"
  do
 
-    OUTPUT_DIR="$HOME/Workspace/$TASK"
-    BIDS_DIR="$OUTPUT_DIR/BIDS"
+    OUTPUT_DIR="$ORIG_DATA_DIR/BIDS-1.3_Phoneme_sequencing/Error"
+    BIDS_DIR="$OUTPUT_DIR/../BIDS"
     ZIP=false
 
     if [ -d $OUTPUT_DIR ]
