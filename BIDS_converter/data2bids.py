@@ -1144,6 +1144,8 @@ class Data2Bids:  # main conversion and file organization program
             temp_df = pd.DataFrame()
             for key, value in event.items():
                 if key == "stim_file":
+                    if not temp_df["stim_file"].endswith(".wav"):
+                        temp_df["stim_file"] = temp_df["stim_file"] + ".wav"
                     temp_df["stim_file"] = df[value]
                     temp_df["duration"] = eval_df(df, value, self.stim_dir)
                 else:
