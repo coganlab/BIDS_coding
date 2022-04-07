@@ -1086,7 +1086,7 @@ class Data2Bids:  # main conversion and file organization program
 
     def write_sidecar(self, full_file: PathLike, part_match: str):
         if full_file.endswith(".tsv"):
-            # need to search BIDS specs for list of possible known BIDS columns
+            # TODO: search BIDS specs for list of possible known BIDS columns
             data = dict()
             df = pd.read_csv(full_file, sep="\t")
             return
@@ -1113,9 +1113,14 @@ class Data2Bids:  # main conversion and file organization program
                         SamplingFrequency=self.sample_rate[part_match],
                         PowerLineFrequency=60,
                         SoftwareFilters="n/a",
-                        ECOGChannelCount=len(signals),
                         TriggerChannelCount=1,
                         RecordingDuration=f.file_duration)
+            if self._config["ieeg"]["type"] == "ECOG":
+                data["ECOGChannelCount"] = len(signals)
+            elif self._config["ieeg"]["type"] == "SEEG":
+                data["SEEGChannelCount"] = len(signals)
+            else:
+                raise NotImplementedError("Types are either 'SEEG' or 'ECOG'")
 
         elif op.dirname(full_file).endswith("anat"):
             entities = layout.parse_file_entities(full_file + ".nii.gz")
