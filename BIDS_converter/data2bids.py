@@ -19,7 +19,7 @@ from bids import layout
 from matgrab import mat2df
 from pyedflib import highlevel
 
-from BIDS_converter.utils import *
+from utils import *
 
 PathLike = TypeVar("PathLike", str, os.PathLike)
 

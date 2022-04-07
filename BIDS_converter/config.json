@@ -40,6 +40,10 @@
                             ,["UniquenessPoint", "UniquenessPoint"]
                             ,["UniquenessPoint", "Uniqueness_point"]
                             ,["UniquenessPoint", "UNIQUENESSPOINT"]
+                            ,["SentenceRep", "Sentence_Rep"]
+                            ,["SentenceRep", "SentenceRep"]
+                            ,["SentenceRep", "Sentence_rep"]
+                            ,["SentenceRep", "SENTENCEREP"]
 ]
     }
 , "ieeg.loc":{"left" : ".*?"
