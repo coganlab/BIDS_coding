@@ -1046,6 +1046,7 @@ class Data2Bids:  # main conversion and file organization program
                                 digital=self._config["ieeg"]["digital"])
             df = pd.read_csv(tsv_name, sep="\t", header=0)
             os.remove(tsv_name)
+            df.replace("[]", np.NaN, inplace=True)
             # all column manipulation and math in frame2bids
             df_new = self.frame2bids(df, self._config["eventFormat"]["Events"],
                                      self.sample_rate[part_match], correct,

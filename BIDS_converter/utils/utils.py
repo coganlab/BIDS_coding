@@ -215,6 +215,12 @@ def is_number(s):
             return True
         except Exception:
             return False
+    elif isinstance(s, pd.Series):
+        try:
+            pd.to_numeric(s)
+            return True
+        except Exception:
+            return False
     else:
         return False
 
