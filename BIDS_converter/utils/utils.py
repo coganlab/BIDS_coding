@@ -13,6 +13,7 @@ import numpy as np
 import pandas as pd
 from pyedflib import EdfReader
 from scipy.io import wavfile
+from typing import List
 
 
 class DisplayablePath:
@@ -336,3 +337,10 @@ def trigger_from_excel(filename, participant):
                     return trig_label
     else:
         raise KeyError("'Trigger' not found in " + xls_file)
+
+
+def check_lower(item: str, string_list: List[str]):
+    for stim_file in string_list:
+        if item in stim_file.lower():
+            return stim_file
+    raise FileNotFoundError("No stim files match {}".format(item))

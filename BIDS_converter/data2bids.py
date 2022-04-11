@@ -7,12 +7,14 @@ import datetime
 import gc
 import gzip
 import json
+import os
 import os.path as op
 import subprocess
 import sys
 from typing import Union, List, TypeVar, Dict, Tuple, Any, Optional
 
 import nibabel as nib
+import pandas as pd
 import pydicom as dicom
 import pyedflib
 from bids import layout
@@ -1018,7 +1020,7 @@ class Data2Bids:  # main conversion and file organization program
                 practice = op.join(file_path, "practice", new_name.split(
                     "_ieeg", 1)[0] + "_ieeg.edf")
                 if not op.isfile(practice) and self._config["split"]["practice"
-                                                                      ]:
+                ]:
                     os.makedirs(op.join(file_path, "practice"),
                                 exist_ok=True)
                     highlevel.write_edf(practice, np.split(array, [
@@ -1141,6 +1143,18 @@ class Data2Bids:  # main conversion and file organization program
             with open(op.splitext(full_file)[0] + ".json", "w") as fst:
                 json.dump(data, fst)
 
+    def check_stims(self, labels: pd.Series) -> pd.Series:
+        out_label = labels
+        files = os.listdir(self.stim_dir)
+        for i, label in enumerate(labels.tolist()):
+            if label in files:
+                out_label.iloc[i] = label
+            elif label + ".wav" in files:
+                out_label.iloc[i] = label + ".wav"
+            else:
+                out_label.iloc[i] = check_lower(label, files)
+        return out_label
+
     def frame2bids(self, df: pd.DataFrame, events: Union[dict, List[dict]],
                    data_sample_rate=None, audio_correction=None,
                    start_at=0) -> pd.DataFrame:
@@ -1153,8 +1167,7 @@ class Data2Bids:  # main conversion and file organization program
             temp_df = pd.DataFrame()
             for key, value in event.items():
                 if key == "stim_file":
-                    if not temp_df["stim_file"].endswith(".wav"):
-                        temp_df["stim_file"] = temp_df["stim_file"] + ".wav"
+                    df[value] = self.check_stims(df[value])
                     temp_df["stim_file"] = df[value]
                     temp_df["duration"] = eval_df(df, value, self.stim_dir)
                 else:
