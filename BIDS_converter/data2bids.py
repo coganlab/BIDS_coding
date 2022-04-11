@@ -184,8 +184,12 @@ class Data2Bids:  # main conversion and file organization program
         self.sample_rate = {}
         self.trigger = {}
         self._channels_file = {}
-        for root, _, files in os.walk(self._data_dir):
-            # ignore BIDS directories and stimuli
+        # ignore BIDS directories and stimuli
+        exclude = [op.basename(self._bids_dir), op.basename(self.stim_dir)]
+        for root, dirs, files in os.walk(self._data_dir, topdown=True):
+            dirs[:] = [d for d in dirs if d not in exclude]
+            if not files:
+                continue
             task_label_match = self.find_a_match(files, "task")
             part_match = self.find_a_match(files, "partLabel")
             self.trigger[part_match] = get_trigger(part_match, headers)
@@ -413,7 +417,7 @@ class Data2Bids:  # main conversion and file organization program
             except AssertionError:
                 continue
         raise FileNotFoundError("There was no file matching the config key {}"
-                                "".format(config_key))
+                                "".format(config_key), files)
 
     def generate_names(self, src_file_path: PathLike, filename: str = None,
                        part_match=None, sess_match=None, ce_match=None,
@@ -1496,10 +1500,13 @@ class Data2Bids:  # main conversion and file organization program
                 fst.write(data)
 
         # now we can scan all files and rearrange them
-        for root, _, files in os.walk(self._data_dir, topdown=True):
+        # ignore BIDS directories and stimuli
+        exclude = [op.basename(self._bids_dir), op.basename(self.stim_dir)]
+        for root, dirs, files in os.walk(self._data_dir, topdown=True):
+            dirs[:] = [d for d in dirs if d not in exclude]
             # each loop is a new participant so long as participant is top lev
-            files[:] = [f for f in files if not self.check_ignore(
-                op.join(root, f))]
+            files[:] = [f for f in files if not self.check_ignore(op.join(
+                root, f))]
             if not files:
                 continue
             files.sort()
@@ -1624,6 +1631,7 @@ class Data2Bids:  # main conversion and file organization program
                     self._config["runIndex"]["content"][0])
                 match_set = [re.match(pattern, str(set_file)) for set_file in
                              os.listdir(file_path)]
+                print(new_name)
                 if new_name.endswith("_ieeg") and any(match_set):
                     # if edf is not yet split
                     if self._is_verbose:
