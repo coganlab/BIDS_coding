@@ -1354,6 +1354,7 @@ class Data2Bids:  # main conversion and file organization program
                                           "eventFormat"][
                                           "Sep"].values()).drop_duplicates(
             ).itertuples(index=False))
+
             for i in range(len(tupelist)):  # iterate through every block
                 nindex = (df.where(
                     df.filter(self._config["eventFormat"]["Sep"].values()) ==

@@ -81,7 +81,7 @@
     , "content" : ["[0-9]{6}"]
     }
 ,"eventFiles" : "([Tt]rial(s|Info).*?\\.mat)"
-,"eventFormat" : {"Labels": ["Subject","Trial","RecDay","FilenamePrefix",
+,"eventFormat" : {"Labels": ["Subject","Trial","Rec", "Day","FilenamePrefix",
   "Start","Auditory","Go","StartCode","AuditoryCode","GoCode","Noisy",
   "NoResponse","ResponseStart","ResponseEnd","cue",	"sound","go",	"block",
   "cond",	"cueStart",	"cueEnd",	"audioStart",	"audioAlignedTrigger",
@@ -91,7 +91,7 @@
                 ,"Sep" : { "runIndex" : "block",
                              "acq" : "Rec" }
                 ,"Timing": { "start": "Start",
-                          "end": "Auditory + (ReactionTime * 30000)" }
+                          "end": "ResponseEnd" }
                 ,"SampleRate": 30000
                 ,"Events" : [{"onset": "Start","duration": "(cueEnd - cueStart) * 30", "trial_num": "Trial","trial_type": "cue"},
                              {"onset": "Auditory", "stim_file": "sound", "trial_num": "Trial", "trial_type": "Audio"},
