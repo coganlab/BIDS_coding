@@ -12,7 +12,7 @@ for TASK in "${TASKS[@]}"
  do
 
     OUTPUT_DIR="$HOME/Workspace/$TASK"
-    BIDS_DIR="$OUTPUT_DIR/BIDS"
+    BIDS_DIR="$ORIG_DATA_DIR/BIDS-1.0_Sentence_rep/BIDS"
     ZIP=false
 
     if [ -d $OUTPUT_DIR ]
