@@ -1,7 +1,8 @@
 #!/bin/bash
 
 ORIG_DATA_DIR="$HOME/Box/CoganLab"
-SUB_IDS=(D53)
+SUB_IDS=(D18 D20 D22 D23 D24 D26 D27 D28 D29 D30 D31 D32 D53 D57 D59 D60 D61 D65
+ D66 D69 D70)
 TASKS=("Sentence_Rep")
 
 #declare -l mylist[30]
