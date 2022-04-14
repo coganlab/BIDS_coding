@@ -948,7 +948,7 @@ class Data2Bids:  # main conversion and file organization program
             raise txt_df_dict["error"]
         df: pd.DataFrame = txt_df_dict["data"]
         df.columns = ["name1", "name2", "x", "y", "z", "hemisphere", "del"]
-        df["name"] = df["name1"] + df["name2"].astype(str).str.zfill(2)
+        df["name"] = df["name1"] + df["name2"].astype(str)
         df["hemisphere"] = df["hemisphere"] + df["del"]
         df = df.drop(columns=["name1", "name2", "del"])
         df = pd.concat(
