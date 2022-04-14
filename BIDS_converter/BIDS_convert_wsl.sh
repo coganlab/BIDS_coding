@@ -1,8 +1,8 @@
 #!/bin/bash
 
 ORIG_DATA_DIR="$HOME/Box/CoganLab"
-SUB_IDS=(D18 D20 D22 D23 D24 D26 D27 D28 D29 D30 D31 D32 D53 D57 D59 D60 D61 D65
- D66 D69 D70)
+SUB_IDS=(D3 D5 D6 D7 D8 D9 D18 D20 D22 D23 D24 D26 D27 D28 D29 D30 D31 D32 D53
+ D57 D59 D60 D61 D65 D66 D69 D70)
 TASKS=("Sentence_Rep")
 
 #declare -l mylist[30]
@@ -12,7 +12,7 @@ for TASK in "${TASKS[@]}"
  do
 
     OUTPUT_DIR="$HOME/Workspace/$TASK"
-    BIDS_DIR="$ORIG_DATA_DIR/BIDS-1.0_Sentence_rep/BIDS"
+    BIDS_DIR="$OUTPUT_DIR/BIDS"
     ZIP=false
 
     if [ -d $OUTPUT_DIR ]
@@ -86,6 +86,7 @@ for TASK in "${TASKS[@]}"
         #the big bad python code to convert the renamed files to BIDS
         #requires numpy, nibabel, and pathlib modules
         python3 data2bids.py -c config.json -i "$OUTPUT_DIR/$SUB_ID" -o $BIDS_DIR -v || { echo "BIDS conversion for $SUB_ID failed, trying next subject" ; continue; }
+
 		rm -rf "$OUTPUT_DIR/$SUB_ID"
 
         [[ $RAN_SUBS =~ (^| )$SUB_ID( |$) ]] || RAN_SUBS+=${SUB_ID}" "

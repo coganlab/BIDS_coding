@@ -44,6 +44,7 @@
                             ,["SentenceRep", "SentenceRep"]
                             ,["SentenceRep", "Sentence_rep"]
                             ,["SentenceRep", "SENTENCEREP"]
+                            ,["SentenceRep", "sentence_rep"]
 ]
     }
 , "ieeg.loc":{"left" : ".*?"
