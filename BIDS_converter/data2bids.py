@@ -7,19 +7,21 @@ import datetime
 import gc
 import gzip
 import json
+import os
 import os.path as op
 import subprocess
 import sys
 from typing import Union, List, TypeVar, Dict, Tuple, Any, Optional
 
 import nibabel as nib
+import pandas as pd
 import pydicom as dicom
 import pyedflib
 from bids import layout
 from matgrab import mat2df
 from pyedflib import highlevel
 
-from BIDS_converter.utils import *
+from utils import *
 
 PathLike = TypeVar("PathLike", str, os.PathLike)
 
@@ -184,8 +186,12 @@ class Data2Bids:  # main conversion and file organization program
         self.sample_rate = {}
         self.trigger = {}
         self._channels_file = {}
-        for root, _, files in os.walk(self._data_dir):
-            # ignore BIDS directories and stimuli
+        # ignore BIDS directories and stimuli
+        exclude = [op.basename(self._bids_dir), op.basename(self.stim_dir)]
+        for root, dirs, files in os.walk(self._data_dir, topdown=True):
+            dirs[:] = [d for d in dirs if d not in exclude]
+            if not files:
+                continue
             task_label_match = self.find_a_match(files, "task")
             part_match = self.find_a_match(files, "partLabel")
             self.trigger[part_match] = get_trigger(part_match, headers)
@@ -413,7 +419,7 @@ class Data2Bids:  # main conversion and file organization program
             except AssertionError:
                 continue
         raise FileNotFoundError("There was no file matching the config key {}"
-                                "".format(config_key))
+                                "".format(config_key), files)
 
     def generate_names(self, src_file_path: PathLike, filename: str = None,
                        part_match=None, sess_match=None, ce_match=None,
@@ -942,7 +948,7 @@ class Data2Bids:  # main conversion and file organization program
             raise txt_df_dict["error"]
         df: pd.DataFrame = txt_df_dict["data"]
         df.columns = ["name1", "name2", "x", "y", "z", "hemisphere", "del"]
-        df["name"] = df["name1"] + df["name2"].astype(str).str.zfill(2)
+        df["name"] = df["name1"] + df["name2"].astype(str)
         df["hemisphere"] = df["hemisphere"] + df["del"]
         df = df.drop(columns=["name1", "name2", "del"])
         df = pd.concat(
@@ -1014,7 +1020,7 @@ class Data2Bids:  # main conversion and file organization program
                 practice = op.join(file_path, "practice", new_name.split(
                     "_ieeg", 1)[0] + "_ieeg.edf")
                 if not op.isfile(practice) and self._config["split"]["practice"
-                                                                      ]:
+                ]:
                     os.makedirs(op.join(file_path, "practice"),
                                 exist_ok=True)
                     highlevel.write_edf(practice, np.split(array, [
@@ -1040,6 +1046,7 @@ class Data2Bids:  # main conversion and file organization program
                                 digital=self._config["ieeg"]["digital"])
             df = pd.read_csv(tsv_name, sep="\t", header=0)
             os.remove(tsv_name)
+            df.replace("[]", np.NaN, inplace=True)
             # all column manipulation and math in frame2bids
             df_new = self.frame2bids(df, self._config["eventFormat"]["Events"],
                                      self.sample_rate[part_match], correct,
@@ -1086,7 +1093,7 @@ class Data2Bids:  # main conversion and file organization program
 
     def write_sidecar(self, full_file: PathLike, part_match: str):
         if full_file.endswith(".tsv"):
-            # need to search BIDS specs for list of possible known BIDS columns
+            # TODO: search BIDS specs for list of possible known BIDS columns
             data = dict()
             df = pd.read_csv(full_file, sep="\t")
             return
@@ -1113,9 +1120,14 @@ class Data2Bids:  # main conversion and file organization program
                         SamplingFrequency=self.sample_rate[part_match],
                         PowerLineFrequency=60,
                         SoftwareFilters="n/a",
-                        ECOGChannelCount=len(signals),
                         TriggerChannelCount=1,
                         RecordingDuration=f.file_duration)
+            if self._config["ieeg"]["type"] == "ECOG":
+                data["ECOGChannelCount"] = len(signals)
+            elif self._config["ieeg"]["type"] == "SEEG":
+                data["SEEGChannelCount"] = len(signals)
+            else:
+                raise NotImplementedError("Types are either 'SEEG' or 'ECOG'")
 
         elif op.dirname(full_file).endswith("anat"):
             entities = layout.parse_file_entities(full_file + ".nii.gz")
@@ -1132,6 +1144,18 @@ class Data2Bids:  # main conversion and file organization program
             with open(op.splitext(full_file)[0] + ".json", "w") as fst:
                 json.dump(data, fst)
 
+    def check_stims(self, labels: pd.Series) -> pd.Series:
+        out_label = labels
+        files = os.listdir(self.stim_dir)
+        for i, label in enumerate(labels.tolist()):
+            if label in files:
+                out_label.iloc[i] = label
+            elif label + ".wav" in files:
+                out_label.iloc[i] = label + ".wav"
+            else:
+                out_label.iloc[i] = check_lower(label, files)
+        return out_label
+
     def frame2bids(self, df: pd.DataFrame, events: Union[dict, List[dict]],
                    data_sample_rate=None, audio_correction=None,
                    start_at=0) -> pd.DataFrame:
@@ -1144,6 +1168,7 @@ class Data2Bids:  # main conversion and file organization program
             temp_df = pd.DataFrame()
             for key, value in event.items():
                 if key == "stim_file":
+                    df[value] = self.check_stims(df[value])
                     temp_df["stim_file"] = df[value]
                     temp_df["duration"] = eval_df(df, value, self.stim_dir)
                 else:
@@ -1343,6 +1368,7 @@ class Data2Bids:  # main conversion and file organization program
                                           "eventFormat"][
                                           "Sep"].values()).drop_duplicates(
             ).itertuples(index=False))
+
             for i in range(len(tupelist)):  # iterate through every block
                 nindex = (df.where(
                     df.filter(self._config["eventFormat"]["Sep"].values()) ==
@@ -1489,10 +1515,13 @@ class Data2Bids:  # main conversion and file organization program
                 fst.write(data)
 
         # now we can scan all files and rearrange them
-        for root, _, files in os.walk(self._data_dir, topdown=True):
+        # ignore BIDS directories and stimuli
+        exclude = [op.basename(self._bids_dir), op.basename(self.stim_dir)]
+        for root, dirs, files in os.walk(self._data_dir, topdown=True):
+            dirs[:] = [d for d in dirs if d not in exclude]
             # each loop is a new participant so long as participant is top lev
-            files[:] = [f for f in files if not self.check_ignore(
-                op.join(root, f))]
+            files[:] = [f for f in files if not self.check_ignore(op.join(
+                root, f))]
             if not files:
                 continue
             files.sort()
@@ -1617,6 +1646,7 @@ class Data2Bids:  # main conversion and file organization program
                     self._config["runIndex"]["content"][0])
                 match_set = [re.match(pattern, str(set_file)) for set_file in
                              os.listdir(file_path)]
+                print(new_name)
                 if new_name.endswith("_ieeg") and any(match_set):
                     # if edf is not yet split
                     if self._is_verbose:

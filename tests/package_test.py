@@ -1,4 +1,5 @@
 from BIDS_converter.data2bids import Data2Bids
+from BIDS_converter import utils
 import shutil
 import os
 import tarfile
