@@ -1631,7 +1631,6 @@ class Data2Bids:  # main conversion and file organization program
 
             # check final file set
             for new_name in names_list:
-                print(new_name)
                 file_path = dst_file_path_list[names_list.index(new_name)]
                 full_name = op.join(file_path, new_name + ".edf")
                 task_match = re.match(".*_task-(\w*)_.*", full_name)
@@ -1647,6 +1646,7 @@ class Data2Bids:  # main conversion and file organization program
                 print(new_name)
                 if new_name.endswith("_ieeg") and any(match_set):
                     # if edf is not yet split
+                    print("here")
                     if self._is_verbose:
                         print("Reading for split... ")
                     if full_name in [i["bids_name"] for i in eeg]:
@@ -1663,9 +1663,13 @@ class Data2Bids:  # main conversion and file organization program
                                    eeg_dict["name"],
                                    correct)
                     continue
+                elif not any(match_set) and self._is_verbose:
+                    print("no file matching the pattern {} found in {}".format(
+                        pattern,file_path))
+                else:
+                    print(match_set)
                 # write JSON file for any missing files
-                self.write_sidecar(op.join(file_path, new_name),
-                                   part_match)
+                self.write_sidecar(op.join(file_path, new_name), part_match)
 
             # write any indicated .json files
             try:

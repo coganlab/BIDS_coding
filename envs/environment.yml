@@ -7,5 +7,8 @@ dependencies:
   - flake8
   - openpyxl
   - pip
+  - scipy
+  - numpy
+  - pandas
   - pip:
     - -r requirements.txt
