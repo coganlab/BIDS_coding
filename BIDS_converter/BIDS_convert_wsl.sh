@@ -1,9 +1,8 @@
 #!/bin/bash
 
 ORIG_DATA_DIR="$HOME/Box/CoganLab"
-SUB_IDS=(D3 D5 D6 D7 D8 D9 D18 D20 D22 D23 D24 D26 D27 D28 D29 D30 D31 D32 D53
- D57 D59 D60 D61 D65 D66 D69 D70)
-TASKS=("Sentence_Rep")
+SUB_IDS=(D20 D22 D23 D24 D26 D27 D28 D29 D32 D35 D38 D39 D41 D42 D44 D47 D53 D54 D55 D57 D59 D63 D65 D68 D69 D70)
+TASKS=("LexicalDecRepDelay")
 
 #declare -l mylist[30]
 
@@ -28,7 +27,7 @@ for TASK in "${TASKS[@]}"
     mkdir -p $BIDS_DIR
     mkdir -p "$OUTPUT_DIR/stimuli"
     # shellcheck disable=SC2038
-    find "$ORIG_DATA_DIR/task_stimuli" -iname "$TASK" -type d -exec echo "{}/." \; | xargs -I{} cp -afv {} "$OUTPUT_DIR/stimuli/"
+    find "$ORIG_DATA_DIR/task_stimuli" -iname "lexical" -type d -exec echo "{}/." \; | xargs -I{} cp -afv {} "$OUTPUT_DIR/stimuli/"
     #TASKLOWER=$(echo $TASK | tr '[:upper:]' '[:lower:]')
     #echo "$ORIG_DATA_DIR/task_stimuli/$TASKLOWER/."
     #cp -av "$ORIG_DATA_DIR/task_stimuli/$TASKLOWER/." "$BIDS_DIR/stimuli/"

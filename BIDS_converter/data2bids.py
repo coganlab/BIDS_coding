@@ -7,14 +7,12 @@ import datetime
 import gc
 import gzip
 import json
-import os
 import os.path as op
 import subprocess
 import sys
-from typing import Union, List, TypeVar, Dict, Tuple, Any, Optional
+from typing import Union, TypeVar, Dict, Tuple, Any, Optional
 
 import nibabel as nib
-import pandas as pd
 import pydicom as dicom
 import pyedflib
 from bids import layout

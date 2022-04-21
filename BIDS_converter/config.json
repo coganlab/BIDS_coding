@@ -45,6 +45,15 @@
                             ,["SentenceRep", "Sentence_rep"]
                             ,["SentenceRep", "SENTENCEREP"]
                             ,["SentenceRep", "sentence_rep"]
+                            ,["LexicalDecRepDelay", "Lexical_Decision_Delay"]
+                            ,["LexicalDecRepDelay", "LexicalDecisionDelay"]
+                            ,["LexicalDecRepDelay", "Lexical_decision_delay"]
+                            ,["LexicalDecRepDelay", "LEXICAL_DECISION_DELAY"]
+                            ,["LexicalDecRepDelay", "LEXICALDECISION_DELAY"]
+                            ,["LexicalDecRepDelay", "LEXICAL_DECISIONDELAY"]
+                            ,["LexicalDecRepDelay", "lexi_withinblock"]
+                            ,["LexicalDecRepDelay", "lexi_within_block"]
+                            ,["LexicalDecRepDelay", "lexi_decision_repeat_within_delay"]
 ]
     }
 , "ieeg.loc":{"left" : ".*?"
