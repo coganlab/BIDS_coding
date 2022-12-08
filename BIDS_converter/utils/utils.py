@@ -352,6 +352,126 @@ def trigger_from_excel(filename: os.PathLike, participant: str) -> Union[int, st
         raise KeyError("'Trigger' not found in " + xls_file)
 
 
+def str2list(x: str) -> list:
+    ttable = "".maketrans({'[': '', ']': '', '\'': ''})
+    return [str2num(x) for x in x.translate(ttable).split()]
+
+
+def check_stims(stim_dir: os.PathLike, labels: pd.Series) -> pd.Series:
+    out_label = labels.copy()
+    files = os.listdir(stim_dir)
+    for i, label in enumerate(labels.tolist()):
+        if label is None:
+            out_label.iloc[i] = None
+        elif label in files:
+            out_label.iloc[i] = label
+        elif label + ".wav" in files:
+            out_label.iloc[i] = label + ".wav"
+        else:
+            out_label.iloc[i] = check_lower(label, files)
+    return out_label
+
+
+def reframe_events(df_in: pd.DataFrame, events: Union[list, dict],
+                   stim_dir: os.PathLike) -> pd.DataFrame:
+    df = df_in.copy()
+    new_df = None
+    if isinstance(events, dict):
+        events = list(events)
+    event_order = 0
+    for event in events:
+        event_order += 1
+        # check if df column is actually a string of a list, then fix the data type and reorder the events
+        list_dfs = []
+        for val in [vals for vals in event.values() if vals in df_in.columns]:
+            if isinstance(df[val][0], str) and all(char in df[val][0] for char in '[]'):
+                # fix string data meant to be a list
+                df[val] = df[val].apply(str2list)
+            if isinstance(df[val][0], list):
+                list_dfs.append(val)
+                num_new = len(max(df[val], key=len))
+
+        if list_dfs:
+            # add new columns to old dataframe
+            df = pd.concat([pd.DataFrame(df[x].tolist(), index=df.index).add_prefix(x) for x in
+                            list_dfs] + [df], axis=1)
+            # add new event config
+            new_events = []
+            new_event = event.copy()
+            for i in range(num_new):
+                for key, value in event.items():
+                    if value in list_dfs:
+                        new_event[key] = value + str(i)
+                new_events.append(new_event.copy())
+            events[event_order:event_order] = new_events
+            # reset event reading with new event definitions
+            event_order -= 1
+            continue
+
+        temp_df = pd.DataFrame()
+        for key, value in event.items():
+            if key == "stim_file":
+                df[value] = check_stims(stim_dir, df[value])
+                temp_df["stim_file"] = df[value]
+                temp_df["duration"] = eval_df(df, value, stim_dir)
+            else:
+                temp_df[key] = eval_df(df, value)
+        if "trial_num" not in temp_df.columns:
+            temp_df["trial_num"] = [1 + i for i in list(range(temp_df.shape[0]))]
+            # TODO: make code below work for non correction case
+        ''' 
+            if "duration" not in temp_df.columns:
+            if "stim_file" in temp_df.columns:
+                temp = []
+                t_correct = []
+                for _, fname in temp_df["stim_file"].iteritems():
+                    if fname.endswith(".wav"):
+                        if self.stim_dir is not None:
+                            fname = op.join(self.stim_dir, fname)
+                            dir = self.stim_dir
+                        else:
+                            dir = self._data_dir
+                        try:
+                            frames, data = wavfile.read(fname)
+                        except FileNotFoundError as e:
+                            print(fname + " not found in current directory
+                             or in " + dir)
+                            raise e
+                        if audio_correction is not None:
+                            correct = audio_correction.set_index(0).squeeze
+                            ()[op.basename(
+                                op.splitext(fname)[0])] * self._config["eve
+                                ntFormat"]["SampleRate"]
+                        else:
+                            correct = 0
+                        duration = (data.size / frames) * self._config["eve
+                        ntFormat"]["SampleRate"]
+                    else:
+                        raise NotImplementedError("current build only suppo
+                        rts .wav stim files")
+                    temp.append(duration)
+                    t_correct.append(correct)
+                temp_df["duration"] = temp
+                # audio correction
+                if t_correct:
+                    temp_df["correct"] = t_correct
+                    temp_df["duration"] = temp_df.eval("duration - correct"
+                    )
+                    temp_df["onset"] = temp_df.eval("onset + correct")
+                    temp_df = temp_df.drop(columns=["correct"])
+            else:
+                raise LookupError("duration of event or copy of audio file 
+                required but not found in " +
+                                  self._config_path)
+        '''
+        temp_df["event_order"] = event_order
+        if new_df is None:
+            new_df = temp_df
+        else:
+            new_df = pd.concat([new_df, temp_df], ignore_index=True, sort=False)
+    return new_df
+
+
 def check_lower(item: str, string_list: List[str]) -> str:
     for stim_file in string_list:
         if item in stim_file.lower():
