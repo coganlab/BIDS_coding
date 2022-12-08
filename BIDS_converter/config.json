@@ -67,6 +67,7 @@
                             ,["Neighborhood_Sternberg", "NEIGHBORHOOD_STERNBERG"]
                             ,["Neighborhood_Sternberg", "neighborhood_sternberg"]
                             ,["Neighborhood_Sternberg", "SternbergNeighborhood"]
+                            ,["Neighborhood_Sternberg", "STERNBERGNEIGHBORHOOD"]
 ]
     }
 , "ieeg.loc":{"left" : ".*?"
@@ -105,21 +106,21 @@
     }
 ,"eventFiles" : "([Tt]rial(s|Info).*?\\.mat)"
 ,"eventFormat" : {"Labels": ["Subject","Trial","Rec", "Day","FilenamePrefix",
-  "Start","Auditory","Go","StartCode","AuditoryCode","GoCode","Noisy",
-  "NoResponse","ResponseStart","ResponseEnd","cue",	"sound","go",	"block",
-  "cond",	"cueStart",	"cueEnd",	"audioStart",	"audioAlignedTrigger",
-  "delStart",	"delEnd",	"goStart",	"goEnd",	"respStart",	"respEnd",
-  "isiStart",	"isiEnd",	"flipTimes",	"tCaptureStart"]
+  "Start","FirstStimAuditory","StimAuditory","ProbeAuditory","Auditory","Go","StartCode","AuditoryCode","GoCode","Noisy",
+  "NoResponse","ResponseStart","ResponseEnd","ListenCueOnset","ListenCueTime","cue",	"sound","go",	"block",
+  "cond",	"cueStart",	"cueEnd",	"audioStart",	"audioAlignedTrigger", "ResponseOnset", "ProbeCueOnset",
+  "delStart",	"delEnd",	"goStart",	"goEnd",	"respStart",	"respEnd", "stimulusSounds_name", "StimlusCategory",
+  "isiStart",	"isiEnd",	"flipTimes",	"tCaptureStart","probeSound_name", "ProbeCategory"]
                 ,"IDcol" : "FilenamePrefix"
                 ,"Sep" : { "runIndex" : "block",
                              "acq" : "Rec" }
-                ,"Timing": { "start": "Start",
-                          "end": "ResponseEnd" }
+                ,"Timing": { "start": "ListenCueOnset",
+                          "end": "ResponseOnset" }
                 ,"SampleRate": 30000
-                ,"Events" : [{"onset": "Start","duration": "(cueEnd - cueStart) * 30", "trial_num": "Trial","trial_type": "cue"},
-                             {"onset": "Auditory", "stim_file": "sound", "trial_num": "Trial", "trial_type": "Audio"},
-                             {"onset": "Go", "duration":  "(goEnd - goStart) * 30", "trial_num": "Trial", "trial_type": "go"},
-                             {"onset": "ResponseStart", "duration": "ResponseEnd - ResponseStart", "trial_num": "Trial","trial_type": "Response"}]
+                ,"Events" : [{"onset": "ListenCueOnset","duration": "750 * 30", "trial_num": "Trial","trial_type": "cue"},
+                             {"onset": "StimAuditory", "stim_file": "stimulusSounds_name", "trial_num": "Trial", "trial_type": "StimlusCategory"},
+                             {"onset": "ProbeAuditory", "stim_file":  "probeSound_name", "trial_num": "Trial", "trial_type": "ProbeCategory"},
+                             {"onset": "ResponseOnset", "duration": "100 * 30", "trial_num": "Trial","trial_type": "Response"}]
 }
 , "split": { "Sep": "all",
             "buffer": 10,

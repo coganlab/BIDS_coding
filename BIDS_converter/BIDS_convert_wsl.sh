@@ -1,7 +1,7 @@
 #!/bin/bash
 
 ORIG_DATA_DIR="$HOME/Box/CoganLab"
-SUB_IDS=(D29 D30 D31 D33 D34 D35 D36 D38 D39 D41 D42 D47 D48 D49 D53 D54 D55 D57 D59 D61 D63 D65 D68 D69 D70 D71 D72 D73 D77)
+SUB_IDS=(D29 D30 D31 D33 D34 D35 D36 D38 D39 D41 D42 D47 D48 D49 D53 D54 D55 D57 D59)
 TASKS=("Neighborhood_Sternberg")
 
 #declare -l mylist[30]
@@ -27,7 +27,7 @@ for TASK in "${TASKS[@]}"
     mkdir -p $BIDS_DIR
     mkdir -p "$OUTPUT_DIR/stimuli"
     # shellcheck disable=SC2038
-    find "$ORIG_DATA_DIR/task_stimuli" -iname "lexical" -type d -exec echo "{}/." \; | xargs -I{} cp -afv {} "$OUTPUT_DIR/stimuli/"
+    find "$ORIG_DATA_DIR/task_stimuli" -iname "neighborhood_sternberg" -type d -exec echo "{}/." \; | xargs -I{} cp -afv {} "$OUTPUT_DIR/stimuli/"
     #TASKLOWER=$(echo $TASK | tr '[:upper:]' '[:lower:]')
     #echo "$ORIG_DATA_DIR/task_stimuli/$TASKLOWER/."
     #cp -av "$ORIG_DATA_DIR/task_stimuli/$TASKLOWER/." "$BIDS_DIR/stimuli/"

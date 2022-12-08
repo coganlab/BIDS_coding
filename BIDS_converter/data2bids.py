@@ -1164,6 +1164,33 @@ class Data2Bids:  # main conversion and file organization program
         for event in events:
             event_order += 1
             temp_df = pd.DataFrame()
+            # check if df column is actually a string of a list, then fix the data type and reorder the events
+            list_dfs = [val for val in event.values()
+                        if val in df.columns
+                        if df[val].dtype == object
+                        if any(char in '[]' for char in df[val][0])]
+            for val in list_dfs:
+                # fix string data meant to be a list
+                df[val] = df[val].apply(lambda x: [float(x) if is_number(x) else x for x in x.translate(
+                    "".maketrans({'[': '', ']': '', '\'': ''})).split()])
+                num_new = len(max(df[val],key=len))
+            if list_dfs:
+                # add new columns to old dataframe
+                df = pd.concat([pd.DataFrame(df[x].tolist(), index=df.index).add_prefix(x) for x in
+                           [col for col in list_dfs if isinstance(df[col][0], (list,tuple))]] + [df], axis=1)
+                event_order -= 1
+                # add new event config
+                new_events = []
+                new_event = event
+                for i in range(num_new):
+                    for key, value in event.items():
+                        if value in list_dfs:
+                            new_event[key] = value + str(i)
+                        else:
+                            new_event[key] = value
+                    new_events.append(new_event)
+                events[event_order:event_order] = [new_events]
+                continue
             for key, value in event.items():
                 if key == "stim_file":
                     df[value] = self.check_stims(df[value])
@@ -1172,8 +1199,7 @@ class Data2Bids:  # main conversion and file organization program
                 else:
                     temp_df[key] = eval_df(df, value)
             if "trial_num" not in temp_df.columns:
-                temp_df["trial_num"] = [1 + i for i in
-                                        list(range(temp_df.shape[0]))]
+                temp_df["trial_num"] = [1 + i for i in list(range(temp_df.shape[0]))]
                 # TODO: make code below work for non correction case
             ''' 
                 if "duration" not in temp_df.columns:
@@ -1665,7 +1691,7 @@ class Data2Bids:  # main conversion and file organization program
                     continue
                 elif not any(match_set) and self._is_verbose:
                     print("no file matching the pattern {} found in {}".format(
-                        pattern,file_path))
+                        pattern, file_path))
                 else:
                     print(match_set)
                 # write JSON file for any missing files
