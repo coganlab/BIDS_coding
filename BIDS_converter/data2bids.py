@@ -1146,7 +1146,9 @@ class Data2Bids:  # main conversion and file organization program
         out_label = labels
         files = os.listdir(self.stim_dir)
         for i, label in enumerate(labels.tolist()):
-            if label in files:
+            if label is None:
+                out_label.iloc[i] = None
+            elif label in files:
                 out_label.iloc[i] = label
             elif label + ".wav" in files:
                 out_label.iloc[i] = label + ".wav"
@@ -1154,9 +1156,10 @@ class Data2Bids:  # main conversion and file organization program
                 out_label.iloc[i] = check_lower(label, files)
         return out_label
 
-    def frame2bids(self, df: pd.DataFrame, events: Union[dict, List[dict]],
+    def frame2bids(self, df_in: pd.DataFrame, events: Union[dict, List[dict]],
                    data_sample_rate=None, audio_correction=None,
                    start_at=0) -> pd.DataFrame:
+        df = df_in.copy()
         new_df = None
         if isinstance(events, dict):
             events = list(events)
@@ -1165,31 +1168,35 @@ class Data2Bids:  # main conversion and file organization program
             event_order += 1
             temp_df = pd.DataFrame()
             # check if df column is actually a string of a list, then fix the data type and reorder the events
-            list_dfs = [val for val in event.values()
-                        if val in df.columns
-                        if df[val].dtype == object
-                        if any(char in '[]' for char in df[val][0])]
-            for val in list_dfs:
-                # fix string data meant to be a list
-                df[val] = df[val].apply(lambda x: [float(x) if is_number(x) else x for x in x.translate(
-                    "".maketrans({'[': '', ']': '', '\'': ''})).split()])
-                num_new = len(max(df[val],key=len))
+            list_dfs = []
+            ttable = "".maketrans({'[': '', ']': '', '\'': ''})
+            str2list = lambda x: [str2num(x) for x in x.translate(ttable).split()]
+            for val in [vals for vals in event.values() if vals in df_in.columns]:
+                if df[val].dtype == object:
+                    if isinstance(df[val][0], list):
+                        list_dfs.append(val)
+                        num_new = len(max(df[val], key=len))
+                    elif isinstance(df[val][0], str):
+                        if all(char in df[val][0] for char in '[]'):
+                            list_dfs.append(val)
+                            # fix string data meant to be a list
+                            df[val] = df[val].apply(str2list)
+                            num_new = len(max(df[val], key=len))
             if list_dfs:
                 # add new columns to old dataframe
                 df = pd.concat([pd.DataFrame(df[x].tolist(), index=df.index).add_prefix(x) for x in
-                           [col for col in list_dfs if isinstance(df[col][0], (list,tuple))]] + [df], axis=1)
-                event_order -= 1
+                                list_dfs] + [df], axis=1)
                 # add new event config
                 new_events = []
-                new_event = event
+                new_event = event.copy()
                 for i in range(num_new):
                     for key, value in event.items():
                         if value in list_dfs:
                             new_event[key] = value + str(i)
-                        else:
-                            new_event[key] = value
-                    new_events.append(new_event)
-                events[event_order:event_order] = [new_events]
+                    new_events.append(new_event.copy())
+                events[event_order:event_order] = new_events
+                # reset event reading with new event definitions
+                event_order -= 1
                 continue
             for key, value in event.items():
                 if key == "stim_file":

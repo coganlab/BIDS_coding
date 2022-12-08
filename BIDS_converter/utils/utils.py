@@ -13,7 +13,7 @@ import numpy as np
 import pandas as pd
 from pyedflib import EdfReader
 from scipy.io import wavfile
-from typing import List
+from typing import List, Union
 
 
 class DisplayablePath:
@@ -200,7 +200,7 @@ def rot_z(alpha):
                         , [0, 0, 1]])
 
 
-def is_number(s):
+def is_number(s: str) -> bool:
     if isinstance(s, str):
         try:
             float(s)
@@ -225,7 +225,7 @@ def is_number(s):
         return False
 
 
-def str2num(s):
+def str2num(s: str) -> Union[float, str]:
     if is_number(s):
         return float(s)
     else:
@@ -238,7 +238,7 @@ def slice_time_calc(TR, sNum, totNum, delay):
     return tslice
 
 
-def delete_folder(pth):
+def delete_folder(pth: os.PathLike):
     for sub in pth.iterdir():
         if sub.is_dir():
             delete_folder(sub)
@@ -253,7 +253,7 @@ def set_default(obj):
     raise TypeError
 
 
-def force_remove(mypath):
+def force_remove(mypath: os.PathLike):
     x = 0
     e = None
     while os.path.isfile(mypath) or os.path.isdir(mypath):
@@ -290,7 +290,7 @@ def force_remove(mypath):
 
 
 def eval_df(df: pd.DataFrame, exp: str,
-            file_dir=""):
+            file_dir: os.PathLike = "") -> pd.Series:
     """input a df and expression and return a single dataframe column
 
     :param df:
@@ -302,6 +302,8 @@ def eval_df(df: pd.DataFrame, exp: str,
     :return:
     :rtype:
     """
+    if exp in df.columns:
+        return df[exp].squeeze()
     for name in [i for i in re.split(r"[ +\-/*%]", exp) if i != '']:
         if name in df.columns:
             if is_number(df[name]):
@@ -325,7 +327,7 @@ def eval_df(df: pd.DataFrame, exp: str,
     return df.eval(exp).squeeze()
 
 
-def trigger_from_excel(filename, participant):
+def trigger_from_excel(filename: os.PathLike, participant: str) -> Union[int, str]:
     """replace trigger channels with trigger label
 
     :param filename:
@@ -350,7 +352,7 @@ def trigger_from_excel(filename, participant):
         raise KeyError("'Trigger' not found in " + xls_file)
 
 
-def check_lower(item: str, string_list: List[str]):
+def check_lower(item: str, string_list: List[str]) -> str:
     for stim_file in string_list:
         if item in stim_file.lower():
             return stim_file
