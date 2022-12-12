@@ -319,8 +319,9 @@ def eval_df(df: pd.DataFrame, exp: str,
                 df[name] = df[name]
         elif not is_number(name):
             if len([i for i in re.split(r"[ +\-/*%]", exp) if i != '']) > 1:
-                raise ValueError("The name {} is no a column in the file, and therefore"
-                                 " cannot be in the experession {}".format(name, exp))
+                continue
+                raise ValueError("The name {} is not a column in the file, and therefore"
+                                 " cannot be in the experession {}\nColumns are {}".format(name, exp, df.columns))
             return pd.Series([name] * df.shape[0], dtype="string")
         else:
             df[name] = pd.Series([float(name)] * df.shape[0], dtype="float")

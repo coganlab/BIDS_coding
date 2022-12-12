@@ -1,8 +1,9 @@
 #!/bin/bash
 
-ORIG_DATA_DIR="$HOME/Box/CoganLab"
-SUB_IDS=(D29 D30 D31 D33 D34 D35 D36 D38 D39 D41 D42 D47 D48 D49 D53 D54 D55 D57 D59)
-TASKS=("Neighborhood_Sternberg")
+ORIG_DATA_DIR="$HOME/lab/Data"
+SUB_IDS=(D3 D5 D6 D7 D8 D9 D18 D20 D22 D23 D24 D26 D27 D28 D29 D30 D31 D32 D53
+ D57 D59 D60 D61 D65 D66 D69 D70 D71 D72)
+TASKS=("SentenceRep")
 
 #declare -l mylist[30]
 
@@ -10,7 +11,7 @@ TASKS=("Neighborhood_Sternberg")
 for TASK in "${TASKS[@]}"
  do
 
-    OUTPUT_DIR="$HOME/Workspace/$TASK"
+    OUTPUT_DIR="$HOME/workspace/$TASK"
     BIDS_DIR="$OUTPUT_DIR/BIDS"
     ZIP=false
 
@@ -27,7 +28,7 @@ for TASK in "${TASKS[@]}"
     mkdir -p $BIDS_DIR
     mkdir -p "$OUTPUT_DIR/stimuli"
     # shellcheck disable=SC2038
-    find "$ORIG_DATA_DIR/task_stimuli" -iname "neighborhood_sternberg" -type d -exec echo "{}/." \; | xargs -I{} cp -afv {} "$OUTPUT_DIR/stimuli/"
+    find "$ORIG_DATA_DIR/task_stimuli" -iname "sentence_rep" -type d -exec echo "{}/." \; | xargs -I{} cp -afv {} "$OUTPUT_DIR/stimuli/"
     #TASKLOWER=$(echo $TASK | tr '[:upper:]' '[:lower:]')
     #echo "$ORIG_DATA_DIR/task_stimuli/$TASKLOWER/."
     #cp -av "$ORIG_DATA_DIR/task_stimuli/$TASKLOWER/." "$BIDS_DIR/stimuli/"
@@ -48,7 +49,7 @@ for TASK in "${TASKS[@]}"
         #CT scan .nii
         find "$ORIG_DATA_DIR/ECoG_Recon_Full/$SUB_ID/elec_recon" -name "postInPre.nii.gz" -type f -exec cp -v {} "$OUTPUT_DIR/$SUB_ID/${SUB_ID}_CT.nii.gz" \;
         #electrode locations .txt
-        find "$ORIG_DATA_DIR/../ECoG_Recon/$SUB_ID/elec_recon" -name "${SUB_ID}_elec_locations_RAS.txt" -type f -exec cp -v {} "$OUTPUT_DIR/$SUB_ID/" \;
+        find "$(dirname $ORIG_DATA_DIR)/ECoG_Recon/$SUB_ID/elec_recon" -name "${SUB_ID}_elec_locations_RAS.txt" -type f -exec cp -v {} "$OUTPUT_DIR/$SUB_ID/" \;
         #T1 MRI file .mgz
         find "$ORIG_DATA_DIR/ECoG_Recon_Full/$SUB_ID/elec_recon" -name "T1.nii.gz" -type f -exec cp {} "$OUTPUT_DIR/$SUB_ID/${SUB_ID}_T1w.nii.gz" \; | head -1
         #stim file corrections
@@ -86,7 +87,7 @@ for TASK in "${TASKS[@]}"
         #requires numpy, nibabel, and pathlib modules
         python3 data2bids.py -c config.json -i "$OUTPUT_DIR/$SUB_ID" -o $BIDS_DIR -v || { echo "BIDS conversion for $SUB_ID failed, trying next subject" ; continue; }
 
-		rm -rf "$OUTPUT_DIR/$SUB_ID"
+		# rm -rf "$OUTPUT_DIR/$SUB_ID"
 
         [[ $RAN_SUBS =~ (^| )$SUB_ID( |$) ]] || RAN_SUBS+=${SUB_ID}" "
         [[ $RAN_TASKS =~ (^| )$TASK( |$) ]] || RAN_TASKS+=${TASK}" "
