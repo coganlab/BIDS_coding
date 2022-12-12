@@ -7,14 +7,12 @@ import datetime
 import gc
 import gzip
 import json
-import os
 import os.path as op
 import subprocess
 import sys
-from typing import Union, List, TypeVar, Dict, Tuple, Any, Optional
+from typing import Union, TypeVar, Dict, Tuple, Any, Optional
 
 import nibabel as nib
-import pandas as pd
 import pydicom as dicom
 import pyedflib
 from bids import layout
@@ -1144,89 +1142,11 @@ class Data2Bids:  # main conversion and file organization program
             with open(op.splitext(full_file)[0] + ".json", "w") as fst:
                 json.dump(data, fst)
 
-    def check_stims(self, labels: pd.Series) -> pd.Series:
-        out_label = labels
-        files = os.listdir(self.stim_dir)
-        for i, label in enumerate(labels.tolist()):
-            if label in files:
-                out_label.iloc[i] = label
-            elif label + ".wav" in files:
-                out_label.iloc[i] = label + ".wav"
-            else:
-                out_label.iloc[i] = check_lower(label, files)
-        return out_label
+    def frame2bids(self, df_in: pd.DataFrame, events: Union[dict, List[dict]],
+                   data_sample_rate: int = None, audio_correction=None,
+                   start_at: int = 0) -> pd.DataFrame:
 
-    def frame2bids(self, df: pd.DataFrame, events: Union[dict, List[dict]],
-                   data_sample_rate=None, audio_correction=None,
-                   start_at=0) -> pd.DataFrame:
-        new_df = None
-        if isinstance(events, dict):
-            events = list(events)
-        event_order = 0
-        for event in events:
-            event_order += 1
-            temp_df = pd.DataFrame()
-            for key, value in event.items():
-                if key == "stim_file":
-                    df[value] = self.check_stims(df[value])
-                    temp_df["stim_file"] = df[value]
-                    temp_df["duration"] = eval_df(df, value, self.stim_dir)
-                else:
-                    temp_df[key] = eval_df(df, value)
-            if "trial_num" not in temp_df.columns:
-                temp_df["trial_num"] = [1 + i for i in
-                                        list(range(temp_df.shape[0]))]
-                # TODO: make code below work for non correction case
-            ''' 
-                if "duration" not in temp_df.columns:
-                if "stim_file" in temp_df.columns:
-                    temp = []
-                    t_correct = []
-                    for _, fname in temp_df["stim_file"].iteritems():
-                        if fname.endswith(".wav"):
-                            if self.stim_dir is not None:
-                                fname = op.join(self.stim_dir, fname)
-                                dir = self.stim_dir
-                            else:
-                                dir = self._data_dir
-                            try:
-                                frames, data = wavfile.read(fname)
-                            except FileNotFoundError as e:
-                                print(fname + " not found in current directory
-                                 or in " + dir)
-                                raise e
-                            if audio_correction is not None:
-                                correct = audio_correction.set_index(0).squeeze
-                                ()[op.basename(
-                                    op.splitext(fname)[0])] * self._config["eve
-                                    ntFormat"]["SampleRate"]
-                            else:
-                                correct = 0
-                            duration = (data.size / frames) * self._config["eve
-                            ntFormat"]["SampleRate"]
-                        else:
-                            raise NotImplementedError("current build only suppo
-                            rts .wav stim files")
-                        temp.append(duration)
-                        t_correct.append(correct)
-                    temp_df["duration"] = temp
-                    # audio correction
-                    if t_correct:
-                        temp_df["correct"] = t_correct
-                        temp_df["duration"] = temp_df.eval("duration - correct"
-                        )
-                        temp_df["onset"] = temp_df.eval("onset + correct")
-                        temp_df = temp_df.drop(columns=["correct"])
-                else:
-                    raise LookupError("duration of event or copy of audio file 
-                    required but not found in " +
-                                      self._config_path)
-            '''
-            temp_df["event_order"] = event_order
-            if new_df is None:
-                new_df = temp_df
-            else:
-                new_df = new_df.append(temp_df, ignore_index=True, sort=False)
+        new_df = reframe_events(df_in, events.copy(), self.stim_dir)
 
         for name in ["onset", "duration"]:
             if not (pd.api.types.is_float_dtype(
@@ -1633,7 +1553,6 @@ class Data2Bids:  # main conversion and file organization program
 
             # check final file set
             for new_name in names_list:
-                print(new_name)
                 file_path = dst_file_path_list[names_list.index(new_name)]
                 full_name = op.join(file_path, new_name + ".edf")
                 task_match = re.match(".*_task-(\w*)_.*", full_name)
@@ -1649,6 +1568,7 @@ class Data2Bids:  # main conversion and file organization program
                 print(new_name)
                 if new_name.endswith("_ieeg") and any(match_set):
                     # if edf is not yet split
+                    print("here")
                     if self._is_verbose:
                         print("Reading for split... ")
                     if full_name in [i["bids_name"] for i in eeg]:
@@ -1665,9 +1585,13 @@ class Data2Bids:  # main conversion and file organization program
                                    eeg_dict["name"],
                                    correct)
                     continue
+                elif not any(match_set) and self._is_verbose:
+                    print("no file matching the pattern {} found in {}".format(
+                        pattern, file_path))
+                else:
+                    print(match_set)
                 # write JSON file for any missing files
-                self.write_sidecar(op.join(file_path, new_name),
-                                   part_match)
+                self.write_sidecar(op.join(file_path, new_name), part_match)
 
             # write any indicated .json files
             try:
