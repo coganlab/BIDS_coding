@@ -5,13 +5,11 @@ import os
 import re
 import shutil
 import stat
-import threading
 from pathlib import Path
 
 import exrex as ex
 import numpy as np
 import pandas as pd
-from pyedflib import EdfReader
 from scipy.io import wavfile
 from typing import List, Union
 
@@ -92,15 +90,15 @@ class DisplayablePath:
 
 
 def match_regexp(config_regexp, filename, subtype=False):
-    delimiter_left = config_regexp["left"]
-    delimiter_right = config_regexp["right"]
+    delimiter_left = config_regexp["left"].replace("(", "(?:")
+    delimiter_right = config_regexp["right"].replace("(", "(?:")
     match_found = False
 
     if subtype:
         for to_match in config_regexp["content"]:
             if re.match(".*?"
                         + delimiter_left
-                        + '(' + to_match[1] + ')'
+                        + '(' + to_match[1].replace("(", "(?:") + ')'
                         + delimiter_right
                         + ".*?", filename):
                 match = to_match[0]
@@ -109,12 +107,12 @@ def match_regexp(config_regexp, filename, subtype=False):
         for to_match in config_regexp["content"]:
             if re.match(".*?"
                         + delimiter_left
-                        + '(' + to_match + ')'
+                        + '(' + to_match.replace("(", "(?:") + ')'
                         + delimiter_right
                         + ".*?", filename):
                 match = re.match(".*?"
                                  + delimiter_left
-                                 + '(' + to_match + ')'
+                                 + '(' + to_match.replace("(", "(?:") + ')'
                                  + delimiter_right
                                  + ".*?", filename).group(1)
                 match_found = True
@@ -161,12 +159,6 @@ def gen_match_regexp(config_regexp, data,
         raise AssertionError(
             "{newname} doesn't match config criteria {given}".format(
                 newname=newname, given=config_regexp))
-
-
-def cat_edf(filename):
-    f = EdfReader(filename)
-    for i in range(f.signals_in_file):
-        print(f.readSignal(i), threading.current_thread().getName())
 
 
 def read_write_edf(read_obj, chn):
