@@ -14,9 +14,8 @@ from typing import TypeVar, Tuple, Any, Optional
 
 import nibabel as nib
 import pydicom as dicom
-import pyedflib
 from bids import layout
-from pyedflib import highlevel
+from pyedflib import highlevel, EdfReader
 
 from utils import *
 
@@ -1166,7 +1165,7 @@ class Data2Bids:  # main conversion and file organization program
         sep_def = df.drop_duplicates(subset=sep_fields)
         for data in sep_def.iterrows():
             row = data[1]
-            match_name = row[self._config["eventFormat"]["IDcol"]]
+            match_name = row[self._config["eventFormat"]["IDcol"]] + "_"
             for cat, sep in self._config["eventFormat"]["Sep"].items():
                 match_name = match_name + gen_match_regexp(self._config[cat], str(row[sep]))
             match_idx = df.index[(df[sep_fields] == row[sep_fields]).all(1)]
