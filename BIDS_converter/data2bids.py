@@ -10,14 +10,12 @@ import json
 import os.path as op
 import subprocess
 import sys
-from typing import Union, TypeVar, Dict, Tuple, Any, Optional
+from typing import TypeVar, Tuple, Any, Optional
 
 import nibabel as nib
 import pydicom as dicom
-import pyedflib
 from bids import layout
-from matgrab import mat2df
-from pyedflib import highlevel
+from pyedflib import highlevel, EdfReader
 
 from utils import *
 
@@ -779,7 +777,7 @@ class Data2Bids:  # main conversion and file organization program
                 if string not in f.read():
                     f.write(string + "\n")
 
-    def check_for_mat_channels(self, fobj: pyedflib.EdfReader, root: PathLike,
+    def check_for_mat_channels(self, fobj: EdfReader, root: PathLike,
                                all_files: List[PathLike],
                                mat_files: List[PathLike]
                                ) -> Tuple[List[np.ndarray], List[dict]]:
@@ -1046,9 +1044,11 @@ class Data2Bids:  # main conversion and file organization program
             os.remove(tsv_name)
             df.replace("[]", np.NaN, inplace=True)
             # all column manipulation and math in frame2bids
-            df_new = self.frame2bids(df, self._config["eventFormat"]["Events"],
-                                     self.sample_rate[part_match], correct,
-                                     start)
+            df_new = frame2bids(df, self._config["eventFormat"],
+                                self.stim_dir, self.sample_rate[part_match],
+                                start)
+            if self._is_verbose:
+                print(df_new)
             df_new.to_csv(tsv_name, sep="\t", index=False, na_rep="n/a")
             # dont forget .json files!
             self.write_sidecar(edf_name, part_match)
@@ -1142,171 +1142,35 @@ class Data2Bids:  # main conversion and file organization program
             with open(op.splitext(full_file)[0] + ".json", "w") as fst:
                 json.dump(data, fst)
 
-    def frame2bids(self, df_in: pd.DataFrame, events: Union[dict, List[dict]],
-                   data_sample_rate: int = None, audio_correction=None,
-                   start_at: int = 0) -> pd.DataFrame:
-
-        new_df = reframe_events(df_in, events.copy(), self.stim_dir)
-
-        for name in ["onset", "duration"]:
-            if not (pd.api.types.is_float_dtype(
-                    new_df[name]) or pd.api.types.is_integer_dtype(
-                new_df[name])):
-                new_df[name] = pd.to_numeric(new_df[name], errors="coerce")
-        if data_sample_rate is None:
-            # onset is timing of even onset (in seconds)
-            new_df["onset"] = new_df["onset"] / self._config["eventFormat"][
-                "SampleRate"]
-        else:
-            # sample is in exact sample of event onset (at eeg sample rate)
-            new_df["sample"] = (new_df["onset"] / self._config["eventFormat"][
-                "SampleRate"] * data_sample_rate) - start_at
-            # onset is timing of even onset (in seconds)
-            new_df["onset"] = new_df["sample"] / data_sample_rate
-            # round sample to nearest frame
-            new_df["sample"] = pd.to_numeric(new_df["sample"].round(),
-                                             errors="coerce",
-                                             downcast="integer")
-        # duration is duration of event (in seconds)
-        new_df["duration"] = new_df["duration"] / self._config["eventFormat"][
-            "SampleRate"]
-
-        if self._is_verbose:
-            print(new_df.sort_values(["trial_num", "event_order"]).drop(
-                columns="event_order"))
-
-        return new_df.sort_values(["trial_num", "event_order"]).drop(
-            columns="event_order")
+    def part_file_sort(self, mat_files: List[PathLike]) -> Dict[str, PathLike]:
+        part_sorted_mats = dict()
+        participants = [self.part_check(filename=fpath)[0] for fpath in mat_files]
+        for part, mat_file in zip(participants, mat_files):
+            part_sorted_mats.setdefault(part, []).append(mat_file)
+        return part_sorted_mats
 
     def mat2tsv(self, mat_files: List[PathLike]):
-        part_match = None
-        written = True
-        is_separate = None
-        nindex = None
-        for mat_file in mat_files:
-            # initialize dataframe if new participant
-            if not match_regexp(self._config["partLabel"], mat_file
-                                ) == part_match:
-                if written:
-                    df = pd.DataFrame()
-                elif not part_match == match_regexp(self._config["partLabel"],
-                                                    mat_file):
-                    b_index = [j not in df.columns.values.tolist() for j in
-                               self._config["eventFormat"]["Sep"]].index(True)
-                    raise FileNotFoundError(
-                        "{config} variable was not found in {part}'s event "
-                        "files".format(config=list(
-                            self._config["eventFormat"]["Sep"].values())[
-                            b_index], part=part_match))
-            try:
-                part_match = match_regexp(self._config["partLabel"], mat_file)
-            except AssertionError:
-                raise SyntaxError(
-                    "file: {filename} has no matching {config}\n".format(
-                        filename=mat_file, config=
-                        self._config["content"][:][0]))
-            df_new = mat2df(mat_file, self._config["eventFormat"]["Labels"])
-            # check to see if new data is introduced. If not then keep
-            # searching
-            if isinstance(df_new, pd.Series):
-                df_new = pd.DataFrame(df_new)
-            if df_new.shape[0] > df.shape[0]:
-                df = pd.concat(
-                    [df[df.columns.difference(df_new.columns)], df_new],
-                    axis=1)  # auto filters duplicates
-            elif df_new.shape[0] == df.shape[0]:
-                df = pd.concat(
-                    [df, df_new[df_new.columns.difference(df.columns)]],
-                    axis=1)  # auto filters duplicates
-            else:
-                continue
-            written = False
+        """
 
-            if self._is_verbose:
-                print(df)
-            try:
-                if self._config["eventFormat"]["IDcol"] in df.columns.values. \
-                        tolist():  # test if edfs should be
-                    # separated by block or not
-                    if len(df[self._config["eventFormat"]["IDcol"]].unique(
-                    )) == 1 and self._config["split"]["Sep"] not in [
-                        "all", True] or not self._config["split"]["Sep"]:
-                        # CHANGE this in case literal name doesn't change
-                        is_separate = False
-                        print("Warning: data may have been lost if file ID d"
-                              "idn't change but the recording session did")
-                        # construct fake orig data name to run through name
-                        # generator
-                        # TODO: fix this as well so it works for all data types
-                        match_name = \
-                            mat_file.split(op.basename(mat_file))[0] + \
-                            df[self._config["eventFormat"]["IDcol"]][0] + \
-                            self._config["ieeg"]["content"][0][1]
-                    else:  # this means there was more than one recording
-                        # session. In this case we will separate each
-                        # trial block into a separate "run"
-                        is_separate = True
-                else:
-                    continue
-            except KeyError:
-                match_name = mat_file
+        """
+        df = gather_metadata(mat_files, self._config["eventFormat"]["Labels"])
+        if self._is_verbose:
+            print(df)
+        sep_fields = [self._config["eventFormat"]["IDcol"]] + \
+                     list(self._config["eventFormat"]["Sep"].values())
+        missing_vals = [sep for sep in sep_fields if sep not in df.columns]
+        if missing_vals:
+            raise ValueError("{} missing from data".format(missing_vals))
 
-            # write the tsv from the dataframe
-            # if not changed: check to see if there is anything new to write
-            if not is_separate:
-                self.write_events(match_name, df, mat_file)
-                written = True
-                continue
-
-            if not all(j in df.columns.values.tolist() for j in
-                       self._config["eventFormat"]["Sep"].values()):
-                if self._is_verbose:
-                    print(mat_file)
-                continue
-
-            # make sure numbers do not repeat when not wanted
-            df_unique = df.filter(self._config["eventFormat"][
-                                      "Sep"].values()).drop_duplicates()
-            for i in range(df_unique.shape[0])[1:]:
-                for j in self._config["eventFormat"]["Sep"].keys():
-                    jval = self._config["eventFormat"]["Sep"][j]
-                    try:
-                        if self._config[j]["repeat"] is False:
-                            try:  # making sure actual key errors get caught
-                                if df_unique[jval].iat[i] in \
-                                        df_unique[jval].tolist()[:i]:
-                                    df_unique[jval].iat[i] = str(int(max(
-                                        df_unique[jval].tolist())) + 1)
-                            except KeyError as e:
-                                raise ValueError(e)
-                        else:
-                            continue
-                    except KeyError:
-                        continue
-
-            tupelist = list(df.filter(self._config[
-                                          "eventFormat"][
-                                          "Sep"].values()).drop_duplicates(
-            ).itertuples(index=False))
-
-            for i in range(len(tupelist)):  # iterate through every block
-                nindex = (df.where(
-                    df.filter(self._config["eventFormat"]["Sep"].values()) ==
-                    tupelist[i]) == df).filter(
-                    self._config["eventFormat"]["Sep"].values()).all(axis=1)
-                match_name = mat_file.split(op.basename(mat_file))[0] + str(
-                    df[self._config["eventFormat"]["IDcol"]][nindex].iloc[0])
-                for k in self._config["eventFormat"]["Sep"].keys():
-                    if k in self._config.keys():
-                        data = str(df_unique[self._config["eventFormat"][
-                            "Sep"][k]].iloc[i])
-                        match_name = match_name + gen_match_regexp(
-                            self._config[k], data)
-
-                # fix this to check for data type
-                match_name = match_name + self._config["ieeg"]["content"][0][1]
-                self.write_events(match_name, df, mat_file, nindex)
-            written = True
+        sep_def = df.drop_duplicates(subset=sep_fields)
+        for data in sep_def.iterrows():
+            row = data[1]
+            match_name = row[self._config["eventFormat"]["IDcol"]] + "_"
+            for cat, sep in self._config["eventFormat"]["Sep"].items():
+                match_name = match_name + gen_match_regexp(self._config[cat], str(row[sep]))
+            match_idx = df.index[(df[sep_fields] == row[sep_fields]).all(1)]
+            match_name = match_name + self._config["ieeg"]["content"][0][1]
+            self.write_events(match_name, df.loc[match_idx], mat_files[0])
 
     def write_events(self, match: str, df: pd.DataFrame,
                      mat_file: str, nindex: int = None):
@@ -1537,8 +1401,9 @@ class Data2Bids:  # main conversion and file organization program
                     pass
 
             if mat_list:  # deal with remaining .mat files
-                self.mat2tsv(mat_list)
-
+                part_mat_list = self.part_file_sort(mat_list)
+                for mat_files in part_mat_list.values():
+                    self.mat2tsv(mat_files)
             if txt_df_list:
                 for txt_df_dict in txt_df_list:
                     if self._config["coordsystem"] in txt_df_dict["name"]:
