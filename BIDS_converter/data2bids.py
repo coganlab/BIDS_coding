@@ -777,7 +777,7 @@ class Data2Bids:  # main conversion and file organization program
                 if string not in f.read():
                     f.write(string + "\n")
 
-    def check_for_mat_channels(self, fobj: pyedflib.EdfReader, root: PathLike,
+    def check_for_mat_channels(self, fobj: EdfReader, root: PathLike,
                                all_files: List[PathLike],
                                mat_files: List[PathLike]
                                ) -> Tuple[List[np.ndarray], List[dict]]:
