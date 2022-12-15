@@ -7,17 +7,21 @@ import datetime
 import gc
 import gzip
 import json
+import os
 import os.path as op
-import subprocess
-import sys
-from typing import TypeVar, Tuple, Any, Optional
+import re
+from pathlib import Path
+from typing import Tuple, Any, Optional, List, Union, Dict, TypeVar
 
-import nibabel as nib
+import numpy as np
+import pandas as pd
 import pydicom as dicom
 from bids import layout
 from pyedflib import highlevel, EdfReader
 
-from utils import *
+from utils import fileutils as fls
+from utils import organize as org
+from utils import utils as ut
 
 PathLike = TypeVar("PathLike", str, os.PathLike)
 
@@ -113,7 +117,7 @@ def get_trigger(part_match: str, headers_dict: dict) -> str:
     else:
         trig_lab = headers_dict["default"]
     if ".xlsx" in trig_lab:
-        trig_lab = trigger_from_excel(str(trig_lab), part_match)
+        trig_lab = org.trigger_from_excel(str(trig_lab), part_match)
     return trig_lab
 
 
@@ -171,13 +175,12 @@ class Data2Bids:  # main conversion and file organization program
         if not op.isdir(op.join(self._bids_dir, "stimuli")):
             os.mkdir(op.join(self._bids_dir, "stimuli"))
         for item in os.listdir(dir):
-            shutil.copyfile(op.join(dir, item), op.join(
+            fls.copy_file(op.join(dir, item), op.join(
                 self._bids_dir, "stimuli", item))
         self.stim_dir = dir
         self._ignore.append(dir)
 
     def set_channels(self, channels: list):
-        headers: dict = self._config["ieeg"]["headerData"]
         self.channels = {}
         self.sample_rate = {}
         self.trigger = {}
@@ -188,43 +191,44 @@ class Data2Bids:  # main conversion and file organization program
             dirs[:] = [d for d in dirs if d not in exclude]
             if not files:
                 continue
-            task_label_match = self.find_a_match(files, "task")
             part_match = self.find_a_match(files, "partLabel")
-            self.trigger[part_match] = get_trigger(part_match, headers)
-            self.channels[part_match] = [self.trigger[part_match]]
-            for i, file in enumerate(files):
-                src = op.join(root, file)
-                if any(f in file for f in
-                       self._config["ieeg"]["channels"].keys()):
-                    self._channels_file[part_match] = src
-
-                for name, var in headers.items():
-                    if re.match(".*?" + part_match + ".*?" + name, src):
-                        # some sort of checking for .mat or txt files?
-                        if name.endswith(".mat"):
-                            self.channels[part_match] = \
-                                self.channels[part_match] + \
-                                mat2df(src, var).tolist()
-                            self.sample_rate[part_match] = int(mat2df(
-                                src, self._config['ieeg']['sampleRate']).iloc[
-                                                                   0])
-                            self._ignore.append(src)
-                        elif name.endswith((".txt", ".csv", ".tsv")):
-                            f = open(name, 'r')
-                            content = f.read()
-                            f.close()
-                            self.channels[part_match] = \
-                                self.channels[part_match] + content.split()
-                        elif name.endswith(tuple(self._config['dataFormat'])):
-                            raise NotImplementedError(
-                                src + "\nthis file format does not yet support"
-                                      " {ext} files for channel labels"
-                                      "".format(ext=op.splitext(src)[1]))
+            self.chan_walk(root, files, part_match)
             if isinstance(channels, str):
                 channels = list(channels)
             if channels is not None:
                 self.channels[part_match] = self.channels[part_match] + [
                     c for c in channels if c not in self.channels[part_match]]
+
+    def chan_walk(self, root: PathLike, files: List[PathLike], part_match: str):
+        ieeg_conf: dict = self._config["ieeg"]
+        self.trigger[part_match] = get_trigger(part_match, ieeg_conf["headerData"])
+        self.channels[part_match] = [self.trigger[part_match]]
+        for i, file in enumerate(files):
+            src = op.join(root, file)
+            if any(f in op.basename(src) for f in ieeg_conf["channels"].keys()):
+                self._channels_file[part_match] = src
+
+            for name, var in ieeg_conf["headerData"].items():
+                if re.match(".*?" + part_match + ".*?" + name, src):
+                    self.scan_chans(src, var, part_match)
+
+    def scan_chans(self, src: PathLike, var: str, part_match: str):
+        # some sort of checking for .mat or txt files?
+        name = op.basename(src)
+        if name.endswith(".mat"):
+            self.channels[part_match] = self.channels[part_match] + org.mat2df(src, var).tolist()
+            self.sample_rate[part_match] = int(org.mat2df(src, self._config['ieeg']['sampleRate']).iloc[0])
+            self._ignore.append(src)
+        elif name.endswith((".txt", ".csv", ".tsv")):
+            f = open(name, 'r')
+            content = f.read()
+            f.close()
+            self.channels[part_match] = self.channels[part_match] + content.split()
+        elif name.endswith(tuple(self._config['dataFormat'])):
+            raise NotImplementedError(
+                src + "\nthis file format does not yet support"
+                      " {ext} files for channel labels"
+                      "".format(ext=op.splitext(src)[1]))
 
     def set_overwrite(self, overwrite: bool):
         self._is_overwrite = overwrite
@@ -254,9 +258,7 @@ class Data2Bids:  # main conversion and file organization program
                               "sub-{SUB_NUM}".format(SUB_NUM=sub_num))
             # destination subdirectory
             if op.isdir(sub_dir):
-                proc = subprocess.Popen("rm -rf {file}".format(file=sub_dir),
-                                        shell=True, stdout=subprocess.PIPE)
-                proc.communicate()
+                fls.force_remove(sub_dir)
             os.mkdir(sub_dir)
 
             if any("medata" in x for x in subdirs):  # copy over + list me data
@@ -268,58 +270,21 @@ class Data2Bids:  # main conversion and file organization program
                     runmatch = re.match(r".*run(\d{2}).*", me).group(1)
                     if str(int(runmatch)) not in runlist:
                         runlist.append(str(int(runmatch)))
-                    shutil.copyfile(op.join(ddir, "medata", me), op.join(
+                    fls.copy_file(op.join(ddir, "medata", me), op.join(
                         sub_dir, me))
                 self.is_multi_echo = True
                 # will trigger even if single echo data is in medata folder.
                 # Should still be okay
             for subdir in subdirs[1:]:
-                # not including parent folder or /medata, run dcm2niix on non
-                # me data
+                # print(str(fobj[0x20, 0x11].value), runlist)
                 try:
-                    fobj = dicom.read_file(op.join(subdir, list(os.walk(
+                    fobj = dicom.read_file(os.path.join(subdir, list(os.walk(
                         subdir))[0][2][0]), force=True)
                     # first dicom file of the scan
-                    scan_num = str(int(op.basename(subdir))).zfill(2)
+                    scan_num = str(int(os.path.basename(subdir))).zfill(2)
                 except ValueError:
                     continue
-                firstfile = [x[2] for x in os.walk(subdir)][0][0]
-                # print(str(fobj[0x20, 0x11].value), runlist)
-                # running dcm2niix
-                if str(fobj[0x20, 0x11].value) in runlist:
-                    proc = subprocess.Popen(
-                        "dcm2niix -z y -f run{SCAN_NUM}_%p_%t_sub{SUB_NUM} -o "
-                        "{OUTPUT_DIR} -s y -b y {DATA_DIR}".format(
-                            OUTPUT_DIR=sub_dir, SUB_NUM=sub_num,
-                            DATA_DIR=op.join(subdir, firstfile),
-                            SCAN_NUM=scan_num), shell=True,
-                        stdout=subprocess.PIPE)
-                    outs, errs = proc.communicate()
-                    prefix = re.match(".*/sub-{SUB_NUM}/(run{SCAN_NUM}".format(
-                        SUB_NUM=sub_num, SCAN_NUM=scan_num
-                    ) + r"[^ \(\"\\n\.]*).*", str(outs)).group(1)
-                    for file in os.listdir(sub_dir):
-                        mefile = re.match(r"run{SCAN_NUM}(\.e\d\d)\.nii"
-                                          r"".format(SCAN_NUM=scan_num), file)
-                        if re.match(r"run{SCAN_NUM}\.e\d\d.nii".format(
-                                SCAN_NUM=scan_num), file):
-                            shutil.move(op.join(sub_dir, file),
-                                        op.join(sub_dir, prefix + mefile.group(
-                                            1) + ".nii"))
-                            shutil.copy(op.join(sub_dir, prefix + ".json"),
-                                        op.join(sub_dir, prefix + mefile.group(
-                                            1) + ".json"))
-                    os.remove(op.join(sub_dir, prefix + ".nii.gz"))
-                    os.remove(op.join(sub_dir, prefix + ".json"))
-                else:
-                    proc = subprocess.Popen(
-                        "dcm2niix -z y -f run{SCAN_NUM}_%p_%t_sub{SUB_NUM} -o "
-                        "{OUTPUT_DIR} -b y {DATA_DIR}".format(
-                            OUTPUT_DIR=sub_dir, SUB_NUM=sub_num,
-                            DATA_DIR=subdir, SCAN_NUM=scan_num), shell=True,
-                        stdout=subprocess.PIPE)
-                    outs, errs = proc.communicate()
-                sys.stdout.write(outs.decode("utf-8"))
+                fls.run_dcm2niix(subdir, fobj, scan_num, runlist, sub_dir, sub_num)
 
             self._multi_echo = runlist
             self._data_dir = op.join(op.dirname(
@@ -386,7 +351,7 @@ class Data2Bids:  # main conversion and file organization program
         if not op.isdir(newdir):
             os.mkdir(newdir)
         elif self._is_overwrite:
-            force_remove(newdir)
+            fls.force_remove(newdir)
             os.mkdir(newdir)
         self._bids_dir = newdir
         self._ignore.append(newdir)
@@ -397,12 +362,6 @@ class Data2Bids:  # main conversion and file organization program
     def get_bids_version(self):
         return self._bids_version
 
-    def bids_validator(self):
-        assert self._bids_dir is not None, "Cannot launch bids-validator wit" \
-                                           "hout specifying bids directory !"
-        subprocess.check_call(['bids-validator',
-                               self._bids_dir])
-
     def find_a_match(self, files: Union[List[str], str],
                      config_key: str) -> str:
         subtype = isinstance(self._config[config_key]["content"][0], list)
@@ -411,7 +370,7 @@ class Data2Bids:  # main conversion and file organization program
 
         for file in files:
             try:
-                return match_regexp(self._config[config_key], file, subtype)
+                return org.match_regexp(self._config[config_key], file, subtype)
             except AssertionError:
                 continue
         raise FileNotFoundError("There was no file matching the config key {}"
@@ -491,8 +450,8 @@ class Data2Bids:  # main conversion and file organization program
         # if is an MRI
         if dst_file_path.endswith("func") or dst_file_path.endswith("anat"):
             try:
-                SeqType = str(match_regexp(self._config["pulseSequenceType"],
-                                           filename, subtype=True))
+                SeqType = str(org.match_regexp(self._config["pulseSequenceType"],
+                                               filename, subtype=True))
             except AssertionError:
                 if verbose:
                     print("No pulse sequence found for %s" % src_file_path)
@@ -552,7 +511,7 @@ class Data2Bids:  # main conversion and file organization program
                 debug = True
                 raise e
             if match is None:
-                match = match_regexp(self._config[tag], filename, subtype)
+                match = org.match_regexp(self._config[tag], filename, subtype)
             if "fill" in self._config[tag].keys():
                 if re.match(r"^[^\d]{1,3}", match):
                     matches = re.split(r"([^\d]{1,3})", match, 1)
@@ -580,8 +539,8 @@ class Data2Bids:  # main conversion and file organization program
         """
         for data_type in self._data_types.keys():
             try:
-                data_subtype = match_regexp(self._config[data_type], filename,
-                                            subtype=True)
+                data_subtype = org.match_regexp(self._config[data_type], filename,
+                                                subtype=True)
                 dst_file_path = op.join(dst, data_type)
                 self._data_types[data_type] = True
                 return data_subtype, dst_file_path
@@ -605,7 +564,7 @@ class Data2Bids:  # main conversion and file organization program
             else:
                 if self._multi_echo == 0:
                     try:
-                        match_regexp(self._config["echo"], src_file)
+                        org.match_regexp(self._config["echo"], src_file)
                     except AssertionError:
                         return False
                     return True
@@ -669,7 +628,7 @@ class Data2Bids:  # main conversion and file organization program
                 InstanceNumber = 0
                 while None in timings:
                     if timings[InStackPositionNumber - 1] is None:
-                        timings[InStackPositionNumber - 1] = slice_time_calc(
+                        timings[InStackPositionNumber - 1] = ut.slice_time_calc(
                             RepetitionTime, InstanceNumber, int(
                                 ImagesInAcquisition / vols_per_time), echo)
                     if acquisition_series == "odd-interleaved" or \
@@ -738,7 +697,7 @@ class Data2Bids:  # main conversion and file organization program
                                     verbose=self._is_verbose)
             return None
         else:
-            shutil.copy(file_name, edf_name)
+            fls.copy_file(file_name, edf_name)
             return None
 
     def part_check(self, part_match: str = None, filename: str = None):
@@ -747,7 +706,7 @@ class Data2Bids:  # main conversion and file organization program
         assert part_match or filename
         if filename:
             try:
-                part_match = match_regexp(self._config["partLabel"], filename)
+                part_match = org.match_regexp(self._config["partLabel"], filename)
             except AssertionError:
                 print("No participant found for %s" % filename)
             except KeyError as e:
@@ -786,88 +745,31 @@ class Data2Bids:  # main conversion and file organization program
         file = fobj.file_name
         part_match = self.part_check(filename=file)[0]
         mats = [i for i in all_files + mat_files if i.endswith(".mat")]
-        f_length = [len(mat2df(op.join(root, fname))) for fname in mats]
+        f_length = [len(org.mat2df(op.join(root, fname))) for fname in mats]
         if fobj.samples_in_file(0) in f_length:
             for fname in mats:
                 sig_len = fobj.samples_in_file(0)
                 if not op.isfile(fname):
                     fname = op.join(root, fname)
-                if mat2df(fname) is None:
+                if org.mat2df(fname) is None:
                     continue
-                elif len(mat2df(fname)) == sig_len:
+                elif len(org.mat2df(fname)) == sig_len:
                     if fname in all_files:
                         all_files.remove(fname)
                     if fname in mat_files:
                         mat_files.remove(fname)
-                    df = pd.DataFrame(mat2df(fname))
+                    df = pd.DataFrame(org.mat2df(fname))
                     for cols in df.columns:
                         extra_arrays = np.vstack([extra_arrays, df[cols]])
                         extra_signal_headers.append(
                             highlevel.make_signal_header(
                                 op.splitext(op.basename(fname))[0],
                                 sample_rate=self.sample_rate[part_match]))
-                elif sig_len * 0.99 <= len(mat2df(fname)) <= sig_len * 1.01:
+                elif sig_len * 0.99 <= len(org.mat2df(fname)) <= sig_len * 1.01:
                     raise BufferError(file + "of size" + sig_len +
                                       "is not the same size as" + fname +
-                                      "of size" + len(mat2df(fname)))
+                                      "of size" + len(org.mat2df(fname)))
         return extra_arrays, extra_signal_headers
-
-    def mri_file_transfer(self, source: PathLike, destination: PathLike,
-                          new_name: str):
-        file = op.basename(source)
-        compress = self._config["compress"]
-        final_file = op.join(destination, new_name + ".nii")
-        # we convert it using nibabel
-        if not any(file.endswith(ext) for ext in [".nii", ".nii.gz"]):
-            # check if .nii listed in config file, not if file ends with .nii
-            # loading the original image
-            nib_img = nib.load(source)
-            nib_affine = np.array(nib_img.affine)
-            nib_data = np.array(nib_img.dataobj)
-
-            # create the nifti1 image
-            # if minc format, invert the data and change the affine
-            # transformation there is also an issue on minc headers
-            if file.endswith(".mnc"):
-                if len(nib_img.shape) > 3:
-                    nib_affine[0:3, 0:3] = nib_affine[0:3, 0:3]
-                    rot_z(np.pi / 2)
-                    rot_y(np.pi)
-                    rot_x(np.pi / 2)
-                    nib_data = nib_data.T
-                    nib_data = np.swapaxes(nib_data, 0, 1)
-
-                    nifti_img = nib.Nifti1Image(nib_data, nib_affine,
-                                                nib_img.header)
-                    nifti_img.header.set_xyzt_units(xyz="mm", t="sec")
-                    zooms = np.array(nifti_img.header.get_zooms())
-                    zooms[3] = self._config["repetitionTimeInSec"]
-                    nifti_img.header.set_zooms(zooms)
-                elif len(nib_img.shape) == 3:
-                    nifti_img = nib.Nifti1Image(nib_data, nib_affine,
-                                                nib_img.header)
-                    nifti_img.header.set_xyzt_units(xyz="mm")
-            else:
-                nifti_img = nib.Nifti1Image(nib_data, nib_affine,
-                                            nib_img.header)
-
-            # saving the image
-            nib.save(nifti_img, final_file + ".gz")
-
-        # if it is already a nifti file, no need to convert it so we just copy
-        # rename
-        if file.endswith(".nii.gz"):
-            shutil.copy(source, final_file + ".gz")
-        elif file.endswith(".nii"):
-            shutil.copy(source, final_file)
-            # compression just if .nii files
-            if compress is True:
-                print("zipping " + file)
-                with open(final_file, 'rb') as f_in:
-                    with gzip.open(final_file + ".gz", 'wb',
-                                   self._config["compressLevel"]) as f_out:
-                        shutil.copyfileobj(f_in, f_out)
-                os.remove(final_file)
 
     def force_to_edf(self, source: PathLike, files: List[PathLike]) -> bool:
         remove_src_edf = True
@@ -880,7 +782,7 @@ class Data2Bids:  # main conversion and file organization program
             with gzip.open(source, 'rb',
                            self._config["compressLevel"]) as f_in:
                 with open(source.rsplit(".gz", 1)[0], 'wb') as f_out:
-                    shutil.copyfileobj(f_in, f_out)
+                    fls.copy_file(f_in, f_out, is_obj=True)
         elif not self._config["ieeg"]["binary?"]:
             raise NotImplementedError(
                 "{file} file format not yet supported. If file is binary forma"
@@ -921,61 +823,6 @@ class Data2Bids:  # main conversion and file organization program
                 "{file} header could not be found".format(file=file))
         return remove_src_edf
 
-    def tsv_all_eeg(self, fname: PathLike, df: pd.DataFrame):
-        """Writes tsv files into each folder containing eeg data
-
-        :param fname:
-        :type fname:
-        :param df:
-        :type df:
-        :return:
-        :rtype:
-        """
-        for d_type in self._data_types.keys():
-            if not ("eeg" in d_type and self._data_types[d_type]):
-                continue
-            file_name = op.join(op.dirname(fname), d_type, op.basename(fname))
-            df.to_csv(file_name, sep="\t", index=False)
-
-    def make_coordsystem(self,
-                         txt_df_dict: Dict[str, Union[pd.DataFrame, str]],
-                         part_match_z: str):
-        if txt_df_dict["error"] is not None:
-            raise txt_df_dict["error"]
-        df: pd.DataFrame = txt_df_dict["data"]
-        df.columns = ["name1", "name2", "x", "y", "z", "hemisphere", "del"]
-        df["name"] = df["name1"] + df["name2"].astype(str)
-        df["hemisphere"] = df["hemisphere"] + df["del"]
-        df = df.drop(columns=["name1", "name2", "del"])
-        df = pd.concat(
-            [df["name"], df["x"], df["y"], df["z"], df["hemisphere"]], axis=1)
-        filename = op.join(self._bids_dir, "sub-" + part_match_z,
-                           "sub-{}_space-Talairach_electrodes.tsv"
-                           "".format(part_match_z))
-        self.tsv_all_eeg(filename, df)
-
-    def make_channels_tsv(self, file_path: PathLike, task: str):
-        part_match, part_match_z = self.part_check(filename=file_path)
-        df = None
-        for name, var in self._config["ieeg"]["channels"].items():
-            if name in file_path:
-                df = mat2df(file_path, var)
-                if "highpass_cutoff" in df.columns.to_list():
-                    df = df.rename(columns={"highpass_cutoff": "high_cutoff"})
-                if "lowpass_cutoff" in df.columns.to_list():
-                    df = df.rename(columns={"lowpass_cutoff": "low_cutoff"})
-        df["type"] = self._config["ieeg"]["type"]
-        df["units"] = self._config["ieeg"]["units"]
-        df = df.append(
-            {"name": "Trigger", "high_cutoff": 1, "low_cutoff": 1000,
-             "type": "TRIG", "units": "uV"}, ignore_index=True)
-        df = pd.concat([df["name"], df["type"], df["units"], df["low_cutoff"],
-                        df["high_cutoff"]], axis=1)
-        filename = op.join(self._bids_dir, "sub-{}".format(part_match_z),
-                           "sub-" + part_match_z + "_task-{}".format(
-                               task) + "_channels.tsv")
-        self.tsv_all_eeg(filename, df)
-
     def write_edf(self, array: np.ndarray, signal_headers: List[dict],
                   header: dict, old_name: PathLike, correct):
         """checks for .tsv files in eeg folders then writes matching .edf files
@@ -1007,7 +854,9 @@ class Data2Bids:  # main conversion and file organization program
                 self._config["acq"]["content"][0] + ")?_run-(" +
                 self._config["runIndex"]["content"][0] + ")_events.tsv", file)
             if match_tsv:
-                num_list = self.get_timing_from_tsv(full_file, signal_headers)
+                self.rewrite_tsv(full_file, part_match)
+                num_list = org.get_timing_from_tsv(full_file, signal_headers[
+                    0]["sample_rate"])
                 start_nums.append(tuple(num_list))
                 matches.append(match_tsv)
         for i in range(len(start_nums)):
@@ -1040,54 +889,23 @@ class Data2Bids:  # main conversion and file organization program
                     end) + "]) ---> " + edf_name)
             highlevel.write_edf(edf_name, new_array, signal_headers, header,
                                 digital=self._config["ieeg"]["digital"])
-            df = pd.read_csv(tsv_name, sep="\t", header=0)
-            os.remove(tsv_name)
-            df.replace("[]", np.NaN, inplace=True)
-            # all column manipulation and math in frame2bids
-            df_new = frame2bids(df, self._config["eventFormat"],
-                                self.stim_dir, self.sample_rate[part_match],
-                                start)
-            if self._is_verbose:
-                print(df_new)
-            df_new.to_csv(tsv_name, sep="\t", index=False, na_rep="n/a")
+            # zero the timing so that each file starts at t=0
+            if i > 0:
+                org.reset_zero(tsv_name, start_nums[i - 1][1],
+                               self.sample_rate[part_match], self._is_verbose)
             # dont forget .json files!
             self.write_sidecar(edf_name, part_match)
             self.write_sidecar(tsv_name, part_match)
 
-    def get_timing_from_tsv(self, file_path: PathLike,
-                            signal_headers: List[dict]) -> List[int]:
-        """reads tsv files to determine sectioning of eeg files
+    def rewrite_tsv(self, tsv_name: PathLike, part_match: str):
+        df = pd.read_csv(tsv_name, sep="\t", header=0)
+        os.remove(tsv_name)
+        df.replace("[]", np.NaN, inplace=True)
 
-        :param file_path:
-        :type file_path:
-        :param signal_headers:
-        :type signal_headers:
-        :return:
-        :rtype:
-        """
-        df = pd.read_csv(file_path, sep="\t", header=0)
-        # converting signal start and end to correct sample rate for data
-        eval_col = eval_df(df, self._config["eventFormat"]["Timing"]["end"],
-                           self.stim_dir)
-        end_num = str2num(eval_col.iloc[-1])
-        i = -1
-        while not is_number(end_num):
-            i -= 1
-            end_num = str2num(eval_col.iloc[i])
-
-        eval_col = eval_df(df, self._config["eventFormat"]["Timing"]["start"],
-                           self.stim_dir)
-        start_num = eval_col.iloc[0]
-        i = 0
-        while not is_number(start_num):
-            i += 1
-            start_num = str2num(eval_col.iloc[i])
-
-        num_list = [round(
-            (float(x) / float(self._config["eventFormat"]["SampleRate"])) *
-            signal_headers[0][
-                "sample_rate"]) for x in (start_num, end_num)]
-        return num_list
+        # all other column manipulation and math in frame2bids
+        df_new = org.frame2bids(df, self._config["eventFormat"],
+                                self.stim_dir, self.sample_rate[part_match])
+        df_new.to_csv(tsv_name, sep="\t", index=False, na_rep="n/a")
 
     def write_sidecar(self, full_file: PathLike, part_match: str):
         if full_file.endswith(".tsv"):
@@ -1150,14 +968,11 @@ class Data2Bids:  # main conversion and file organization program
         return part_sorted_mats
 
     def mat2tsv(self, mat_files: List[PathLike]):
-        """
-
-        """
-        df = gather_metadata(mat_files, self._config["eventFormat"]["Labels"])
+        event_fmt = self._config["eventFormat"]
+        df = org.gather_metadata(mat_files)
         if self._is_verbose:
             print(df)
-        sep_fields = [self._config["eventFormat"]["IDcol"]] + \
-                     list(self._config["eventFormat"]["Sep"].values())
+        sep_fields = [event_fmt["IDcol"]] + list(event_fmt["Sep"].values())
         missing_vals = [sep for sep in sep_fields if sep not in df.columns]
         if missing_vals:
             raise ValueError("{} missing from data".format(missing_vals))
@@ -1165,9 +980,9 @@ class Data2Bids:  # main conversion and file organization program
         sep_def = df.drop_duplicates(subset=sep_fields)
         for data in sep_def.iterrows():
             row = data[1]
-            match_name = row[self._config["eventFormat"]["IDcol"]] + "_"
-            for cat, sep in self._config["eventFormat"]["Sep"].items():
-                match_name = match_name + gen_match_regexp(self._config[cat], str(row[sep]))
+            match_name = row[event_fmt["IDcol"]] + "_"
+            for cat, sep in event_fmt["Sep"].items():
+                match_name = match_name + org.gen_match_regexp(self._config[cat], str(row[sep]))
             match_idx = df.index[(df[sep_fields] == row[sep_fields]).all(1)]
             match_name = match_name + self._config["ieeg"]["content"][0][1]
             self.write_events(match_name, df.loc[match_idx], mat_files[0])
@@ -1322,8 +1137,10 @@ class Data2Bids:  # main conversion and file organization program
             self.make_subdirs(files)
             if self.channels:
                 self.announce_channels(part_match)
-                self.make_channels_tsv(self._channels_file[part_match],
-                                       task_label_match)
+                org.make_channels_tsv(self._channels_file[part_match],
+                                      task_label_match, part_match_z,
+                                      self._config["ieeg"],
+                                      self._bids_dir, self._data_types)
             if self._is_verbose:
                 print(files)
             while files:  # loops over each participant file
@@ -1363,8 +1180,8 @@ class Data2Bids:  # main conversion and file organization program
                 # finally, if the file is not nifti
                 if dst_file_path.endswith(
                         "func") or dst_file_path.endswith("anat"):
-                    self.mri_file_transfer(
-                        src_file_path, dst_file_path, new_name)
+                    fls.mri_file_transfer(src_file_path, dst_file_path,
+                                          new_name, self._config)
 
                 elif dst_file_path.endswith("ieeg"):
                     remove_src_edf = self.force_to_edf(
@@ -1407,7 +1224,8 @@ class Data2Bids:  # main conversion and file organization program
             if txt_df_list:
                 for txt_df_dict in txt_df_list:
                     if self._config["coordsystem"] in txt_df_dict["name"]:
-                        self.make_coordsystem(txt_df_dict, part_match_z)
+                        org.make_coordsystem(txt_df_dict, part_match_z,
+                                             self._bids_dir, self._data_types)
                     elif self._config["eventFormat"]["AudioCorrection"] in \
                             txt_df_dict["name"]:
                         if txt_df_dict["error"] is not None:
@@ -1473,7 +1291,7 @@ class Data2Bids:  # main conversion and file organization program
                     json.dump(contents, fst)
         # Output
         if self._is_verbose:
-            tree(self._bids_dir)
+            ut.tree(self._bids_dir)
 
 
 def main():
