@@ -105,13 +105,7 @@
     , "content" : ["[0-9]{6}"]
     }
 ,"eventFiles" : "([Tt]rial(s|Info).*?\\.mat)"
-,"eventFormat" : {"Labels": ["Subject","Trial","Rec", "Day","FilenamePrefix",
-  "Start","FirstStimAuditory","StimAuditory","ProbeAuditory","Auditory","Go","StartCode","AuditoryCode","GoCode","Noisy",
-  "NoResponse","ResponseStart","ResponseEnd","ListenCueOnset","ListenCueTime","cue",	"sound","go",	"block",
-  "cond",	"cueStart",	"cueEnd",	"audioStart",	"audioAlignedTrigger", "ResponseOnset", "ProbeCueOnset",
-  "delStart",	"delEnd",	"goStart",	"goEnd",	"respStart",	"respEnd", "stimulusSounds_name", "StimlusCategory",
-  "isiStart",	"isiEnd",	"flipTimes",	"tCaptureStart","probeSound_name", "ProbeCategory"]
-                ,"IDcol" : "FilenamePrefix"
+,"eventFormat" : {"IDcol" : "FilenamePrefix"
                 ,"Sep" : { "runIndex" : "block",
                              "acq" : "Rec" }
                 ,"Timing": { "start": "Start",
