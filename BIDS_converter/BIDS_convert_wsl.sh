@@ -1,8 +1,9 @@
 #!/bin/bash
 
-ORIG_DATA_DIR="$HOME/lab/Data"
-SUB_IDS=(D3 D5 D6 D7 D8 D9 D18 D20 D22 D23 D24 D26 D27 D28 D29 D30 D31 D32 D53
- D57 D59 D60 D61 D65 D66 D69 D70 D71 D72)
+ORIG_DATA_DIR="$HOME/Box/CoganLab"
+SUB_IDS=(D30)
+#D3 D5 D6 D7 D8 D9 D18 D20 D22 D23 D24 D26 D27 D28 D29 D30 D31 D32 D53
+ #D57 D59 D60 D61 D65 D66 D69 D70 D71 D72)
 TASKS=("SentenceRep")
 
 #declare -l mylist[30]
@@ -11,7 +12,7 @@ TASKS=("SentenceRep")
 for TASK in "${TASKS[@]}"
  do
 
-    OUTPUT_DIR="$HOME/workspace/$TASK"
+    OUTPUT_DIR="$HOME/Workspace/$TASK"
     BIDS_DIR="$OUTPUT_DIR/BIDS"
     ZIP=false
 
@@ -47,8 +48,8 @@ for TASK in "${TASKS[@]}"
         mkdir -p "$OUTPUT_DIR/$SUB_ID"
 
         #CT scan .nii
-        find "$ORIG_DATA_DIR/ECoG_Recon_Full/$SUB_ID/elec_recon" -name "postInPre.nii.gz" -type f -exec cp -v {} "$OUTPUT_DIR/$SUB_ID/${SUB_ID}_CT.nii.gz" \;
-        find "$ORIG_DATA_DIR/ECoG_Recon_Full/$SUB_ID/elec_recon" -regex ".*\($SUB_ID.*CT.*\)\|\(postInPre\)\.nii" -type f -exec cp -v {} "$OUTPUT_DIR/$SUB_ID/${SUB_ID}_CT.nii" \;
+        find "$ORIG_DATA_DIR/ECoG_Recon_Full/$SUB_ID/elec_recon" -name "postimpRaw.nii.gz" -type f -exec cp -v {} "$OUTPUT_DIR/$SUB_ID/${SUB_ID}_CT.nii.gz" \;
+        find "$ORIG_DATA_DIR/ECoG_Recon_Full/$SUB_ID/elec_recon" -regex ".*\($SUB_ID.*CT.*\)\|\(postimpRaw\)\.nii" -type f -exec cp -v {} "$OUTPUT_DIR/$SUB_ID/${SUB_ID}_CT.nii" \;
         #electrode locations .txt
         find "$(dirname $ORIG_DATA_DIR)/ECoG_Recon/$SUB_ID/elec_recon" -name "${SUB_ID}_elec_locations_RAS.txt" -type f -exec cp -v {} "$OUTPUT_DIR/$SUB_ID/" \;
         #T1 MRI file .mgz

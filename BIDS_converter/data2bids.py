@@ -1137,10 +1137,11 @@ class Data2Bids:  # main conversion and file organization program
             self.make_subdirs(files)
             if self.channels:
                 self.announce_channels(part_match)
-                org.make_channels_tsv(self._channels_file[part_match],
-                                      task_label_match, part_match_z,
-                                      self._config["ieeg"],
-                                      self._bids_dir, self._data_types)
+                filename, df = org.prep_tsv(
+                    self._channels_file[part_match], task_label_match,
+                    part_match_z, self._config["ieeg"], self._bids_dir)
+                org.tsv_all_eeg(filename, df, self._data_types)
+
             if self._is_verbose:
                 print(files)
             while files:  # loops over each participant file
@@ -1224,8 +1225,9 @@ class Data2Bids:  # main conversion and file organization program
             if txt_df_list:
                 for txt_df_dict in txt_df_list:
                     if self._config["coordsystem"] in txt_df_dict["name"]:
-                        org.make_coordsystem(txt_df_dict, part_match_z,
-                                             self._bids_dir, self._data_types)
+                        filename, df = org.prep_coordsystem(
+                            txt_df_dict, part_match_z, self._bids_dir)
+                        org.tsv_all_eeg(filename, df, self._data_types)
                     elif self._config["eventFormat"]["AudioCorrection"] in \
                             txt_df_dict["name"]:
                         if txt_df_dict["error"] is not None:

@@ -12,7 +12,7 @@ from numpy import nan
 from .utils import is_number, PathLike, str2num
 
 
-def gather_metadata(mat_files: List[PathLike], labels: List[str] = None) -> pd.DataFrame:
+def gather_metadata(mat_files: List[PathLike]) -> pd.DataFrame:
     df = pd.DataFrame()
     for mat_file in mat_files:
         df_new = mat2df(mat_file)
@@ -319,8 +319,8 @@ def gen_match_regexp(config_regexp: Dict[str, Any], data: str,
                 newname=newname, given=config_regexp))
 
 
-def make_channels_tsv(file_path: PathLike, task: str, pmatchz: str,
-                      ieeg_config: dict, bids_dir: PathLike, data_types: Dict[str, bool]):
+def prep_tsv(file_path: PathLike, task: str, pmatchz: str, ieeg_config: dict,
+                bids_dir: PathLike) -> (str, pd.DataFrame):
     df = None
     for name, var in ieeg_config["channels"].items():
         if name in file_path:
@@ -339,12 +339,13 @@ def make_channels_tsv(file_path: PathLike, task: str, pmatchz: str,
     filename = op.join(bids_dir, "sub-{}".format(pmatchz),
                        "sub-" + pmatchz + "_task-{}".format(
                            task) + "_channels.tsv")
-    tsv_all_eeg(filename, df, data_types)
+    return filename, df
 
 
 def tsv_all_eeg(fname: PathLike, df: pd.DataFrame, data_types: Dict[str, bool]):
     """Writes tsv files into each folder containing eeg data
 
+    :param data_types:
     :param fname:
     :type fname:
     :param df:
@@ -359,9 +360,9 @@ def tsv_all_eeg(fname: PathLike, df: pd.DataFrame, data_types: Dict[str, bool]):
         df.to_csv(file_name, sep="\t", index=False)
 
 
-def make_coordsystem(txt_df_dict: Dict[str, Union[pd.DataFrame, str]],
-                     part_match_z: str, bids_dir: PathLike,
-                     data_types: Dict[str, bool]):
+def prep_coordsystem(txt_df_dict: Dict[str, Union[pd.DataFrame, str]],
+                     part_match_z: str, bids_dir: PathLike) -> (
+        str, pd.DataFrame):
     if txt_df_dict["error"] is not None:
         raise txt_df_dict["error"]
     df: pd.DataFrame = txt_df_dict["data"]
@@ -374,7 +375,7 @@ def make_coordsystem(txt_df_dict: Dict[str, Union[pd.DataFrame, str]],
     filename = op.join(bids_dir, "sub-" + part_match_z,
                        "sub-{}_space-Talairach_electrodes.tsv"
                        "".format(part_match_z))
-    tsv_all_eeg(filename, df, data_types)
+    return filename, df
 
 
 def eval_df(df: pd.DataFrame, exp: str) -> pd.Series:
