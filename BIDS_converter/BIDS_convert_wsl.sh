@@ -61,8 +61,8 @@ for TASK in "${TASKS[@]}"
             cp -v "$ORIG_DATA_DIR/ECoG_Task_Data/response_coding/PhonemeSequencingStimStarts.txt" "$OUTPUT_DIR/$SUB_ID/${SUB_ID}_PhonemeSequencingStimStarts.txt"
         fi
         #eeg files
-        if ! find "$ORIG_DATA_DIR/D_Data/$TASK/$SUB_ID" -regex ".*\.\(EDF\)\|\(edf\)" -exec false {} +  ; then #search for edf files
-            find "$ORIG_DATA_DIR/D_Data/$TASK/$SUB_ID" -regex ".*\.\(EDF\)\|\(edf\)" -exec cp -v -t "$OUTPUT_DIR/$SUB_ID/" {} +
+        if ! find "$ORIG_DATA_DIR/D_Data/$TASK/$SUB_ID" -regex ".*\.\(EDF\)\|.*\.\(edf\)" -exec false {} +  ; then #search for edf files
+            find "$ORIG_DATA_DIR/D_Data/$TASK/$SUB_ID" -regex ".*\.\(EDF\)\|.*\.\(edf\)" -exec cp -v -t "$OUTPUT_DIR/$SUB_ID/" {} +
             find "$OUTPUT_DIR/$SUB_ID/" -regex ".*\.EDF" | xargs -I{} basename -s ".EDF" {} | xargs -I{} mv -v "$OUTPUT_DIR/$SUB_ID/{}.EDF" "$OUTPUT_DIR/$SUB_ID/{}.edf"
             if $ZIP ; then
                 find "$ORIG_DATA_DIR/D_Data/$TASK/$SUB_ID" -regex ".*\.\(EDF\)\|\(edf\)" | xargs -I{} basename {} | xargs -I{} cut -f 1 -d '.' {} | xargs -I{} echo "$OUTPUT_DIR/$SUB_ID/{}.edf" | xargs -I{} gzip -6 -v {}
