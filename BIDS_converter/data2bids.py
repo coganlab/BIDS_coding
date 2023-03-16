@@ -1143,10 +1143,6 @@ class Data2Bids:  # main conversion and file organization program
             self.make_subdirs(files)
             if self.channels:
                 self.announce_channels(part_match)
-                filename, df = org.prep_tsv(
-                    self._channels_file[part_match], task_label_match,
-                    part_match_z, self._config["ieeg"], self._bids_dir)
-                org.tsv_all_eeg(filename, df, self._data_types)
 
             if self._is_verbose:
                 print(files)
@@ -1222,6 +1218,14 @@ class Data2Bids:  # main conversion and file organization program
                         run_list.append(int(run_match))
                 except UnboundLocalError:
                     pass
+
+            if self.channels and eeg:
+                filename, df = org.prep_tsv(
+                    self._channels_file[part_match], task_label_match,
+                    part_match_z, self._config["ieeg"], self._bids_dir)
+                ord_labels = [sig['label'] for sig in eeg[0]['signal_headers']]
+                df = org.sort_by_list(df, ord_labels, "name")
+                org.tsv_all_eeg(filename, df, self._data_types)
 
             if mat_list:  # deal with remaining .mat files
                 part_mat_list = self.part_file_sort(mat_list)

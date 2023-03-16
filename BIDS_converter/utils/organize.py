@@ -319,6 +319,12 @@ def gen_match_regexp(config_regexp: Dict[str, Any], data: str,
                 newname=newname, given=config_regexp))
 
 
+def sort_by_list(df: pd.DataFrame, ord: list[str], col: str) -> pd.DataFrame:
+    """sorts a dataframe by a list of categories"""
+    df[col] = pd.Categorical(df[col], categories=ord, ordered=True)
+    return df.sort_values(col)
+
+
 def prep_tsv(file_path: PathLike, task: str, pmatchz: str, ieeg_config: dict,
                 bids_dir: PathLike) -> (str, pd.DataFrame):
     df = None
