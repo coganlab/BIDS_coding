@@ -1,18 +1,19 @@
 #!/bin/bash
 
 ORIG_DATA_DIR="$HOME/Box/CoganLab"
-SUB_IDS=(D3 D5 D6 D7 D8 D9 D18 D20 D22 D23 D24 D26 D27 D28 D29 D30 D31 D32 D53
- D57 D59 D60 D61 D65 D66 D69 D70 D71 D72)
+TASKS=("SentenceRep")
+#(D3 D5 D6 D7 D8 D9 D12 D14 D15 D16 D17 D18 D20 D22 D23 D24 D26 D27 D28 D29 D30 D31 D32 D53
+# D57 D59 D60 D61 D65 D66 D69 D70 D71 D72 D73)
 #D3 D5 D6 D7 D8 D9 D18 D20 D22 D23 D24 D26 D27 D28 D29 D30 D31 D32 D53
  #D57 D59 D60 D61 D65 D66 D69 D70 D71 D72)
-TASKS=("SentenceRep")
+
 
 #declare -l mylist[30]
 
 #BIDS_DIR="$OUTPUT_DIR/$TASK/BIDS"
 for TASK in "${TASKS[@]}"
  do
-
+    SUB_IDS=$(ls "$ORIG_DATA_DIR/D_Data/$TASK/D"* -d | xargs -I{} basename {} )
     OUTPUT_DIR="$HOME/Workspace/$TASK"
     BIDS_DIR="$OUTPUT_DIR/BIDS"
     ZIP=false
@@ -35,7 +36,7 @@ for TASK in "${TASKS[@]}"
     #echo "$ORIG_DATA_DIR/task_stimuli/$TASKLOWER/."
     #cp -av "$ORIG_DATA_DIR/task_stimuli/$TASKLOWER/." "$BIDS_DIR/stimuli/"
 
-    for SUB_ID in "${SUB_IDS[@]}"
+    for SUB_ID in $SUB_IDS
     do 
         #bring wanted files to work space
         #IDSPLIT=( $(grep -Eo '[^[:digit:]]+|[[:digit:]]+' <<<"SUB_ID") )
@@ -89,7 +90,7 @@ for TASK in "${TASKS[@]}"
         #find "$ORIG_DATA_DIR/ECoG_Task_Data" -type f -regex "Timestamps [MASTER].xlsx"  -exec cp -v {} "$OUTPUT_DIR/$SUB_ID/${SUB_ID}_timstamps.xlsx" \;
         #the big bad python code to convert the renamed files to BIDS
         #requires numpy, nibabel, and pathlib modules
-        python3 data2bids.py -c config.json -i "$OUTPUT_DIR/$SUB_ID" -o $BIDS_DIR -v || { echo "BIDS conversion for $SUB_ID failed, trying next subject" ; continue; }
+        python -m data2bids -c config.json -i "$OUTPUT_DIR/$SUB_ID" -o $BIDS_DIR -v || { echo "BIDS conversion for $SUB_ID failed, trying next subject" ; continue; }
 
 		#rm -rf "$OUTPUT_DIR/$SUB_ID"
 

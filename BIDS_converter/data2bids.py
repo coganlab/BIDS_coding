@@ -19,9 +19,15 @@ import pydicom as dicom
 from bids import layout
 from pyedflib import highlevel, EdfReader
 
-from utils import fileutils as fls
-from utils import organize as org
-from utils import utils as ut
+import sys
+
+file = Path(__file__).resolve()
+parent, root = file.parent, file.parents[1]
+sys.path.append(str(root))
+
+from BIDS_converter.utils import fileutils as fls
+from BIDS_converter.utils import organize as org
+from BIDS_converter.utils import utils as ut
 
 PathLike = TypeVar("PathLike", str, os.PathLike)
 
@@ -1200,8 +1206,7 @@ class Data2Bids:  # main conversion and file organization program
                     # as dict for writing later
                     eeg.append(self.read_edf(op.splitext(
                         src_file_path)[0] + ".edf", self.channels[
-                                                 part_match], extra_arrays,
-                                             extra_signal_headers))
+                        part_match], extra_arrays, extra_signal_headers))
 
                     if remove_src_edf:
                         if self._is_verbose:

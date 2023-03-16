@@ -373,7 +373,7 @@ def prep_coordsystem(txt_df_dict: Dict[str, Union[pd.DataFrame, str]],
     df = pd.concat(
         [df["name"], df["x"], df["y"], df["z"], df["hemisphere"]], axis=1)
     filename = op.join(bids_dir, "sub-" + part_match_z,
-                       "sub-{}_space-Talairach_electrodes.tsv"
+                       "sub-{}_space-ACPC_electrodes.tsv"
                        "".format(part_match_z))
     return filename, df
 
