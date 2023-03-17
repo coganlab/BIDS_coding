@@ -15,7 +15,7 @@ for TASK in "${TASKS[@]}"
  do
     SUB_IDS=$(ls "$ORIG_DATA_DIR/D_Data/$TASK/D"* -d | xargs -I{} basename {} )
     OUTPUT_DIR="$HOME/Workspace/$TASK"
-    BIDS_DIR="$OUTPUT_DIR/BIDS"
+    BIDS_DIR="$ORIG_DATA_DIR/BIDS-1.1_$TASK/BIDS"
     ZIP=false
 
     if [ -d $OUTPUT_DIR ]

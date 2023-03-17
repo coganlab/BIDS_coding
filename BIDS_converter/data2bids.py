@@ -1172,7 +1172,7 @@ class Data2Bids:  # main conversion and file organization program
                 try:
                     (new_name, dst_file_path, part_match, run_match,
                      acq_match, echo_match, sess_match, ce_match,
-                     data_type_match, task_label_match,
+                     data_type_match, _,
                      _) = self.generate_names(src_file_path,
                                               part_match=part_match)
                 except TypeError as problem:
@@ -1219,6 +1219,7 @@ class Data2Bids:  # main conversion and file organization program
                 except UnboundLocalError:
                     pass
 
+            # create the channels file
             if self.channels and eeg:
                 filename, df = org.prep_tsv(
                     self._channels_file[part_match], task_label_match,
