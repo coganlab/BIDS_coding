@@ -221,7 +221,7 @@ def check_lower(item: str, string_list: List[str]) -> str:
     raise FileNotFoundError("No stim files match {}".format(item))
 
 
-def trigger_from_excel(filename: PathLike, participant: str) -> Union[int, str]:
+def from_excel(filename: PathLike, participant: str, col: str) -> Union[int, str]:
     """replace trigger channels with trigger label
 
     :param filename:
@@ -234,16 +234,16 @@ def trigger_from_excel(filename: PathLike, participant: str) -> Union[int, str]:
     xls_file = filename
     xls_df = pd.ExcelFile(filename).parse(participant)
 
-    if any("Trigger" in column for column in xls_df):
+    if any(col in column for column in xls_df):
         for column in xls_df:
-            if "Trigger" in column:
+            if col in column:
                 trig_label = xls_df[column].iloc[0]
                 if is_number(trig_label):
                     return int(trig_label)
                 else:
                     return trig_label
     else:
-        raise KeyError("'Trigger' not found in " + xls_file)
+        raise KeyError(f"'{col}' not found in " + xls_file)
 
 
 def match_regexp(config_regexp: Dict[str, Any], filename: PathLike,
@@ -326,7 +326,7 @@ def sort_by_list(df: pd.DataFrame, ord: list[str], col: str) -> pd.DataFrame:
 
 
 def prep_tsv(file_path: PathLike, task: str, pmatchz: str, ieeg_config: dict,
-                bids_dir: PathLike) -> (str, pd.DataFrame):
+             bids_dir: PathLike) -> (str, pd.DataFrame):
     df = None
     for name, var in ieeg_config["channels"].items():
         if name in file_path:

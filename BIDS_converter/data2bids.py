@@ -123,7 +123,7 @@ def get_trigger(part_match: str, headers_dict: dict) -> str:
     else:
         trig_lab = headers_dict["default"]
     if ".xlsx" in trig_lab:
-        trig_lab = org.trigger_from_excel(str(trig_lab), part_match)
+        trig_lab = org.from_excel(str(trig_lab), part_match, "Trigger")
     return trig_lab
 
 
@@ -1187,6 +1187,16 @@ class Data2Bids:  # main conversion and file organization program
                                           new_name, self._config)
 
                 elif dst_file_path.endswith("ieeg"):
+                    dtype = org.from_excel(self._config["ieeg"]["headerData"][
+                                               "default"], part_match, "Type")
+                    if "grid" in dtype.lower():
+                        self._config["ieeg"]["type"] = "ECOG"
+                    elif "seeg" in dtype.lower():
+                        self._config["ieeg"]["type"] = "ECOG"
+                    else:
+                        raise NotImplementedError(
+                            "Types are either 'SEEG' or 'ECOG'")
+
                     remove_src_edf = self.force_to_edf(
                         src_file_path, files)
 

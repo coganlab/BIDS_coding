@@ -15,7 +15,7 @@ for TASK in "${TASKS[@]}"
  do
     SUB_IDS=$(ls "$ORIG_DATA_DIR/D_Data/$TASK/D"* -d | xargs -I{} basename {} )
     OUTPUT_DIR="$HOME/Workspace/$TASK"
-    BIDS_DIR="$ORIG_DATA_DIR/BIDS-1.1_$TASK/BIDS"
+    BIDS_DIR="$OUTPUT_DIR/BIDS"
     ZIP=false
 
     if [ -d $OUTPUT_DIR ]
@@ -53,7 +53,8 @@ for TASK in "${TASKS[@]}"
         find "$ORIG_DATA_DIR/ECoG_Recon_Full/$SUB_ID/elec_recon" -name "postimpRaw.nii.gz" -type f -exec cp -v {} "$OUTPUT_DIR/$SUB_ID/${SUB_ID}_CT.nii.gz" \;
         find "$ORIG_DATA_DIR/ECoG_Recon_Full/$SUB_ID/elec_recon" -regex ".*\($SUB_ID.*CT.*\)\|\(postimpRaw\)\.nii" -type f -exec cp -v {} "$OUTPUT_DIR/$SUB_ID/${SUB_ID}_CT.nii" \;
         #electrode locations .txt
-        find "$(dirname $ORIG_DATA_DIR)/ECoG_Recon/$SUB_ID/elec_recon" -name "${SUB_ID}_elec_locations_RAS.txt" -type f -exec cp -v {} "$OUTPUT_DIR/$SUB_ID/" \;
+#        find "$(dirname $ORIG_DATA_DIR)/ECoG_Recon/$SUB_ID/elec_recon" -name "${SUB_ID}_elec_locations_RAS.txt" -type f -exec cp -v {} "$OUTPUT_DIR/$SUB_ID/" \;
+        find "$(dirname $ORIG_DATA_DIR)/ECoG_Recon/$SUB_ID/elec_recon" -regex ".*${SUB_ID}_elec_locations_RAS.*\.txt" -type f -exec cp -v {} "$OUTPUT_DIR/$SUB_ID/" \;
         #T1 MRI file .mgz
         find "$ORIG_DATA_DIR/ECoG_Recon_Full/$SUB_ID/elec_recon" -name "T1.nii.gz" -type f -exec cp {} "$OUTPUT_DIR/$SUB_ID/${SUB_ID}_T1w.nii.gz" \; | head -1
         #stim file corrections
