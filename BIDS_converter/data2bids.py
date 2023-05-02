@@ -1192,7 +1192,7 @@ class Data2Bids:  # main conversion and file organization program
                     if "grid" in dtype.lower():
                         self._config["ieeg"]["type"] = "ECOG"
                     elif "seeg" in dtype.lower():
-                        self._config["ieeg"]["type"] = "ECOG"
+                        self._config["ieeg"]["type"] = "SEEG"
                     else:
                         raise NotImplementedError(
                             "Types are either 'SEEG' or 'ECOG'")
@@ -1242,6 +1242,7 @@ class Data2Bids:  # main conversion and file organization program
                 part_mat_list = self.part_file_sort(mat_list)
                 for mat_files in part_mat_list.values():
                     self.mat2tsv(mat_files)
+                    
             if txt_df_list:
                 for txt_df_dict in txt_df_list:
                     if self._config["coordsystem"] in txt_df_dict["name"]:

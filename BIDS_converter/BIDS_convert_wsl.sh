@@ -5,7 +5,7 @@ TASKS=("SentenceRep")
 #(D3 D5 D6 D7 D8 D9 D12 D14 D15 D16 D17 D18 D20 D22 D23 D24 D26 D27 D28 D29 D30 D31 D32 D53
 # D57 D59 D60 D61 D65 D66 D69 D70 D71 D72 D73)
 #D3 D5 D6 D7 D8 D9 D18 D20 D22 D23 D24 D26 D27 D28 D29 D30 D31 D32 D53
- #D57 D59 D60 D61 D65 D66 D69 D70 D71 D72)
+ #D57 D59 D60 D61 D63 D65 D66 D69 D70 D71 D72)
 
 
 #declare -l mylist[30]
@@ -13,7 +13,8 @@ TASKS=("SentenceRep")
 #BIDS_DIR="$OUTPUT_DIR/$TASK/BIDS"
 for TASK in "${TASKS[@]}"
  do
-    SUB_IDS=$(ls "$ORIG_DATA_DIR/D_Data/$TASK/D"* -d | xargs -I{} basename {} )
+    mapfile -t SUB_IDS < <(find "$ORIG_DATA_DIR/D_Data/$TASK" -maxdepth 1 -type d -name "D*" -exec basename {} \;)
+#    SUB_IDS=(D18 D59)
     OUTPUT_DIR="$HOME/Workspace/$TASK"
     BIDS_DIR="$OUTPUT_DIR/BIDS"
     ZIP=false
@@ -36,7 +37,7 @@ for TASK in "${TASKS[@]}"
     #echo "$ORIG_DATA_DIR/task_stimuli/$TASKLOWER/."
     #cp -av "$ORIG_DATA_DIR/task_stimuli/$TASKLOWER/." "$BIDS_DIR/stimuli/"
 
-    for SUB_ID in $SUB_IDS
+    for SUB_ID in "${SUB_IDS[@]}"
     do 
         #bring wanted files to work space
         #IDSPLIT=( $(grep -Eo '[^[:digit:]]+|[[:digit:]]+' <<<"SUB_ID") )
