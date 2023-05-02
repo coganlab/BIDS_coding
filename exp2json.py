@@ -47,7 +47,7 @@ for task in TASKS:
                     names = df["name"].tolist()
                     dtype = from_excel("~/Box/CoganLab/ECoG_Task_Data/Timesta"
                                        "mps (MASTER).xlsx", sub, "Type")
-                    trigger = from_excel("~/Box/CoganLab/ECoG_Task_Data/Timesta"
+                    trig = from_excel("~/Box/CoganLab/ECoG_Task_Data/Timesta"
                                        "mps (MASTER).xlsx", sub, "Trigger")
                     if "grid" in dtype.lower():
                         dtype = "ecog"
@@ -56,7 +56,7 @@ for task in TASKS:
                     else:
                         raise ValueError(f"dtype {dtype} not recognized")
 
-                    data = {"channels": names, "dtype": dtype}
+                    data = {"channels": names, "dtype": dtype, "trigger": trig}
 
                     updateJsonFile("subjects.json", data, task, sub)
 
