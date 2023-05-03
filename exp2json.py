@@ -54,7 +54,6 @@ def updateJsonFile(filename: str, data: dict, task: str, sub: str):
         jsonFile.write(out_str)
 
 
-
 for task in TASKS:
     DATADIR = os.path.join(DUKEDIR, task)
     for sub in [s for s in os.listdir(DATADIR) if s.startswith('D') and
@@ -64,10 +63,11 @@ for task in TASKS:
                 if f == "experiment.mat":
                     df = mat2df(os.path.join(root, f), "channels")
                     names = df["name"].tolist()
-                    dtype = from_excel("~/Box/CoganLab/ECoG_Task_Data/Timesta"
-                                       "mps (MASTER).xlsx", sub, "Type")
-                    trig = from_excel("~/Box/CoganLab/ECoG_Task_Data/Timesta"
-                                       "mps (MASTER).xlsx", sub, "Trigger")
+                    names.sort()
+                    excel = os.path.join(os.path.dirname(
+                        DUKEDIR), "ECoG_Task_Data", "Timestamps (MASTER).xlsx")
+                    dtype = from_excel(excel, sub, "Type")
+                    trig = from_excel(excel, sub, "Trigger")
                     if "grid" in dtype.lower():
                         dtype = "ecog"
                     elif "seeg" in dtype.lower():
