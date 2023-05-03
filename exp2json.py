@@ -1,5 +1,6 @@
 import os
 import json
+import re
 from matgrab import mat2df
 from BIDS_converter.utils.organize import from_excel
 from BIDS_converter.utils.utils import is_number
@@ -13,6 +14,16 @@ TASKS = ['Environmental_Sternberg', 'GlobalLocal', 'Lexical',
          'timit', 'Uniqueness_Point']
 
 
+def remove_from_brackets(string: str):
+    pattern = r'\[[^]]*\]'
+    found = re.findall(pattern, string)
+
+    for f in found:
+        string = string.replace(f, re.sub(r'\s', '', f))
+
+    return string
+
+
 def updateJsonFile(filename: str, data: dict, task: str, sub: str):
 
     names = [n.strip() for n in data["channels"]]
@@ -22,7 +33,7 @@ def updateJsonFile(filename: str, data: dict, task: str, sub: str):
     except (json.JSONDecodeError, FileNotFoundError):
         current = {}  # Read the JSON into the buffer
 
-    ## Working with buffered content
+    # Working with buffered content
     if sub not in current.keys():
         current[sub] = {"default": data}
     elif any(n not in current[sub]['default']['channels'] for n in names):
@@ -31,9 +42,17 @@ def updateJsonFile(filename: str, data: dict, task: str, sub: str):
     elif any(n not in names for n in current[sub]["default"]["channels"]):
         current[sub][task] = data
 
-    ## Save our changes to JSON file
+    # sort the dictionary
+    myKeys = list(current.keys())
+    myKeys.sort()
+    sorted_dict = {i: current[i] for i in myKeys}
+
+    # Save our changes to JSON file
+    out_str = remove_from_brackets(json.dumps(sorted_dict, indent=4))
+
     with open(filename, "w+") as jsonFile:
-        jsonFile.write(json.dumps(current))
+        jsonFile.write(out_str)
+
 
 
 for task in TASKS:
