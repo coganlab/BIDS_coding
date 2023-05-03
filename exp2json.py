@@ -24,6 +24,13 @@ def remove_from_brackets(string: str):
     return string
 
 
+def sort_alphanumeric(lst):
+    convert = lambda text: int(text) if text.isdigit() else text.lower()
+    alphanum_key = lambda key: [ convert(c) for c in re.split('([0-9]+)', key) ]
+    return sorted(lst, key=alphanum_key)
+
+
+
 def updateJsonFile(filename: str, data: dict, task: str, sub: str):
 
     names = [n.strip() for n in data["channels"]]
@@ -37,8 +44,8 @@ def updateJsonFile(filename: str, data: dict, task: str, sub: str):
     if sub not in current.keys():
         current[sub] = {"default": data}
     elif any(n not in current[sub]['default']['channels'] for n in names):
-        current[sub]['default']['channels'] = list(
-            set(current[sub]['default']['channels'] + names))
+        current[sub]['default']['channels'] = sort_alphanumeric(list(
+            set(current[sub]['default']['channels'] + names)))
     elif any(n not in names for n in current[sub]["default"]["channels"]):
         current[sub][task] = data
 
@@ -62,8 +69,7 @@ for task in TASKS:
             for f in files:
                 if f == "experiment.mat":
                     df = mat2df(os.path.join(root, f), "channels")
-                    names = df["name"].tolist()
-                    names.sort()
+                    names = sort_alphanumeric(df["name"].tolist())
                     excel = os.path.join(os.path.dirname(
                         DUKEDIR), "ECoG_Task_Data", "Timestamps (MASTER).xlsx")
                     dtype = from_excel(excel, sub, "Type")
