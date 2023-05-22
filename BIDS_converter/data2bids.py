@@ -668,7 +668,7 @@ class Data2Bids:  # main conversion and file organization program
 
         f = EdfReader(file_name)
         chn_nums = d[int] + [i for i, x in enumerate(f.getSignalLabels())
-                             if x in channels]
+                             if x.replace(" ", "") in channels]
         f.close()
         chn_nums.sort()
 
@@ -751,7 +751,8 @@ class Data2Bids:  # main conversion and file organization program
         file = fobj.file_name
         part_match = self.part_check(filename=file)[0]
         mats = [i for i in all_files + mat_files if i.endswith(".mat")]
-        f_length = [len(org.mat2df(op.join(root, fname))) for fname in mats]
+        f_length = [len(org.mat2df(op.join(root, op.basename(
+            fname)))) for fname in mats]
         if fobj.samples_in_file(0) in f_length:
             for fname in mats:
                 sig_len = fobj.samples_in_file(0)
