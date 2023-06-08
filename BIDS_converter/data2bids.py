@@ -694,6 +694,9 @@ class Data2Bids:  # main conversion and file organization program
             for i, signal in enumerate(signal_headers):
                 if (signal["label"] or i) == self.trigger[part_match]:
                     signal_headers[i]["label"] = "Trigger"
+                else:
+                    signal_headers[i]["label"] = signal_headers[i][
+                        "label"].replace(" ", "")
 
             return dict(name=file_name, bids_name=edf_name,
                         nsamples=array.shape[1], signal_headers=signal_headers,

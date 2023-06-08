@@ -14,7 +14,7 @@ TASKS=("SentenceRep")
 for TASK in "${TASKS[@]}"
  do
     mapfile -t SUB_IDS < <(find "$ORIG_DATA_DIR/D_Data/$TASK" -maxdepth 1 -type d -name "D*" -exec basename {} \;)
-#    SUB_IDS=(D18 D59)
+#    SUB_IDS=(D3 D5 D6 D7 D8 D9)
     OUTPUT_DIR="$HOME/Workspace/$TASK"
     BIDS_DIR="$OUTPUT_DIR/BIDS"
     ZIP=false
@@ -55,7 +55,7 @@ for TASK in "${TASKS[@]}"
         find "$ORIG_DATA_DIR/ECoG_Recon_Full/$SUB_ID/elec_recon" -regex ".*\($SUB_ID.*CT.*\)\|\(postimpRaw\)\.nii" -type f -exec cp -v {} "$OUTPUT_DIR/$SUB_ID/${SUB_ID}_CT.nii" \;
         #electrode locations .txt
 #        find "$(dirname $ORIG_DATA_DIR)/ECoG_Recon/$SUB_ID/elec_recon" -name "${SUB_ID}_elec_locations_RAS.txt" -type f -exec cp -v {} "$OUTPUT_DIR/$SUB_ID/" \;
-        find "$(dirname $ORIG_DATA_DIR)/ECoG_Recon/$SUB_ID/elec_recon" -regex ".*${SUB_ID}_elec_locations_RAS.*\.txt" -type f -exec cp -v {} "$OUTPUT_DIR/$SUB_ID/" \;
+        find "$(dirname $ORIG_DATA_DIR)/ECoG_Recon/$SUB_ID/elec_recon" -regex ".*${SUB_ID}_elec_locations_RAS_.*\.txt" -type f -exec cp -v {} "$OUTPUT_DIR/$SUB_ID/" \;
         #T1 MRI file .mgz
         find "$ORIG_DATA_DIR/ECoG_Recon_Full/$SUB_ID/elec_recon" -name "T1.nii.gz" -type f -exec cp {} "$OUTPUT_DIR/$SUB_ID/${SUB_ID}_T1w.nii.gz" \; | head -1
         #stim file corrections
