@@ -398,14 +398,24 @@ def eval_df(df: pd.DataFrame, exp: str) -> pd.Series:
     """
     if exp in df.columns:
         return df[exp].squeeze()
-    for name in [i for i in re.split(r"[ +\-/*%]", exp) if i != '']:
+    fields = [i for i in re.split(r"[ +\-/*%]", exp) if i != '']
+
+    df["SPLITCHAR"] = pd.Series(["/"] * df.shape[0], dtype="string")
+    for name in fields:
         if name in df.columns:
             if is_number(df[name]):
                 df[name] = df[name].astype(float)
+            elif all(f in df.columns for f in fields):
+                out = df[fields.pop(0)].copy()
+                while fields:
+                    out += df[fields.pop(0)].copy().astype(str)
+                return out
             else:
                 df[name] = df[name]
         elif not is_number(name):
-            if len([i for i in re.split(r"[ +\-/*%]", exp) if i != '']) > 1:
+            if len(fields) > 1:
+                df[name] = pd.Series([name] * df.shape[0],
+                                     dtype="string")
                 continue
             return pd.Series([name] * df.shape[0], dtype="string")
         else:

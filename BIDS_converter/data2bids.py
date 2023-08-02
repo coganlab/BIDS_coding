@@ -192,8 +192,9 @@ class Data2Bids:  # main conversion and file organization program
         self.trigger = {}
         self._channels_file = {}
         # ignore BIDS directories and stimuli
+        exclude = [op.basename(self._bids_dir)]
         if self.stim_dir is not None:
-            exclude = [op.basename(self._bids_dir), op.basename(self.stim_dir)]
+            exclude.append(op.basename(self.stim_dir))
         for root, dirs, files in os.walk(self._data_dir, topdown=True):
             dirs[:] = [d for d in dirs if d not in exclude]
             if not files:

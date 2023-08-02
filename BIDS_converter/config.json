@@ -113,8 +113,8 @@
                 ,"Timing": { "start": "stimulus",
                           "end": "response" }
                 ,"SampleRate": 30000
-                ,"Events" : [{"onset": "stimulus","duration": "0.5 * 30", "trial_num": "trial","trial_type": "Stimulus"},
-                             {"onset": "response", "duration": "RT", "trial_num": "trial","trial_type": "Response"}]
+                ,"Events" : [{"onset": "stimulus","duration": "0.5 * 30", "trial_num": "trial","trial_type": "Stimulus + SPLITCHAR + congruency + percIncongruent + SPLITCHAR + switchType + percSwitch"},
+                             {"onset": "response", "duration": "RT", "trial_num": "trial","trial_type": "Response + SPLITCHAR + congruency + percIncongruent + SPLITCHAR + switchType + percSwitch"}]
 }
 , "split": { "Sep": "all",
             "buffer": 10,
@@ -129,9 +129,9 @@
                                     "LongName": "Event type",
                                     "Description": "Type of stimuli presented to the participant",
                                     "Levels": {
-                                      "Listen": "Cue where the word 'Listen' is displayed",
-                                      "Audio": "A spoken word is played through a speaker",
-                                      "Speak": "Cue where the word 'Speak' is displayed",
+                                      "i75n25": "Cue where the word 'Listen' is displayed",
+                                      "i75r25": "A spoken word is played through a speaker",
+                                      "c75r25": "Cue where the word 'Speak' is displayed",
                                       "Response": "Participant's response is recorded"
                                     }
                                   }
