@@ -337,9 +337,10 @@ def prep_tsv(file_path: PathLike, task: str, pmatchz: str, ieeg_config: dict,
                 df = df.rename(columns={"lowpass_cutoff": "low_cutoff"})
     df["type"] = ieeg_config["type"]
     df["units"] = ieeg_config["units"]
-    df = df.append(
-        {"name": "Trigger", "high_cutoff": 1, "low_cutoff": 1000,
-         "type": "TRIG", "units": "uV"}, ignore_index=True)
+    new_row = pd.DataFrame(
+        {"name": ["Trigger"], "high_cutoff": [1], "low_cutoff": [1000],
+         "type": ["TRIG"], "units": ["uV"]})
+    df = pd.concat([df, new_row], ignore_index=True)
     df = pd.concat([df["name"], df["type"], df["units"], df["low_cutoff"],
                     df["high_cutoff"]], axis=1)
     filename = op.join(bids_dir, "sub-{}".format(pmatchz),
