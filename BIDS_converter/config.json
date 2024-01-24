@@ -106,13 +106,14 @@
     , "right" : "_$#^#^"
     , "content" : ["[0-9]{6}"]
     }
-,"eventFiles" : "([Tt]rial(s|Info).*?\\.mat)"
+,"eventFiles" : ".*([Tt]rial(s|Info).*?\\.mat)"
 ,"eventFormat" : {"IDcol" : "FilenamePrefix"
                 ,"Sep" : { "runIndex" : "block",
                              "acq" : "Rec" }
                 ,"Timing": { "start": "stimulus",
                           "end": "response" }
                 ,"SampleRate": 30000
+                ,"AudioCorrection": "n/a"
                 ,"Events" : [{"onset": "stimulus","duration": "0.5 * 30", "trial_num": "trial","trial_type": "Stimulus + SPLITCHAR + congruency + percIncongruent + SPLITCHAR + switchType + percSwitch"},
                              {"onset": "response", "duration": "RT", "trial_num": "trial","trial_type": "Response + SPLITCHAR + congruency + percIncongruent + SPLITCHAR + switchType + percSwitch"}]
 }

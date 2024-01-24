@@ -979,9 +979,8 @@ class Data2Bids:  # main conversion and file organization program
             part_sorted_mats.setdefault(part, []).append(mat_file)
         return part_sorted_mats
 
-    def mat2tsv(self, mat_files: List[PathLike]):
+    def events2tsv(self, df: pd.DataFrame, filename: str):
         event_fmt = self._config["eventFormat"]
-        df = org.gather_metadata(mat_files)
         if self._is_verbose:
             print(df)
         sep_fields = [event_fmt["IDcol"]] + list(event_fmt["Sep"].values())
@@ -997,7 +996,7 @@ class Data2Bids:  # main conversion and file organization program
                 match_name = match_name + org.gen_match_regexp(self._config[cat], str(row[sep]))
             match_idx = df.index[(df[sep_fields] == row[sep_fields]).all(1)]
             match_name = match_name + self._config["ieeg"]["content"][0][1]
-            self.write_events(match_name, df.loc[match_idx], mat_files[0])
+            self.write_events(match_name, df.loc[match_idx], filename)
 
     def write_events(self, match: str, df: pd.DataFrame,
                      mat_file: str, nindex: int = None):
@@ -1143,7 +1142,7 @@ class Data2Bids:  # main conversion and file organization program
             names_list = []
             mat_list = []
             run_list = []
-            txt_df_list = []
+            df_list = []
             correct = None
             part_match = self.find_a_match(files, "partLabel")
             part_match_z = self.part_check(part_match)[1]
@@ -1169,7 +1168,7 @@ class Data2Bids:  # main conversion and file organization program
                         e = None
                     except Exception as e:
                         df = None
-                    txt_df_list.append(dict(name=file, data=df, error=e))
+                    df_list.append(dict(name=file, data=df, error=e))
                     continue
                 elif not any(re.match(".*?" + ext, file) for ext in curr_ext):
                     # if the file doesn't match the extension, we skip it
@@ -1249,21 +1248,34 @@ class Data2Bids:  # main conversion and file organization program
             if mat_list:  # deal with remaining .mat files
                 part_mat_list = self.part_file_sort(mat_list)
                 for mat_files in part_mat_list.values():
-                    self.mat2tsv(mat_files)
+                    events = org.gather_metadata(mat_files)
+                    df_list.append(dict(name=mat_files[0],
+                                        data=events))
                     
-            if txt_df_list:
-                for txt_df_dict in txt_df_list:
-                    if self._config["coordsystem"] in txt_df_dict["name"]:
+            if df_list:
+                checker = False
+                for df_dict in df_list:
+                    name = df_dict["name"]
+                    data = df_dict["data"]
+                    if re.match(self._config["eventFiles"], name):
+                        self.events2tsv(data, name)
+                        checker = True
+                    elif self._config["coordsystem"] in name:
                         filename, df = org.prep_coordsystem(
-                            txt_df_dict, part_match_z, self._bids_dir)
+                            df_dict, part_match_z, self._bids_dir)
                         org.tsv_all_eeg(filename, df, self._data_types)
-                    elif self._config["eventFormat"]["AudioCorrection"] in \
-                            txt_df_dict["name"]:
-                        if txt_df_dict["error"] is not None:
-                            raise txt_df_dict["error"]
-                        correct = txt_df_dict["data"]
+                    elif self._config["eventFormat"]["AudioCorrection"] in name:
+                        error = df_dict.get("error", None)
+                        if error is not None:
+                            raise error
+                        correct = data
                     else:
-                        print("skipping " + txt_df_dict["name"])
+                        print("skipping " + name)
+                if not checker:
+                    all_data = (f"{x['name']} \n {x['data']}" for x in df_list)
+                    file_list = '\n'.join(all_data)
+                    raise ValueError("Metadata file not found. This was the"
+                                     f"found data results:\n{file_list}")
 
             # check final file set
             for new_name in names_list:
