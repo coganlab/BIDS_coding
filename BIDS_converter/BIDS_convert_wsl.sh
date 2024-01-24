@@ -1,7 +1,7 @@
 #!/bin/bash
 
 ORIG_DATA_DIR="$HOME/Box/CoganLab"
-TASKS=("GlobalLocal")
+TASKS=("SentenceRep")
 #(D3 D5 D6 D7 D8 D9 D12 D14 D15 D16 D17 D18 D20 D22 D23 D24 D26 D27 D28 D29 D30 D31 D32 D53
 # D57 D59 D60 D61 D65 D66 D69 D70 D71 D72 D73)
 #D3 D5 D6 D7 D8 D9 D18 D20 D22 D23 D24 D26 D27 D28 D29 D30 D31 D32 D53
@@ -30,10 +30,10 @@ for TASK in "${TASKS[@]}"
         rm -rf $BIDS_DIR
     fi
     mkdir -p $BIDS_DIR
-#    mkdir -p "$OUTPUT_DIR/stimuli"
+    mkdir -p "$OUTPUT_DIR/stimuli"
     # shellcheck disable=SC2038
-#    find "$ORIG_DATA_DIR/task_stimuli" -iname "sentence_rep" -type d -exec echo "{}/." \; | xargs -I{} cp -afv {} "$OUTPUT_DIR/stimuli/"
-    #TASKLOWER=$(echo $TASK | tr '[:upper:]' '[:lower:]')
+    find "$ORIG_DATA_DIR/task_stimuli" -iname "sentence_rep" -type d -exec echo "{}/." \; | xargs -I{} cp -afv {} "$OUTPUT_DIR/stimuli/"
+    TASKLOWER=$(echo $TASK | tr '[:upper:]' '[:lower:]')
     #echo "$ORIG_DATA_DIR/task_stimuli/$TASKLOWER/."
     #cp -av "$ORIG_DATA_DIR/task_stimuli/$TASKLOWER/." "$BIDS_DIR/stimuli/"
 
