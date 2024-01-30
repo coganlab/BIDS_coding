@@ -2,10 +2,13 @@ name: BIDS_coding
 channels:
   - defaults
 dependencies:
-  - python<3.10
+  - python<3.12
   - tqdm
   - flake8
   - openpyxl
   - pip
+  - scipy
+  - numpy
+  - pandas
   - pip:
     - -r requirements.txt
