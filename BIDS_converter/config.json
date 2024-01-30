@@ -110,14 +110,12 @@
 ,"eventFormat" : {"IDcol" : "FilenamePrefix"
                 ,"Sep" : { "runIndex" : "block",
                              "acq" : "Rec" }
-                ,"Timing": { "start": "Start",
-                          "end": "ResponseEnd" }
+                ,"Timing": { "start": "stimulus",
+                          "end": "response" }
                 ,"SampleRate": 30000
                 ,"AudioCorrection": "n/a"
-                ,"Events" : [{"onset": "Start","duration": "(cueEnd - cueStart) * 30", "trial_num": "Trial","trial_type": "cue"},
-                             {"onset": "Auditory", "stim_file": "sound", "trial_num": "Trial", "trial_type": "Audio"},
-                             {"onset": "Go", "duration":  "(goEnd - goStart) * 30", "trial_num": "Trial", "trial_type": "Go + SPLITCHAR + go"},
-                             {"onset": "ResponseStart", "duration": "ResponseEnd - ResponseStart", "trial_num": "Trial","trial_type": "Response"}]
+                ,"Events" : [{"onset": "stimulus","duration": "0.5 * 30", "trial_num": "trial","trial_type": "Stimulus + SPLITCHAR + congruency + percIncongruent + SPLITCHAR + switchType + percSwitch"},
+                             {"onset": "response", "duration": "RT", "trial_num": "trial","trial_type": "Response + SPLITCHAR + congruency + percIncongruent + SPLITCHAR + switchType + percSwitch"}]
 }
 , "split": { "Sep": "all",
             "buffer": 10,
