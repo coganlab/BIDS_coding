@@ -2,10 +2,17 @@
    sphinx-quickstart on Thu Feb 23 01:25:16 2023.
    This file has been adapted to provide a more readable and helpful homepage.
 
-Welcome to the IEEG_Pipelines Documentation
+Welcome to the BIDS_coding Documentation
 ===========================================
 
-This is the main page of the IEEG_Pipelines documentation. Here you will find the table of contents and links to other important resources.
+This is the main page of the BIDS_coding documentation. Here you will find the table of contents and links to other important resources.
+
+.. toctree::
+   :maxdepth: 1
+   :caption: Useful Links
+
+   BIDS_coding @ GitHub <https://github.com/coganlab/BIDS_coding>
+   Issue Tracker <https://github.com/coganlab/BIDS_coding/issues>
 
 .. include:: ../README.md
    :parser: myst_parser.sphinx_
@@ -18,4 +25,4 @@ Indices and Tables
 * :ref:`search`
 * `MATLAB Module Index <mat-modindex.html>`_
 
-Thank you for using IEEG_Pipelines!
+Thank you for using BIDS_coding!
