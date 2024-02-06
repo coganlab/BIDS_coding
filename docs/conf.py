@@ -46,6 +46,14 @@ extensions = ['myst_parser',
               'sphinx.ext.viewcode',
               'sphinx.ext.mathjax']
 
+def linkcode_resolve(domain, info):
+    if domain != 'py':
+        return None
+    if not info['module']:
+        return None
+    filename = info['module'].replace('.', '/')
+    return "https://github.com/coganlab/BIDS_coding/%s.py" % filename
+
 # List of patterns, relative to source directory, that match files and
 # directories to ignore when looking for source files.
 # This pattern also affects html_static_path and html_extra_path.
@@ -66,8 +74,8 @@ html_theme_options = {
     "navigation_depth": 4,
     "logo_only": False,
 }
-html_logo = "./images/brain_logo_blue.png"
-html_favicon = "./images/favicon.ico"
+html_logo = None
+html_favicon = None
 
 html_context = {
     # Enable the "Edit in GitHub link within the header of each page.
