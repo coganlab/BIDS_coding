@@ -1,332 +1,328 @@
-**Global Local**
-
-**Preprocessing Guide**
-
-*ecog_preprocessing (Mat) → makeTrials_GL (Mat) → BIDS_coding (WSL)*
-
-**Step 1** : **Download data files** **(Box)**
-
-1. **Go to Box → ECoG_Task_Data → Cogan_Task_Data** and locate the
-   *Subject (D#) folder → Global Local task folder → All blocks*
-   subfolder
-2. **Download** **all** **Box** **data files from “All Blocks”** folder
-3. Then **Copy + Paste** files into **Local PC** folder in
-   **CoganLabNL** → **InUnit Preprocessing** → **Subject (D#) → Global
-   Local → All blocks**
-4. \_ **KEY** \_: locate the Excel csv file titled:
-   **GL_MainTask_Data_D#_taskdate**
-5. **RENAME** **this file to**" **Trials**"
-6. **EDF file** : *2 options - Download (local PC) or Box Drive (no
-   download)*
-7. **Download** : from **TaskUploadDir** 1. **Box →**\ \*\*
-   TaskUploadDir **→** Download*\* → move to same local PC Global Local
-   folder
-
-   1. Only if you want to download!
-
-8. **Box Drive** : No download, will use Box Drive path in edf_filename
-   variable instead of local PC path → \_ **See Step 2!** \_
-
-**Step 2** : **ecog_preprocessing** **(Matlab)** *- general
-preprocessing script*
-
-1.  Once your files are downloaded and Trials is renamed, open Matlab
-    and run the **ecog_preprocessing** script *(used for all tasks
-    preprocessing)*
-2.  Start the same as all other tasks → create a new **Case** for the
-    task (Global Local = **009** ),
-3.  Fill in all of the case variable information accordingly: \_ **see
-    differences!** \_
-4.  \_ **KEY 1** \_ - for **Global Local** \_ **only** *,
-    the*\ **ptb_trialInfo variable**\ *is commented out! → put a* **%**
-    \_ *(percentage sign) in front!* 1. This is because we do not need
-    to get trialInfo – it is replaced by the **Trials** excel sheet we
-    renamed in Step 1.
-5.  \_ **KEY 2** \_ - **edf_filename**\ \*\* variable (path)*\* will
-    change depending on if you downloaded the EDF above from Box, or if
-    you are uploading it directly from Box Drive: 1. **Downloaded EDF**
-    : path to InUnit Preprocessing (PC)
-
-    1. ‘C::raw-latex:`\Users`:raw-latex:`\ncl24`:raw-latex:`\Desktop`:raw-latex:`\CoganLabNL`:raw-latex:`\InUnit `Preprocessing:raw-latex:`\D81`:raw-latex:`\Lexical `Delay:raw-latex:`\D`#
-       DATE COGAN_TASKNAME.EDF’
-
-       2. **Box Drive EDF** : path to TaskUploadDir (Box)
-
-    2. ‘C::raw-latex:`\Users`:raw-latex:`\ncl24`:raw-latex:`\Box`:raw-latex:`\CoganLab`:raw-latex:`\ECoG`\_Task_Data:raw-latex:`\TaskUploadDir`:raw-latex:`\D`#
-       DATE COGAN_TASKNAME.EDF’
-
-6.  Once all variables are filled out, **highlight + run (F9)** to load
-    into your workspace
-7.  Ignore the trialInfo section (don’t need trialInfo) → Go straight to
-    the **edfread + labels** section & run!
-8.  This will read the EDF file to create your **labels** variable
-9.  Then, run the following **extract trigger + mic channel** section
-10. This will create your **trigger** & **mic** variables, as well as
-    save them as **trigger.mat** & **mic.mat** files in your task
-    folder.
-11. Finally, run the **.ieeg.dat + experiment** file section, that will
-    save the **experiment.mat** & **.ieeg.dat** files in your task
-    folder
-12. As well as create the folders **mat** & **taskdate** *(e.g.* \_
-    **230807** \__)\_ 1. Move the **experiment** file into the **mat**
-    folder 2. At the end of Step 5, the **Trials.mat** file will
-    automatically save under the **taskdate (230807) → mat** folder on
-    Box!
-
-**Step 3** : **MaketrigTimes** **(Matlab)** *- trigTimes +
-trigTimes_audioAligned files*
-
-1.  When you reach the **maketrigtimes** section, you will open the
-    **maketrigtimes.m** script and run it in a separate window next to
-    ecog_preprocessing.
-2.  *In order to run maketrigtimes successfully, you will need to have*:
-3.  The **trigger** variable already loaded in your workspace 1. Should
-    already be there if going straight from running ecog_preprocessing –
-    but if not, double-click on trigger saved in folder
-4.  Already run **edfread_fast** 1. If not, go back and run this in
-    ecog_preprocessing & make sure that your edf_filename variable (path
-    to EDF) from the case variables is loaded in your workspace before
-    doing so.
-5.  Run the first section at the top to load the graph of the triggers
-6.  **Uncomment the -triggers (negative) linefor Global Local!** 1.
-    Otherwise the graph will appear upside down
-7.  Then, proceed as usual and make the trigTimes adjustments you do for
-    all other tasks
-8.  **Global Local-specific Task Info** : 1. Total # triggers →
-    **trigTimes** = **448** 2. **4**\ \*\* blocks **total,** 112*\*
-    triggers per block
-
-    1. *Rare cases could have 512 total trigs, 128 per block*
-
-       3. Seconds between triggers = **1.5**
-       4. Threshold (thresh) = **-1.25**
-
-    2. Bc graph is inverted / negative from the -triggers line!
-
-9.  If you need to delete excess triggers (first, last, random in
-    middle) run: trigTimes([1,2,3,etc.]) = []; 1. *Fill in brackets with
-    which specific trigger numbers you need to delete!*
-10. Once **trigTimes = 448** , run the final section to save
-    **trigTimes.mat** file to your PC folder!
-11. Finally, return to the **ecog_preprocessing** script tab and run the
-    section below, to align the audio to your saved trigTimes
-12. This will create the **trigTimes_audioAligned.mat** file and save it
-    into your PC folder
-
-**Step 4** : **Upload Files + Copy EDF to Box D_Data**
-
-1. \_ **Before moving on!** \_ **→ Upload all files to** **Box** **→
-   D_Data** from InUnit Preprocessing folder: **Box → D_Data → Global
-   Local → Subject (D#)**
-2. Critical because the **makeTrials_GL script pulls and uses files
-   from** **Box only! (D_Data Global Local folder specifically)** 1. So
-   before running that script, all files must be uploaded there in order
-   for it to work
-3. Upload the files to D_Data in the exact same way as all other tasks!
-   - only difference = Trials.csv instead of trialInfo
-4. \_ **Also!** \_ \_ **→** \_ **Copy EDF file into D_Data folder from
-   TaskUploadDir**
-5. The edfread command in this program can only read EDFs / files from
-   the D_Data folder!!!
-6. So you must Copy the EDF from TaskUploadDir into the D_Data folder
-   with the rest of the uploaded files!
-7. SEE BELOW - you must also change Path to EDF!!! 1. Of edf_filename
-   variable + edfread_fast(edf_filename) commands!
-
-**Step 5** : **makeTrials_GL** **(Matlab)** *- Global Local only script
-to make Trials.mat*
-
-1. Once all files have been uploaded to **Box → D_Data** folder, return
-   to Matlab and run the **makeTrials_GL.m** script in another separate
-   tab window → this script will output the final **Trials.mat** file
-   when finished!
-2. **STEPS TO RUN SUCCESSFULLY**\ \*\* :*\* *(also written on script!)*
-3. **Step 1** : **Copy EDF file into D_Data Box folder!** (from
-   TaskUploadDir) 1. \_ **KEY** \_ - Make sure EDF file is copied into
-   the **D_Data** Subject Global Local folder on Box!
-4. **Step 2**\ \*\* : \***\* Edit info\ **(specific to each
-   subject)**\ + copy in command line to run each command below (A, B,
-   C) ONE AT A TIME:**1.**\ 2A)****Command 1 **:change** edf_filename*\*
-   variable
-
-   1. **COMMAND** : **edf_filename =
-      ‘C::raw-latex:`\Users`:raw-latex:`\ncl24`:raw-latex:`\Box`:raw-latex:`\CoganLab`:raw-latex:`\D`\_Data:raw-latex:`\GlobalLocal`:raw-latex:`\D103`:raw-latex:`\D103`
-      240110 COGAN_GLOBALLOCAL.EDF’;**
-
-      2. **2B)**\ Command 2:change **h** variable
-
-   2. **COMMAND** : **h =
-      edfread_fast(‘C::raw-latex:`\Users`:raw-latex:`\ncl24`:raw-latex:`\Box`:raw-latex:`\CoganLab`:raw-latex:`\D`\_Data:raw-latex:`\GlobalLocal`:raw-latex:`\D103`:raw-latex:`\D103`
-      240110 COGAN_GLOBALLOCAL.EDF’);**
-
-      3. **2C)**\ Command 3:run **makeTrials_GL** function
-
-   3. **COMMAND** : **makeTrials_GL(‘D103’, ‘240110’)**
-   4. Must replace: (‘subject’, ‘taskdate’) 1. Replace **subject** with
-      **‘D#’** 2. Replace **date** with **‘taskdate’**
-      (e.g. **‘230807’)**
-   5. Final format: **makeTrials_GL(‘D#’, ‘taskdate’)** 1. **Example** :
-      D94
-
-      1. subject = ‘D94’
-      2. date = ‘230807’
-      3. **=** :**makeTrials_GL(‘D94’, ‘230807’)**
-
-   6. You **MUST add the single ‘quotations’** around each of the real
-      variables that you enter, in order for them to be registered as
-      the values for those variables! 4. *Once 2C is finished running,
-      you are done!*
-
-5. **Final output** = **Trials.mat** (when 2C is done ^) 1.
-   **Trials.mat** file will automatically save under the **taskdate
-   (e.g. 230807) → matfolder on**\ \*\* Box \****!*\* 2. Example path to
-   locate Trials.mat file:
-
-   1. Box -> CoganLab -> D_Data -> GlobalLocal -> D103 (subj) -> 240110
-      (taskdate) -> mat -> Trials.mat
-
-6. If you would like to save it in your local PC folder (InUnit
-   Preprocessing) as well, you can download the file from Box and copy
-   it there! – you don’t have to though.
-
-**Step 6** : **BIDS_coding** **(WSL → Visual Studio (VS) Code program)**
-*- BIDS*
-
-1.  Step 1: Open WSL
-
-2.  Step 2: Open **BIDS_coding** workspace (folder from Desktop)
-
-3.  **File** (top left) → **Open Folder → Desktop → BIDS_coding** 1.
-    Make sure it opens into **BIDS_convert_wsl.sh** script! 2.
-    **BIDS_coding → BIDS_converter → BIDS_convert_wsl.sh**
-
-    1. C:/Users/ncl24/BIDS_coding/BIDS_converter/BIDS_convert_wsl.sh
+Global Local
+============
+
+Preprocessing Guide
+-------------------
+ecog_preprocessing (Mat) → makeTrials_GL (Mat) → BIDS_coding (WSL)
+
+#. **Download data files (Box)**
+
+    #. **Go to Box → ECoG_Task_Data → Cogan_Task_Data** and locate the
+       *Subject (D#) folder → Global Local task folder → All blocks*
+       subfolder
+    #. **Download** **all** **Box** **data files from “All Blocks”** folder
+    #. Then **Copy + Paste** files into **Local PC** folder in
+       **CoganLabNL** → **InUnit Preprocessing** → **Subject (D#) → Global
+       Local → All blocks**
+    #. \_ **KEY** \_: locate the Excel csv file titled:
+       **GL_MainTask_Data_D#_taskdate**
+    #. **RENAME** **this file to**" **Trials**"
+    #. **EDF file** : *2 options - Download (local PC) or Box Drive (no
+       download)*
+    #. **Download** : from **TaskUploadDir** 1. **Box →**\ \*\*
+       TaskUploadDir **→** Download*\* → move to same local PC Global Local
+       folder
+
+       * Only if you want to download!
+
+    #. **Box Drive** : No download, will use Box Drive path in edf_filename
+       variable instead of local PC path → \_ **See Step 2!** \_
+
+#. **ecog_preprocessing(Matlab)**
+    *-general preprocessing script*
+
+    #.  Once your files are downloaded and Trials is renamed, open Matlab
+        and run the **ecog_preprocessing** script *(used for all tasks
+        preprocessing)*
+    #.  Start the same as all other tasks → create a new **Case** for the
+        task (Global Local = **009** ),
+    #.  Fill in all of the case variable information accordingly: **see differences!**
+    #.  **KEY 1** - for **Global Local only**,
+        the **ptb_trialInfo variable** is commented out! → put a **\%**
+        (percentage sign) in front! This is because we do not need
+        to get trialInfo – it is replaced by the **Trials** excel sheet we
+        renamed in Step 1.
+    #.  **KEY 2** - **edf_filename** variable (path) will
+        change depending on if you downloaded the EDF above from Box, or if
+        you are uploading it directly from Box Drive:
+        * **Downloaded EDF** path to InUnit Preprocessing (PC):
+            .. code-block:: bash
+                C:\Users\ncl24\Desktop\CoganLabNL\InUnit Preprocessing\D81\Lexical Delay\D# DATE COGAN_TASKNAME.EDF
+        * **Box Drive EDF** path to TaskUploadDir (Box):
+            .. code-block:: bash
+                C:\Users\ncl24\Box\CoganLab\ECoG_Task_Data\TaskUploadDir\D# DATE COGAN_TASKNAME.EDF
+
+    #.  Once all variables are filled out, **highlight + run (F9)** to load
+        into your workspace
+    #.  Ignore the trialInfo section (don’t need trialInfo) → Go straight to
+        the **edfread + labels** section & run!
+    #.  This will read the EDF file to create your **labels** variable
+    #.  Then, run the following **extract trigger + mic channel** section
+    #. This will create your **trigger** & **mic** variables, as well as
+        save them as **trigger.mat** & **mic.mat** files in your task
+        folder.
+    #. Finally, run the **.ieeg.dat + experiment** file section, that will
+        save the **experiment.mat** & **.ieeg.dat** files in your task
+        folder
+    #. As well as create the folders **mat** & **taskdate** *(e.g.* \_
+        **230807** \__)\_ 1. Move the **experiment** file into the **mat**
+        folder 2. At the end of Step 5, the **Trials.mat** file will
+        automatically save under the **taskdate (230807) → mat** folder on
+        Box!
+
+#. **MaketrigTimes (Matlab)**
+    *- trigTimes + trigTimes_audioAligned files*
+
+    #.  When you reach the **maketrigtimes** section, you will open the
+        **maketrigtimes.m** script and run it in a separate window next to
+        ecog_preprocessing.
+    #.  *In order to run maketrigtimes successfully, you will need to have*:
+    #.  The **trigger** variable already loaded in your workspace 1. Should
+        already be there if going straight from running ecog_preprocessing –
+        but if not, double-click on trigger saved in folder
+    #.  Already run **edfread_fast** 1. If not, go back and run this in
+        ecog_preprocessing & make sure that your edf_filename variable (path
+        to EDF) from the case variables is loaded in your workspace before
+        doing so.
+    #.  Run the first section at the top to load the graph of the triggers
+    #.  **Uncomment the -triggers (negative) linefor Global Local!** 1.
+        Otherwise the graph will appear upside down
+    #.  Then, proceed as usual and make the trigTimes adjustments you do for
+        all other tasks
+    #.  **Global Local-specific Task Info** : 1. Total # triggers →
+        **trigTimes** = **448** 2. **4**\ \*\* blocks **total,** 112*\*
+        triggers per block
+
+        #. *Rare cases could have 512 total trigs, 128 per block*
+
+           #. Seconds between triggers = **1.5**
+           #. Threshold (thresh) = **-1.25**
+
+        #. Bc graph is inverted / negative from the -triggers line!
+
+    #.  If you need to delete excess triggers (first, last, random in
+        middle) run: trigTimes([1,2,3,etc.]) = []; 1. *Fill in brackets with
+        which specific trigger numbers you need to delete!*
+    #. Once **trigTimes = 448** , run the final section to save
+        **trigTimes.mat** file to your PC folder!
+    #. Finally, return to the **ecog_preprocessing** script tab and run the
+        section below, to align the audio to your saved trigTimes
+    #. This will create the **trigTimes_audioAligned.mat** file and save it
+        into your PC folder
+
+#. **Upload Files + Copy EDF to Box D_Data**
+
+    #. \_ **Before moving on!** \_ **→ Upload all files to** **Box** **→
+       D_Data** from InUnit Preprocessing folder: **Box → D_Data → Global
+       Local → Subject (D#)**
+    #. Critical because the **makeTrials_GL script pulls and uses files
+       from** **Box only! (D_Data Global Local folder specifically)** 1. So
+       before running that script, all files must be uploaded there in order
+       for it to work
+    #. Upload the files to D_Data in the exact same way as all other tasks!
+       - only difference = Trials.csv instead of trialInfo
+    #. \_ **Also!** \_ \_ **→** \_ **Copy EDF file into D_Data folder from
+       TaskUploadDir**
+    #. The edfread command in this program can only read EDFs / files from
+       the D_Data folder!!!
+    #. So you must Copy the EDF from TaskUploadDir into the D_Data folder
+       with the rest of the uploaded files!
+    #. SEE BELOW - you must also change Path to EDF!!! 1. Of edf_filename
+       variable + edfread_fast(edf_filename) commands!
+
+#. **makeTrials_GL (Matlab)**
+    *- Global Local only script to make Trials.mat*
+
+    #. Once all files have been uploaded to **Box → D_Data** folder, return
+       to Matlab and run the **makeTrials_GL.m** script in another separate
+       tab window → this script will output the final **Trials.mat** file
+       when finished!
+    #. **STEPS TO RUN SUCCESSFULLY**\ \*\* :*\* *(also written on script!)*
+    #. **Step 1** : **Copy EDF file into D_Data Box folder!** (from
+       TaskUploadDir) 1. \_ **KEY** \_ - Make sure EDF file is copied into
+       the **D_Data** Subject Global Local folder on Box!
+    #. **Step 2**\ \*\* : \***\* Edit info\ **(specific to each
+       subject)**\ + copy in command line to run each command below (A, B,
+       C) ONE AT A TIME:**1.**\ 2A)****Command 1 **:change** edf_filename*\*
+       variable
+
+       #. **COMMAND** : **edf_filename =
+          ‘C::raw-latex:`\Users`:raw-latex:`\ncl24`:raw-latex:`\Box`:raw-latex:`\CoganLab`:raw-latex:`\D`\_Data:raw-latex:`\GlobalLocal`:raw-latex:`\D103`:raw-latex:`\D103`
+          240110 COGAN_GLOBALLOCAL.EDF’;**
+
+          2. **2B)**\ Command 2:change **h** variable
+
+       #. **COMMAND** : **h =
+          edfread_fast(‘C::raw-latex:`\Users`:raw-latex:`\ncl24`:raw-latex:`\Box`:raw-latex:`\CoganLab`:raw-latex:`\D`\_Data:raw-latex:`\GlobalLocal`:raw-latex:`\D103`:raw-latex:`\D103`
+          240110 COGAN_GLOBALLOCAL.EDF’);**
+
+          3. **2C)**\ Command 3:run **makeTrials_GL** function
+
+       #. **COMMAND** : **makeTrials_GL(‘D103’, ‘240110’)**
+       #. Must replace: (‘subject’, ‘taskdate’) 1. Replace **subject** with
+          **‘D#’** 2. Replace **date** with **‘taskdate’**
+          (e.g. **‘230807’)**
+       #. Final format: **makeTrials_GL(‘D#’, ‘taskdate’)** 1. **Example** :
+          D94
+
+          #. subject = ‘D94’
+          #. date = ‘230807’
+          #. **=** :**makeTrials_GL(‘D94’, ‘230807’)**
+
+       #. You **MUST add the single ‘quotations’** around each of the real
+          variables that you enter, in order for them to be registered as
+          the values for those variables! 4. *Once 2C is finished running,
+          you are done!*
+
+    #. **Final output** = **Trials.mat** (when 2C is done ^) 1.
+       **Trials.mat** file will automatically save under the **taskdate
+       (e.g. 230807) → matfolder on**\ \*\* Box \****!*\* 2. Example path to
+       locate Trials.mat file:
+
+       * Box -> CoganLab -> D_Data -> GlobalLocal -> D103 (subj) -> 240110
+          (taskdate) -> mat -> Trials.mat
+
+    #. If you would like to save it in your local PC folder (InUnit
+       Preprocessing) as well, you can download the file from Box and copy
+       it there! – you don’t have to though.
+
+#. **BIDS_coding (WSL → Visual Studio (VS) Code program)**
+    *- BIDS*
+
+    #.  Open WSL
 
-4.  Step 3: In " **Terminal**" (command window at bottom), type **git
-    pull**
+    #.  Open **BIDS_coding** workspace (folder from Desktop)
 
-5.  Make sure you are in the right workspace, should look like this: 1.
-    |image0| 2. Press **Enter**
+        * **File** (top left) → **Open Folder → Desktop → BIDS_coding**
 
-6.  Step 4: If you encounter an \_ **error message!** \_
+            #. Make sure it opens into **BIDS_convert_wsl.sh** script!
 
-7.  *Message*: 1. |image1|
+            #. **BIDS_coding → BIDS_converter → BIDS_convert_wsl.sh**
 
-8.  You will need to make sure all of your changes to **ALL scripts in
-    the workspace** (modified files will have an " **M**" next to them
-    in explorer left side bar) have been **COMMITTED** to Github \_
-    **before running** \_ the next line, because they will be
-    **ERASED!!!** 1. *To commit changes to github*: type **git push →
-    git commit**
+            #. C:/Users/ncl24/BIDS_coding/BIDS_converter/BIDS_convert_wsl.sh
 
-9.  If your only changes are the variables of subject, task, etc. that
-    you make for specific subjects, then you don’t have to commit them –
-    **BUT** , make sure any files you have run for previous subjects
-    with the script are **SAVED TO BOX BEFORE RUNNING the next command**
-    , because they will be **overwritten!!!** 1. To Save to Box:
+    #.  In " **Terminal**" (command window at bottom), type **git
+        pull**
 
-    1. Drag **sub-D00XX** folder into **share** folder above Workspace
-       in WSL explorer → should be in **Share** folder on Desktop, then
-       copy into Box → **BIDS-1.1_GlobalLocal** folder
+        * Make sure you are in the right workspace, should look like this:
+            #. |image0|
+            #. Press **Enter**
 
-10. Step 5: Once all previous subject files have been saved to Box BIDS
-    Global Local folder, you will reset the script!
+    #.  If you encounter an **error message!**
 
-    1. Type **git reset –hard** + Enter!
-    2. *Should look like this when idone*:
-    3. |image2|
+        #.  *Message*: 1. |image1|
 
-11. Step 6: When git reset is done, \_ **re-type** \_ **git pull** +
-    Enter!
+        #.  You will need to make sure all of your changes to **ALL scripts in
+            the workspace** (modified files will have an " **M**" next to them
+            in explorer left side bar) have been **COMMITTED** to Github \_
+            **before running** \_ the next line, because they will be
+            **ERASED!!!** 1. *To commit changes to github*: type **git push →
+            git commit**
 
-12. Step 7: **KEY** – **Edits to make to Script after Reset** :
+        #.  If your only changes are the variables of subject, task, etc. that
+            you make for specific subjects, then you don’t have to commit them –
+            **BUT** , make sure any files you have run for previous subjects
+            with the script are **SAVED TO BOX BEFORE RUNNING the next command**
+            , because they will be **overwritten!!!** 1. To Save to Box:
 
-13. Editing **BIDS_convert_wsl.sh** script!
+            * Drag **sub-D00XX** folder into **share** folder above Workspace
+               in WSL explorer → should be in **Share** folder on Desktop, then
+               copy into Box → **BIDS-1.1_GlobalLocal** folder
 
-14. **EDITS** : *CRITICAL TO CHANGE THESE IN SCRIPT BEFORE RUNNING!* 1.
-    **Line 4** : Change task to → **TASKS=(“GlobalLocal”)**
+    #. Once all previous subject files have been saved to Box BIDS
+        Global Local folder, you will reset the script!
 
-    1.  Must change from “SentenceRep” default to GlobalLocal (or any
-        task going forward)
-    2.  Use the exact same name as the D_Data folder!
-    3.  **Final** : |image3|
+        #. Type **git reset --hard** + Enter!
+        #. *Should look like this when idone*:
+        #. |image2|
 
-        2. **Line 16** : **Comment out (#) whole** **mapfile** **line!**
+    #. When git reset is done, **re-type git pull** + Enter!
 
-    4.  Don’t need for Global Local (will cause error)
-    5.  **Final** : *see full line on script* |image4|
+    #. **KEY** – **Edits to make to Script after Reset** :
 
-        3. **Line 17** : Change **SUB_IDS=(D#)** D# to correct Subject
-           D#’s!
+        #. Editing **BIDS_convert_wsl.sh** script!
 
-    6.  Can run **multiple subjects at once** , or just **one**
-    7.  If running multiple, separate by spaces only! No comma! → *see
-        example below:*
-    8.  **Final** : |image5|
+        #. **EDITS** : *CRITICAL TO CHANGE THESE IN SCRIPT BEFORE RUNNING!*
+            #. **Line 4** : Change task to → **TASKS=(“GlobalLocal”)**
+                #.  Must change from “SentenceRep” default to GlobalLocal (or any
+                    task going forward)
+                    *  Use the exact same name as the D_Data folder!
+                #.  **Final** : |image3|
 
-        4. **Line 35** : **Comment out (#) the whole line 35!**
+            #. **Line 16** : **Comment out (#) whole** **mapfile** **line!**
 
-    9.  Global Local doesn’t have task stimuli, so don’t need this line
-        and it will cause an error if you keep it!
-    10. **Final** : *see full line on script* |image6|
-    11. Only comment this out for Global Local or tasks that don’t have
-        task stimuli!
-    12. For other future tasks that do, change the “sentence_rep” task
-        name in the middle of the command line (35) and insert the
-        correct task name to use proper task stimuli!
+                #.  Don’t need for Global Local (will cause error)
+                #.  **Final** : *see full line on script* |image4|
 
-15. **CTRL + S**\ \*\* TO SAVE ALL EDITS TO SCRIPT!!!*\*
+            #. **Line 17** : Change **SUB_IDS=(D#)** D# to correct Subject
+                   D#’s!
 
-16. Step 8: When all edits have been made to script & saved ( **ctrl +
-    s** ), type **conda activate BIDS_coding** + Enter!
+                #.  Can run **multiple subjects at once** , or just **one**
+                #.  If running multiple, separate by spaces only! No comma! → *see
+                    example below:*
+                #.  **Final** : |image5|
 
-17. Step 9: The conda activate command will change (base) at the start
-    of the command path to (BIDS_coding)
+            #. **Line 35** : **Comment out (#) the whole line 35!**
 
-18. Once the new command line pops up below: 1. Type **cd
-    BIDS_converter/** + Enter!
+                #. Global Local doesn’t have task stimuli, so don’t need this line
+                    and it will cause an error if you keep it!
+                #. **Final** : *see full line on script* |image6|
+                #. Only comment this out for Global Local or tasks that don’t have
+                    task stimuli!
+                    * For other future tasks that do, change the “sentence_rep” task
+                        name in the middle of the command line (35) and insert the
+                        correct task name to use proper task stimuli!
 
-19. Step 10: The cd command will take you into the BIDS_converter folder
-    within BIDS_coding (adds it to end of path), which is where you can
-    now run the script to perform the BIDS conversion functions
+        #. **CTRL + S** TO SAVE ALL EDITS TO SCRIPT!!!
 
-20. Once the next command line pops up below with /BIDS_converter at the
-    end: type **./BIDS_convert_wsl.sh** + Enter!
+    #. When all edits have been made to script & saved ( **ctrl +
+        s** ), type **conda activate BIDS_coding** + Enter!
 
-21. **STEPS 8, 9, 10 SHOULD LOOK LIKE THIS** : (in order top → bottom!)
+    #. The conda activate command will change (base) at the start
+        of the command path to (BIDS_coding)
 
-22. |image7|
+        * Once the new command line pops up below:
+            * Type **cd BIDS_converter/** + Enter!
 
-23. Step 11: The script should then run for a few minutes (10-15 min)
-    after entering the last command to create all of the converted BIDS
-    files!
+    #. within BIDS_coding (adds it to end of path), which is where you can
+        now run the script to perform the BIDS conversion functions
 
-24. Final output will be on the left side bar (WSL Explorer) 1. *To open
-    explorer*: click double paper icon at top left corner
+        * Once the next command line pops up below with /BIDS_converter at the
+            end: type **./BIDS_convert_wsl.sh** + Enter!
 
-25. Under **ncl24 → Workspace → GlobalLocal → BIDS** 1. Locate the
-    **sub-D0XXX** folder!
+    **STEPS 8, 9, 10 SHOULD LOOK LIKE THIS** : (in order top → bottom!)
 
-    1. i.e. sub-D0100 for Subject D100
-    2. |image8|
+        |image7|
 
-       2. This is where all of the finalized BIDS files will go!
+    #. The script should then run for a few minutes (10-15 min)
+        after entering the last command to create all of the converted BIDS
+        files!
 
-26. Last step: move to **share** folder (on WSL)
+        #. Final output will be on the left side bar (WSL Explorer) 1. *To open
+            explorer*: click double paper icon at top left corner
 
-27. When it is finished creating BIDS files, in the left side bar with
-    workspaces, drag and drop this **sub-D00XX** output folder
-    containing the BIDS files into the " **share**" folder above
-    Workspace! (see top of pic above) 1. Then you will be able to access
-    it from **Share PC** folder on Desktop! → if not moved to share,
-    can’t access on Windows
+        #. Under **ncl24 → Workspace → GlobalLocal → BIDS** 1. Locate the
+            **sub-D0XXX** folder!
 
-**Final Step** : **Upload** **sub-D00XX** **on** **Share folder to Box
-BIDS-1.1_GlobalLocal**
+            #. i.e. sub-D0100 for Subject D100
+            #. |image8|
 
-1. Copy **sub-D00XX** with all finalized BIDS file outputs from
-   **Share** PCfolder into **Box → CoganLab → BIDS-1.1_GlobalLocal →
-   BIDS** folder!
+               * This is where all of the finalized BIDS files will go!
+
+    #. Last step: move to **share** folder (on WSL)
+
+        * When it is finished creating BIDS files, in the left side bar with
+            workspaces, drag and drop this **sub-D00XX** output folder
+            containing the BIDS files into the " **share**" folder above
+            Workspace! (see top of pic above) 1. Then you will be able to access
+            it from **Share PC** folder on Desktop! → if not moved to share,
+            can’t access on Windows
+
+#. **Upload sub-D00XX on Share folder to Box BIDS-1.1_GlobalLocal**
+
+    * Copy **sub-D00XX** with all finalized BIDS file outputs from
+       **Share** PCfolder into **Box → CoganLab → BIDS-1.1_GlobalLocal →
+       BIDS** folder!
 
 |image9|
 
