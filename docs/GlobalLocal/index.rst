@@ -134,38 +134,34 @@ ecog_preprocessing (Mat) → makeTrials_GL (Mat) → BIDS_coding (WSL)
        when finished!
     #. **STEPS TO RUN SUCCESSFULLY** *(also written on script!)*
 
-        * **Step 1** : **Copy EDF file into D_Data Box folder!** (from
-           TaskUploadDir)
+        * **Step 1** : **Copy EDF file into D_Data Box folder!** (from TaskUploadDir)
 
             * **KEY** - Make sure EDF file is copied into the **D_Data** Subject Global Local folder on Box!
         * **Step 2**: **Edit info** (specific to each subject) + **copy in command line to run each command below (A, B, C) ONE AT A TIME:**
 
             * 2A) Command 1: change edf_filename variable
-                .. code-block:: matlab
-                    edf_filename = ‘C:\Users\ncl24\Box\CoganLab\D_Data\GlobalLocal\D103\240110 COGAN_GLOBALLOCAL.EDF’;
+                ``edf_filename = ‘C:\Users\ncl24\Box\CoganLab\D_Data\GlobalLocal\D103\240110 COGAN_GLOBALLOCAL.EDF’;``
 
             * 2B) Command 2:  change h variable
-                .. code-block:: matlab
-                    h = edfread_fast(‘C:\Users\ncl24\Box\CoganLab\D_Data\GlobalLocal\D103\240110 COGAN_GLOBALLOCAL.EDF’);
+                ``h = edfread_fast(‘C:\Users\ncl24\Box\CoganLab\D_Data\GlobalLocal\D103\240110 COGAN_GLOBALLOCAL.EDF’);``
 
             * 2C) Command 3: run makeTrials_GL function
-                .. code-block:: matlab
-                    makeTrials_GL(‘D103’, ‘240110’)
+                ``makeTrials_GL(‘D103’, ‘240110’)``
 
-           #. Must replace: (‘subject’, ‘taskdate’) 1. Replace **subject** with
-              **‘D#’** 2. Replace **date** with **‘taskdate’**
-              (e.g. **‘230807’)**
-           #. Final format: **makeTrials_GL(‘D#’, ‘taskdate’)** 1. **Example** :
-              D94
+                #. Must replace: (‘subject’, ‘taskdate’) 1. Replace **subject** with
+                   **‘D#’** 2. Replace **date** with **‘taskdate’**
+                   (e.g. **‘230807’)**
+                #. Final format: **makeTrials_GL(‘D#’, ‘taskdate’)** 1. **Example** :
+                   D94
 
-              #. subject = ‘D94’
-              #. date = ‘230807’
-              #. **=** :**makeTrials_GL(‘D94’, ‘230807’)**
+                   #. subject = ‘D94’
+                   #. date = ‘230807’
+                   #. **=** :**makeTrials_GL(‘D94’, ‘230807’)**
 
-           #. You **MUST add the single ‘quotations’** around each of the real
-              variables that you enter, in order for them to be registered as
-              the values for those variables! 4. *Once 2C is finished running,
-              you are done!*
+                #. You **MUST add the single ‘quotations’** around each of the real
+                   variables that you enter, in order for them to be registered as
+                   the values for those variables! 4. *Once 2C is finished running,
+                   you are done!*
 
         * **Final output** = **Trials.mat** (when 2C is done ^)
 
@@ -180,11 +176,11 @@ ecog_preprocessing (Mat) → makeTrials_GL (Mat) → BIDS_coding (WSL)
            it there! – you don’t have to though.
 
 * **Step 6: BIDS_coding (WSL → Visual Studio (VS) Code program)**
-    *- BIDS*
+    *BIDS*
 
     #.  Open WSL
 
-    #.  Open **BIDS_coding** workspace (folder from Desktop)
+    #.  Open ``BIDS_coding`` workspace (folder from Desktop)
 
         * **File** (top left) → **Open Folder → Desktop → BIDS_coding**
 
@@ -194,23 +190,24 @@ ecog_preprocessing (Mat) → makeTrials_GL (Mat) → BIDS_coding (WSL)
 
             #. C:/Users/ncl24/BIDS_coding/BIDS_converter/BIDS_convert_wsl.sh
 
-    #.  In " **Terminal**" (command window at bottom), type **git
-        pull**
+    #.  In "**Terminal**" (command window at bottom), type ``git pull``
 
         * Make sure you are in the right workspace, should look like this:
+
             #. |image4|
             #. Press **Enter**
 
     #.  If you encounter an **error message!**
 
-        #.  *Message*: 1. |image8|
+        #.  *Message*:
+            |image8|
 
-        #.  You will need to make sure all of your changes to **ALL scripts in
-            the workspace** (modified files will have an " **M**" next to them
-            in explorer left side bar) have been **COMMITTED** to Github \_
-            **before running** \_ the next line, because they will be
-            **ERASED!!!** 1. *To commit changes to github*: type **git push →
-            git commit**
+        #.  You will need to make sure all of your changes to **ALL scripts in the workspace**
+            (modified files will have an "**M**" next to them
+            in explorer left side bar) have been **COMMITTED** to Github
+            **before running** the next line, because they will be
+            **ERASED!!!**
+            * *To commit changes to github*: type ``git push`` → ``git commit``
 
         #.  If your only changes are the variables of subject, task, etc. that
             you make for specific subjects, then you don’t have to commit them –
@@ -225,9 +222,9 @@ ecog_preprocessing (Mat) → makeTrials_GL (Mat) → BIDS_coding (WSL)
     #. Once all previous subject files have been saved to Box BIDS
         Global Local folder, you will reset the script!
 
-        #. Type **git reset --hard** + Enter!
+        #. Type ``git reset --hard`` + Enter!
         #. *Should look like this when idone*:
-        #. |image2|
+            |image2|
 
     #. When git reset is done, **re-type git pull** + Enter!
 
@@ -247,8 +244,7 @@ ecog_preprocessing (Mat) → makeTrials_GL (Mat) → BIDS_coding (WSL)
                 #.  Don’t need for Global Local (will cause error)
                 #.  **Final** : *see full line on script* |image0|
 
-            #. **Line 17** : Change **SUB_IDS=(D#)** D# to correct Subject
-                   D#’s!
+            #. **Line 17** : Change **SUB_IDS=(D#)** D# to correct Subject D#’s!
 
                 #.  Can run **multiple subjects at once** , or just **one**
                 #.  If running multiple, separate by spaces only! No comma! → *see
@@ -262,26 +258,25 @@ ecog_preprocessing (Mat) → makeTrials_GL (Mat) → BIDS_coding (WSL)
                 #. **Final** : *see full line on script* |image6|
                 #. Only comment this out for Global Local or tasks that don’t have
                     task stimuli!
-                    * For other future tasks that do, change the “sentence_rep” task
+                    * For other future tasks that do, change the ``“sentence_rep”`` task
                         name in the middle of the command line (35) and insert the
                         correct task name to use proper task stimuli!
 
         #. **CTRL + S** TO SAVE ALL EDITS TO SCRIPT!!!
 
-    #. When all edits have been made to script & saved ( **ctrl +
-        s** ), type **conda activate BIDS_coding** + Enter!
+    #. When all edits have been made to script & saved ( **ctrl + s** ), type ``conda activate BIDS_coding`` + Enter!
 
     #. The conda activate command will change (base) at the start
         of the command path to (BIDS_coding)
 
         * Once the new command line pops up below:
-            * Type **cd BIDS_converter/** + Enter!
+            * Type ``cd BIDS_converter`` + Enter!
 
     #. within BIDS_coding (adds it to end of path), which is where you can
         now run the script to perform the BIDS conversion functions
 
         * Once the next command line pops up below with /BIDS_converter at the
-            end: type **./BIDS_convert_wsl.sh** + Enter!
+            end: type ``./BIDS_convert_wsl.sh`` + Enter!
 
     **STEPS 8, 9, 10 SHOULD LOOK LIKE THIS** : (in order top → bottom!)
 
