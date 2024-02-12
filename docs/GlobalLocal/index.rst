@@ -151,15 +151,19 @@ Step 5: makeTrials_GL (Matlab)
         * 2C) Command 3: run makeTrials_GL function
             ``makeTrials_GL(‘D103’, ‘240110’)``
 
-            #. Must replace: (‘subject’, ‘taskdate’) 1. Replace **subject** with **‘D#’** 2. Replace **date** with **‘taskdate’** (e.g. **‘230807’)**
+            #. Must replace: (‘subject’, ‘taskdate’)
+
+                #. Replace ``subject`` with ``‘D#’``
+
+                #. Replace ``date`` with ``‘taskdate’`` (e.g. ``‘230807’``)
 
             #. Final format: ``makeTrials_GL(‘D#’, ‘taskdate’)``
 
                 #. **Example** : D94
 
-                    #. subject = ‘D94’
+                    #. ``subject = ‘D94’``
 
-                    #. date = ‘230807’
+                    #. ``date = ‘230807’``
 
                     #. ``makeTrials_GL(‘D94’, ‘230807’)``
 
