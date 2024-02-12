@@ -44,7 +44,8 @@ extensions = ['myst_parser',
               'sphinx.ext.intersphinx',
               'sphinx.ext.linkcode',
               'sphinx.ext.viewcode',
-              'sphinx.ext.mathjax']
+              'sphinx.ext.mathjax',
+              'sphinxarg.ext']
 
 def linkcode_resolve(domain, info):
     if domain != 'py':

@@ -36,7 +36,7 @@ def get_parser():  # parses flags at onset of command
     parser = argparse.ArgumentParser(
         formatter_class=argparse.RawDescriptionHelpFormatter, description="""
         Data2bids is a script based on the SIMEXP lab script to convert nifti
-        MRI files into BIDS format. This script has been modified to
+        MRI and EEG files into BIDS format. This script has been modified to
         also parse README data as well as include conversion of DICOM files to
         nifti. The script utilizes Chris Rorden's Dcm2niix program for
         actual conversion.

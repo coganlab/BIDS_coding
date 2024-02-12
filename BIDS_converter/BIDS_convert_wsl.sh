@@ -1,7 +1,7 @@
 #!/bin/bash
 
 ORIG_DATA_DIR="$HOME/Box/CoganLab"
-TASKS=("SentenceRep")
+TASKS=("GlobalLocal")
 #(D3 D5 D6 D7 D8 D9 D12 D14 D15 D16 D17 D18 D20 D22 D23 D24 D26 D27 D28 D29 D30 D31 D32 D53
 # D57 D59 D60 D61 D65 D66 D69 D70 D71 D72 D73)
 #D3 D5 D6 D7 D8 D9 D18 D20 D22 D23 D24 D26 D27 D28 D29 D30 D31 D32 D53
@@ -14,7 +14,7 @@ TASKS=("SentenceRep")
 for TASK in "${TASKS[@]}"
  do
     mapfile -t SUB_IDS < <(find "$ORIG_DATA_DIR/D_Data/$TASK" -maxdepth 1 -type d -name "D*" -exec basename {} \;)
-#    SUB_IDS=(D3 D5 D6 D7 D8 D9)
+    SUB_IDS=(D77)
     OUTPUT_DIR="$HOME/Workspace/$TASK"
     BIDS_DIR="$OUTPUT_DIR/BIDS"
     ZIP=false

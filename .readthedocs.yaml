@@ -19,7 +19,7 @@ build:
     # golang: "1.19"
   jobs:
     pre_build:
-      - pip install --upgrade myst_parser sphinx_rtd_theme
+      - pip install --upgrade myst_parser sphinx_rtd_theme sphinx-argparse
 
 # Build documentation in the docs/ directory with Sphinx
 sphinx:
