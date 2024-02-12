@@ -14,5 +14,6 @@ Each task has its own specific needs, and therefore has extending guides. Each t
 
 .. toctree::
     :maxdepth: 2
+    :caption: Tasks
 
-    tasks
+    GlobalLocal/index
