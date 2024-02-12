@@ -291,14 +291,15 @@ Step 6: BIDS_coding (WSL → Visual Studio (VS) Code program)
 
         * *To open explorer*: click double paper icon at top left corner
 
-    #. Under **ncl24 → Workspace → GlobalLocal → BIDS** 1. Locate the
-        **sub-D0XXX** folder!
+    #. Under **ncl24 → Workspace → GlobalLocal → BIDS**
 
-        #. i.e. sub-D0100 for Subject D100
+        * Locate the **sub-D0XXX** folder!
 
-        #. |image9|
+            #. i.e. sub-D0100 for Subject D100
 
-           * This is where all of the finalized BIDS files will go!
+            #. |image9|
+
+               * This is where all of the finalized BIDS files will go!
 
 #. Last step: move to **share** folder (on WSL)
 
