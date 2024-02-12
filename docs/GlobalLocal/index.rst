@@ -30,7 +30,7 @@ ecog_preprocessing (Mat) → makeTrials_GL (Mat) → BIDS_coding (WSL)
 
     #.  Once your files are downloaded and Trials is renamed, open Matlab
         and run the **ecog_preprocessing** script *(used for all tasks preprocessing)*
-    #.  Start the same as all other tasks → create a new ``Case` for the
+    #.  Start the same as all other tasks → create a new ``Case`` for the
         task (Global Local = **009** ),
     #.  Fill in all of the case variable information accordingly: **see differences!**
 
@@ -74,8 +74,8 @@ ecog_preprocessing (Mat) → makeTrials_GL (Mat) → BIDS_coding (WSL)
             * Should already be there if going straight from running ecog_preprocessing –
             but if not, double-click on trigger saved in folder
         #.  Already run ``edfread_fast``
-            * If not, go back and run this in
-            ecog_preprocessing & make sure that your ``edf_filename`` variable (path
+
+            * If not, go back and run this in ecog_preprocessing & make sure that your ``edf_filename`` variable (path
             to EDF) from the case variables is loaded in your workspace before
             doing so.
     #.  Run the first section at the top to load the graph of the triggers
@@ -198,12 +198,12 @@ ecog_preprocessing (Mat) → makeTrials_GL (Mat) → BIDS_coding (WSL)
         pull**
 
         * Make sure you are in the right workspace, should look like this:
-            #. |image0|
+            #. |image4|
             #. Press **Enter**
 
     #.  If you encounter an **error message!**
 
-        #.  *Message*: 1. |image1|
+        #.  *Message*: 1. |image8|
 
         #.  You will need to make sure all of your changes to **ALL scripts in
             the workspace** (modified files will have an " **M**" next to them
@@ -240,12 +240,12 @@ ecog_preprocessing (Mat) → makeTrials_GL (Mat) → BIDS_coding (WSL)
                 #.  Must change from “SentenceRep” default to GlobalLocal (or any
                     task going forward)
                     *  Use the exact same name as the D_Data folder!
-                #.  **Final** : |image3|
+                #.  **Final** : |image1|
 
             #. **Line 16** : **Comment out (#) whole** **mapfile** **line!**
 
                 #.  Don’t need for Global Local (will cause error)
-                #.  **Final** : *see full line on script* |image4|
+                #.  **Final** : *see full line on script* |image0|
 
             #. **Line 17** : Change **SUB_IDS=(D#)** D# to correct Subject
                    D#’s!
@@ -298,7 +298,7 @@ ecog_preprocessing (Mat) → makeTrials_GL (Mat) → BIDS_coding (WSL)
             **sub-D0XXX** folder!
 
             #. i.e. sub-D0100 for Subject D100
-            #. |image8|
+            #. |image9|
 
                * This is where all of the finalized BIDS files will go!
 
@@ -317,7 +317,7 @@ ecog_preprocessing (Mat) → makeTrials_GL (Mat) → BIDS_coding (WSL)
        **Share** PCfolder into **Box → CoganLab → BIDS-1.1_GlobalLocal →
        BIDS** folder!
 
-|image9|
+|image3|
 
 .. |image0| image:: media/image1.png
 .. |image1| image:: media/image2.png
@@ -327,5 +327,5 @@ ecog_preprocessing (Mat) → makeTrials_GL (Mat) → BIDS_coding (WSL)
 .. |image5| image:: media/image6.png
 .. |image6| image:: media/image7.png
 .. |image7| image:: media/image8.png
-.. |image8| image:: media/image10.png
-.. |image9| image:: media/image9.png
+.. |image8| image:: media/image9.png
+.. |image9| image:: media/image10.png
