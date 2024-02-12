@@ -16,8 +16,8 @@ Step 1: Download data files (Box)
 #. **KEY**: locate the Excel csv file titled:
    ``GL_MainTask_Data_D#_taskdate``
 #. **RENAME this file to** ``Trials``
-#. **EDF file** :
-    *2 options - Download (local PC) or Box Drive (no download)*
+#. **EDF file**: *2 options - Download (local PC) or Box Drive (no download)*
+
     #. **Download** : from **TaskUploadDir**
         **Box → TaskUploadDir → Download** → move to same local PC Global Local folder (Only if you want to download!)
 
@@ -42,6 +42,7 @@ Step 2: ecog_preprocessing(Matlab)
     #.  **KEY 2** - ``edf_filename`` variable (path) will
         change depending on if you downloaded the EDF above from Box, or if
         you are uploading it directly from Box Drive:
+
         #. **Downloaded EDF** path to InUnit Preprocessing (PC): ``C:\Users\ncl24\Desktop\CoganLabNL\InUnit Preprocessing\D81\Lexical Delay\D# DATE COGAN_TASKNAME.EDF``
         #. **Box Drive EDF** path to TaskUploadDir (Box): ``C:\Users\ncl24\Box\CoganLab\ECoG_Task_Data\TaskUploadDir\D# DATE COGAN_TASKNAME.EDF``
 
@@ -121,6 +122,7 @@ Step 4: Upload Files + Copy EDF to Box D_Data
         * So before running that script, all files must be uploaded there in order for it to work
     #. Upload the files to D_Data in the exact same way as all other tasks! - only difference = Trials.csv instead of trialInfo
 #. **Also! → Copy EDF file into D_Data folder from TaskUploadDir**
+
     #. The edfread command in this program can only read EDFs / files from
        the D_Data folder!!!
     #. So you must Copy the EDF from TaskUploadDir into the D_Data folder
@@ -155,17 +157,18 @@ Step 5: makeTrials_GL (Matlab)
             #. Must replace: (‘subject’, ‘taskdate’) 1. Replace **subject** with
                **‘D#’** 2. Replace **date** with **‘taskdate’**
                (e.g. **‘230807’)**
-            #. Final format: **makeTrials_GL(‘D#’, ‘taskdate’)** 1. **Example** :
-               D94
+            #. Final format: ``makeTrials_GL(‘D#’, ‘taskdate’)``
 
-               #. subject = ‘D94’
-               #. date = ‘230807’
-               #. **=** :**makeTrials_GL(‘D94’, ‘230807’)**
+                #. **Example** : D94
+
+                    #. subject = ‘D94’
+                    #. date = ‘230807’
+                    #. ``makeTrials_GL(‘D94’, ‘230807’)``
 
             #. You **MUST add the single ‘quotations’** around each of the real
                variables that you enter, in order for them to be registered as
-               the values for those variables! 4. *Once 2C is finished running,
-               you are done!*
+               the values for those variables!
+        * *Once 2C is finished running, you are done!*
 
     * **Final output** = **Trials.mat** (when 2C is done ^)
 
@@ -218,11 +221,13 @@ Step 6: BIDS_coding (WSL → Visual Studio (VS) Code program)
         you make for specific subjects, then you don’t have to commit them –
         **BUT** , make sure any files you have run for previous subjects
         with the script are **SAVED TO BOX BEFORE RUNNING the next command**
-        , because they will be **overwritten!!!** 1. To Save to Box:
+        , because they will be **overwritten!!!**
 
-        * Drag **sub-D00XX** folder into **share** folder above Workspace
-           in WSL explorer → should be in **Share** folder on Desktop, then
-           copy into Box → **BIDS-1.1_GlobalLocal** folder
+        * To Save to Box:
+
+            * Drag **sub-D00XX** folder into **share** folder above Workspace
+               in WSL explorer → should be in **Share** folder on Desktop, then
+               copy into Box → **BIDS-1.1_GlobalLocal** folder
 
 #. Once all previous subject files have been saved to Box BIDS
     Global Local folder, you will reset the script!
@@ -238,9 +243,12 @@ Step 6: BIDS_coding (WSL → Visual Studio (VS) Code program)
     #. Editing **BIDS_convert_wsl.sh** script!
 
     #. **EDITS** : *CRITICAL TO CHANGE THESE IN SCRIPT BEFORE RUNNING!*
+
         #. **Line 4** : Change task to → **TASKS=(“GlobalLocal”)**
+
             #.  Must change from “SentenceRep” default to GlobalLocal (or any
                 task going forward)
+
                 *  Use the exact same name as the D_Data folder!
             #.  **Final** : |image1|
 
