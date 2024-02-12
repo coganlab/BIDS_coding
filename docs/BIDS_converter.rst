@@ -8,8 +8,7 @@ Data2BIDS
    :module: BIDS_converter.data2bids
    :func: get_parser
 
-Tasks
------
+
 Each task has its own specific needs, and therefore has extending guides. Each task has it's own branch on github.
 
 .. toctree::
