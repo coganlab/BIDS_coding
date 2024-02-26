@@ -16,7 +16,7 @@ jobs:
     strategy:
       matrix:
         os: [ ubuntu-latest ] #ubuntu-16.04
-        python-version: [3.8]
+        python-version: [3.11]
 
     steps:
     - uses: actions/checkout@v2
@@ -48,8 +48,4 @@ jobs:
     - name: Test with pytest
       run: |
         . /etc/lsb-release
-        if [[ "$DISTRIB_RELEASE" == "16.04" ]]; then
-            pytest -v tests/package_test.py -k "test_D48"
-        else
-            pytest -v tests/package_test.py
-        fi
+        pytest -v BIDS_converter

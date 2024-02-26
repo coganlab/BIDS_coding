@@ -2,19 +2,12 @@
 # -*- coding: utf-8 -*-
 
 import os
-import re
-import shutil
-import stat
-import threading
+import subprocess
 from pathlib import Path
-from typing import TypeVar, Union, Generic, get_type_hints, get_args
+from typing import Union, TypeVar
 
-import exrex as ex
 import numpy as np
 import pandas as pd
-from pyedflib import EdfReader
-from scipy.io import wavfile
-
 
 PathLike = TypeVar("PathLike", str, os.PathLike)
 
@@ -73,7 +66,7 @@ class DisplayablePath:
     def _default_criteria(cls, path):
         return True
 
-    def displayable(self):
+    def displayable(self) -> Union[Path, str]:
         if self.parent is None:
             return self.path
 
@@ -94,89 +87,6 @@ class DisplayablePath:
         return ''.join(reversed(parts))
 
 
-def match_regexp(config_regexp, filename, subtype=False):
-    delimiter_left = config_regexp["left"]
-    delimiter_right = config_regexp["right"]
-    match_found = False
-
-    if subtype:
-        for to_match in config_regexp["content"]:
-            if re.match(".*?"
-                        + delimiter_left
-                        + '(' + to_match[1] + ')'
-                        + delimiter_right
-                        + ".*?", filename):
-                match = to_match[0]
-                match_found = True
-    else:
-        for to_match in config_regexp["content"]:
-            if re.match(".*?"
-                        + delimiter_left
-                        + '(' + to_match + ')'
-                        + delimiter_right
-                        + ".*?", filename):
-                match = re.match(".*?"
-                                 + delimiter_left
-                                 + '(' + to_match + ')'
-                                 + delimiter_right
-                                 + ".*?", filename).group(1)
-                match_found = True
-    assert match_found
-    return match
-
-
-def gen_match_regexp(config_regexp, data,
-                     subtype=False):
-    """takes a match config and generates a matching string
-
-    :param config_regexp:
-    :type config_regexp:
-    :param data:
-    :type data:
-    :param subtype:
-    :type subtype:
-    :return:
-    :rtype:
-    """
-    if data.startswith("0"):
-        data = data.lstrip("0")
-    match_found = False
-    for to_match in config_regexp["content"]:
-        if re.match(to_match, data):
-            match_found = True
-    if not match_found:
-        raise AssertionError(
-            "{newname} doesn't match config criteria {given}".format(
-                newname=data, given=config_regexp["content"]))
-    left = ex.getone(config_regexp["left"])
-    right = ex.getone(config_regexp["right"])
-    newname = left + data + right
-
-    try:
-        if data == match_regexp(config_regexp, newname, subtype=subtype):
-            return newname
-        else:
-            raise ValueError("{newname} doesn't match config criteria".format(
-                newname=newname))
-    except AssertionError:
-        # return self.gen_match_regexp(config_regexp, data.lstrip("0"),subtype)
-        # except RecursionError:
-        raise AssertionError(
-            "{newname} doesn't match config criteria {given}".format(
-                newname=newname, given=config_regexp))
-
-
-def cat_edf(filename):
-    f = EdfReader(filename)
-    for i in range(f.signals_in_file):
-        print(f.readSignal(i), threading.current_thread().getName())
-
-
-def read_write_edf(read_obj, chn):
-    if isinstance(chn, str):
-        chn = read_obj.getSignalLabels().index(chn)
-    read_obj.readSignal(chn)
-
 
 # this part of the code creates the tree graphic
 def tree(path):
@@ -185,25 +95,7 @@ def tree(path):
         print(path_to_display.displayable())
 
 
-def rot_x(alpha):
-    return np.array([[1, 0, 0]
-                        , [0, np.cos(alpha), np.sin(alpha)]
-                        , [0, -np.sin(alpha), np.cos(alpha)]])
-
-
-def rot_y(alpha):
-    return np.array([[np.cos(alpha), 0, -np.sin(alpha)]
-                        , [0, 1, 0]
-                        , [np.sin(alpha), 0, np.cos(alpha)]])
-
-
-def rot_z(alpha):
-    return np.array([[np.cos(alpha), np.sin(alpha), 0]
-                        , [-np.sin(alpha), np.cos(alpha), 0]
-                        , [0, 0, 1]])
-
-
-def is_number(s):
+def is_number(s: str) -> bool:
     if isinstance(s, str):
         try:
             float(s)
@@ -228,7 +120,14 @@ def is_number(s):
         return False
 
 
-def str2num(s):
+def bids_validator(bids_dir):
+    assert bids_dir is not None, "Cannot launch bids-validator wit" \
+                                       "hout specifying bids directory !"
+    subprocess.check_call(['bids-validator',
+                           bids_dir])
+
+
+def str2num(s: str) -> Union[float, str]:
     if is_number(s):
         return float(s)
     else:
@@ -241,111 +140,8 @@ def slice_time_calc(TR, sNum, totNum, delay):
     return tslice
 
 
-def delete_folder(pth):
-    for sub in pth.iterdir():
-        if sub.is_dir():
-            delete_folder(sub)
-        else:
-            sub.unlink()
-    pth.rmdir()
-
-
 def set_default(obj):
     if isinstance(obj, set):
         return list(obj)
     raise TypeError
 
-
-def force_remove(mypath):
-    x = 0
-    e = None
-    while os.path.isfile(mypath) or os.path.isdir(mypath):
-        x += 1
-        if os.path.isfile(mypath):
-            os.remove(mypath)
-        try:
-            if os.path.isdir(mypath):
-                delete_folder(Path(mypath))
-        except OSError:
-            try:
-                shutil.rmtree(mypath)
-            except PermissionError:
-                for root, dirs, files in os.walk(mypath, topdown=False):
-                    for file in files:
-                        fullfile = os.path.join(root, file)
-                        os.chmod(fullfile, stat.S_IWUSR)
-                        os.remove(fullfile)
-                    for dir in dirs:
-                        try:
-                            delete_folder(os.path.join(root, dir))
-                        except AttributeError:
-                            os.rmdir(os.path.join(root, dir))
-                shutil.rmtree(mypath, ignore_errors=True)
-            except Exception as e:
-                shutil.rmtree(mypath, ignore_errors=True)
-        if x >= 1000:
-            if e is not None:
-                raise RuntimeError(
-                    mypath + " could not remove all files or directories becau"
-                             "se of " + e)
-            else:
-                raise
-
-
-def eval_df(df: pd.DataFrame, exp: str,
-            file_dir: PathLike = ""):
-    """input a df and expression and return a single dataframe column
-
-    :param df:
-    :type df:
-    :param exp:
-    :type exp:
-    :param file_dir:
-    :type file_dir:
-    :return:
-    :rtype:
-    """
-
-    assert isinstance(file_dir, (os.PathLike, str))
-
-    for name in [i for i in re.split(r"[ +\-/*%]", exp) if i != '']:
-        if name in df.columns:
-            if is_number(df[name]):
-                df[name] = pd.to_numeric(df[name])
-            elif os.path.isfile(os.path.join(file_dir, str(df[name].iloc[0]))):
-                for i, (_, fname) in enumerate(df[name].iteritems()):
-                    fname = os.path.join(file_dir, fname)
-                    frames, data = wavfile.read(fname)
-                    duration = data.size / frames
-                    df[name].iat[i] = duration
-                df[name] = df[name].astype(float)
-            else:
-                df[name] = df[name]
-        elif not is_number(name):
-            df[name] = pd.Series([name] * df.shape[0])
-    return df.eval(exp).squeeze()
-
-
-def trigger_from_excel(filename, participant):
-    """replace trigger channels with trigger label
-
-    :param filename:
-    :type filename:
-    :param participant:
-    :type participant:
-    :return:
-    :rtype:
-    """
-    xls_file = filename
-    xls_df = pd.ExcelFile(filename).parse(participant)
-
-    if any("Trigger" in column for column in xls_df):
-        for column in xls_df:
-            if "Trigger" in column:
-                trig_label = xls_df[column].iloc[0]
-                if is_number(trig_label):
-                    return int(trig_label)
-                else:
-                    return trig_label
-    else:
-        raise KeyError("'Trigger' not found in " + xls_file)

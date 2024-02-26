@@ -2,10 +2,13 @@ name: BIDS_coding
 channels:
   - defaults
 dependencies:
+  - python<3.12
   - tqdm
   - flake8
   - openpyxl
   - pip
+  - scipy
+  - numpy
+  - pandas
   - pip:
     - -r requirements.txt
-#prefix: C:\Users\ae166\Anaconda3\envs\BIDS_coding

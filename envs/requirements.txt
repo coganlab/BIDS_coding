@@ -1,12 +1,8 @@
-scipy<=1.6.2
-pandas>=1.1.3
-nibabel>=3.2.1
-pybids>=0.13
-numpy>=1.19.2
-pydicom>=2.1.2
+nibabel
+pybids
+pydicom
 bids>=0.0
-exrex >=0.10.5
-pyEDFlib >= 0.1.22
-matgrab >= 0.0.8
-typing >= 3.7.4
+exrex
+pyEDFlib
+matgrab
 pytest
