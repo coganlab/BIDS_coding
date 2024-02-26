@@ -36,7 +36,7 @@ def frame2bids(df_in: pd.DataFrame, event_format: Dict[str, str],
     # start_at = df_in[event_format["Events"][0]["onset"]].iloc[
     #         0] / event_format["SampleRate"]
     new_df = reframe_events(df_in, event_format["Events"].copy(),
-                            stim_dir, event_format["SampleRate"])
+                            stim_dir, event_format["SampleRate"], event_format["AudioCorrection"])
 
     for name in ["onset", "duration"]:
         if not (pd.api.types.is_float_dtype(
@@ -55,7 +55,8 @@ def frame2bids(df_in: pd.DataFrame, event_format: Dict[str, str],
 
 
 def reframe_events(df_in: pd.DataFrame, events: Union[list, dict],
-                   stim_dir: PathLike, mat_sample_rate) -> pd.DataFrame:
+                   stim_dir: PathLike, mat_sample_rate,
+                   audio_correction) -> pd.DataFrame:
     df = df_in.copy()
     new_df = None
     if isinstance(events, dict):
@@ -105,37 +106,35 @@ def reframe_events(df_in: pd.DataFrame, events: Union[list, dict],
         if "trial_num" not in temp_df.columns:
             temp_df["trial_num"] = [1 + i for i in list(range(temp_df.shape[0]))]
         temp_df.dropna(axis=0, how="all", subset=["onset", "duration"], inplace=True)
-            # TODO: make code below work for non correction case
-        ''' 
-            if "duration" not in temp_df.columns:
+        # TODO: make code below work for non correction case
+        if "duration" not in temp_df.columns:
             if "stim_file" in temp_df.columns:
                 temp = []
                 t_correct = []
                 for _, fname in temp_df["stim_file"].iteritems():
                     if fname.endswith(".wav"):
-                        if self.stim_dir is not None:
-                            fname = op.join(self.stim_dir, fname)
-                            dir = self.stim_dir
+                        if stim_dir is not None:
+                            fname = op.join(stim_dir, fname)
+                            dir = stim_dir
                         else:
-                            dir = self._data_dir
+                            raise FileNotFoundError("stim_dir required for"
+                            " .wav files")
                         try:
                             frames, data = wavfile.read(fname)
                         except FileNotFoundError as e:
-                            print(fname + " not found in current directory
-                             or in " + dir)
+                            print(fname + " not found in current directory"
+                             "or in " + dir)
                             raise e
                         if audio_correction is not None:
                             correct = audio_correction.set_index(0).squeeze
                             ()[op.basename(
-                                op.splitext(fname)[0])] * self._config["eve
-                                ntFormat"]["SampleRate"]
+                                op.splitext(fname)[0])] * mat_sample_rate
                         else:
                             correct = 0
-                        duration = (data.size / frames) * self._config["eve
-                        ntFormat"]["SampleRate"]
+                        duration = (data.size / frames) * mat_sample_rate
                     else:
-                        raise NotImplementedError("current build only suppo
-                        rts .wav stim files")
+                        raise NotImplementedError("current build only suppo"
+                        "rts .wav stim files")
                     temp.append(duration)
                     t_correct.append(correct)
                 temp_df["duration"] = temp
@@ -147,10 +146,9 @@ def reframe_events(df_in: pd.DataFrame, events: Union[list, dict],
                     temp_df["onset"] = temp_df.eval("onset + correct")
                     temp_df = temp_df.drop(columns=["correct"])
             else:
-                raise LookupError("duration of event or copy of audio file 
-                required but not found in " +
-                                  self._config_path)
-        '''
+                raise LookupError("duration of event or copy of audio file "
+                "required but not found in config file")
+
         temp_df["event_order"] = event_order
         if new_df is None:
             new_df = temp_df

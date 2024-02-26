@@ -133,6 +133,7 @@ class Data2Bids:  # main conversion and file organization program
                  DICOM_path=None, multi_echo=None, overwrite=False,
                  stim_dir=None, channels=None, verbose=False):
         # sets the .self globalization for self variables
+        self._is_multi_echo = None
         self._input_dir = None
         self._config_path = None
         self._config = None
@@ -246,9 +247,9 @@ class Data2Bids:  # main conversion and file organization program
 
     def set_multi_echo(self, multi_echo):  # if -m flag is called
         if multi_echo is None:
-            self.is_multi_echo = False
+            self._is_multi_echo = False
         else:
-            self.is_multi_echo = True
+            self._is_multi_echo = True
             if not multi_echo:
                 self._multi_echo = 0
             else:
@@ -280,7 +281,7 @@ class Data2Bids:  # main conversion and file organization program
                         runlist.append(str(int(runmatch)))
                     fls.copy_file(op.join(ddir, "medata", me), op.join(
                         sub_dir, me))
-                self.is_multi_echo = True
+                self._is_multi_echo = True
                 # will trigger even if single echo data is in medata folder.
                 # Should still be okay
             for subdir in subdirs[1:]:
@@ -372,10 +373,10 @@ class Data2Bids:  # main conversion and file organization program
 
     def find_a_match(self, files: Union[List[str], str],
                      config_key: str) -> str:
+        e = ""
         subtype = isinstance(self._config[config_key]["content"][0], list)
         if isinstance(files, str):
             files: List[str] = list(files)
-
         for file in files:
             try:
                 return org.match_regexp(self._config[config_key], file, subtype)
@@ -385,10 +386,11 @@ class Data2Bids:  # main conversion and file organization program
                                 "".format(config_key), files)
 
     def generate_names(self, src_file_path: PathLike, filename: str = None,
-                       part_match=None, sess_match=None, ce_match=None,
-                       acq_match=None, echo_match=None, data_type_match=None,
-                       task_label_match=None, run_match=None, verbose=None,
-                       debug=False) -> Tuple[
+                       part_match: str = None, sess_match: str = None,
+                       ce_match: str = None, acq_match: str = None,
+                       echo_match: str = None, data_type_match: str = None,
+                       task_label_match: str = None, run_match: str = None,
+                       verbose: bool = None, debug: bool = False) -> Tuple[
         Union[str, Any], Union[str, bytes], Any, Optional[str], str, Union[
             str, Any], Optional[str], str, Any, str, Optional[str]]:
         """function to run through name text and generate metadata
@@ -566,7 +568,7 @@ class Data2Bids:  # main conversion and file organization program
         :return:
         :rtype:
         """
-        if self.is_multi_echo:
+        if self._is_multi_echo:
             if int(runnum) in self._multi_echo:
                 return True
             else:
@@ -584,7 +586,7 @@ class Data2Bids:  # main conversion and file organization program
     def get_params(self, folder, echo_num, run_num):  # function to run through
         # DICOMs and get metadata
         # threading?
-        if self.is_multi_echo and run_num in self._multi_echo:
+        if self._is_multi_echo and run_num in self._multi_echo:
             vols_per_time = len(self._config['delayTimeInSec']) - 1
             echo = self._config['delayTimeInSec'][echo_num]
         else:
@@ -711,7 +713,8 @@ class Data2Bids:  # main conversion and file organization program
             fls.copy_file(file_name, edf_name)
             return None
 
-    def part_check(self, part_match: str = None, filename: str = None):
+    def part_check(self, part_match: str = None, filename: str = None) -> \
+            Tuple[str, str]:
         # Matching the participant label to determine if
         # there exists therein delete previously created BIDS subject files
         assert part_match or filename
