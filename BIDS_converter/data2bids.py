@@ -208,13 +208,16 @@ class Data2Bids:  # main conversion and file organization program
                 self.channels[part_match] = self.channels[part_match] + [
                     c for c in channels if c not in self.channels[part_match]]
 
-    def chan_walk(self, root: PathLike, files: List[PathLike], part_match: str):
+    def chan_walk(self, root: PathLike, files: List[PathLike],
+                  part_match: str):
         ieeg_conf: dict = self._config["ieeg"]
-        self.trigger[part_match] = get_trigger(part_match, ieeg_conf["headerData"])
+        self.trigger[part_match] = get_trigger(part_match,
+                                               ieeg_conf["headerData"])
         self.channels[part_match] = [self.trigger[part_match]]
         for i, file in enumerate(files):
             src = op.join(root, file)
-            if any(f in op.basename(src) for f in ieeg_conf["channels"].keys()):
+            if any(f in op.basename(src) for f in
+                   ieeg_conf["channels"].keys()):
                 self._channels_file[part_match] = src
 
             for name, var in ieeg_conf["headerData"].items():
@@ -225,14 +228,17 @@ class Data2Bids:  # main conversion and file organization program
         # some sort of checking for .mat or txt files?
         name = op.basename(src)
         if name.endswith(".mat"):
-            self.channels[part_match] = self.channels[part_match] + org.mat2df(src, var).tolist()
-            self.sample_rate[part_match] = int(org.mat2df(src, self._config['ieeg']['sampleRate']).iloc[0])
+            self.channels[part_match] = self.channels[part_match] + org.mat2df(
+                src, var).tolist()
+            self.sample_rate[part_match] = int(
+                org.mat2df(src, self._config['ieeg']['sampleRate']).iloc[0])
             self._ignore.append(src)
         elif name.endswith((".txt", ".csv", ".tsv")):
             f = open(name, 'r')
             content = f.read()
             f.close()
-            self.channels[part_match] = self.channels[part_match] + content.split()
+            self.channels[part_match] = self.channels[
+                                            part_match] + content.split()
         elif name.endswith(tuple(self._config['dataFormat'])):
             raise NotImplementedError(
                 src + "\nthis file format does not yet support"
@@ -293,7 +299,8 @@ class Data2Bids:  # main conversion and file organization program
                     scan_num = str(int(os.path.basename(subdir))).zfill(2)
                 except ValueError:
                     continue
-                fls.run_dcm2niix(subdir, fobj, scan_num, runlist, sub_dir, sub_num)
+                fls.run_dcm2niix(subdir, fobj, scan_num, runlist, sub_dir,
+                                 sub_num)
 
             self._multi_echo = runlist
             self._data_dir = op.join(op.dirname(
@@ -379,7 +386,8 @@ class Data2Bids:  # main conversion and file organization program
             files: List[str] = list(files)
         for file in files:
             try:
-                return org.match_regexp(self._config[config_key], file, subtype)
+                return org.match_regexp(self._config[config_key], file,
+                                        subtype)
             except AssertionError:
                 continue
         raise FileNotFoundError("There was no file matching the config key {}"
@@ -460,8 +468,9 @@ class Data2Bids:  # main conversion and file organization program
         # if is an MRI
         if dst_file_path.endswith("func") or dst_file_path.endswith("anat"):
             try:
-                SeqType = str(org.match_regexp(self._config["pulseSequenceType"],
-                                               filename, subtype=True))
+                SeqType = str(
+                    org.match_regexp(self._config["pulseSequenceType"],
+                                     filename, subtype=True))
             except AssertionError:
                 if verbose:
                     print("No pulse sequence found for %s" % src_file_path)
@@ -549,7 +558,8 @@ class Data2Bids:  # main conversion and file organization program
         """
         for data_type in self._data_types.keys():
             try:
-                data_subtype = org.match_regexp(self._config[data_type], filename,
+                data_subtype = org.match_regexp(self._config[data_type],
+                                                filename,
                                                 subtype=True)
                 dst_file_path = op.join(dst, data_type)
                 self._data_types[data_type] = True
@@ -638,7 +648,8 @@ class Data2Bids:  # main conversion and file organization program
                 InstanceNumber = 0
                 while None in timings:
                     if timings[InStackPositionNumber - 1] is None:
-                        timings[InStackPositionNumber - 1] = ut.slice_time_calc(
+                        timings[
+                            InStackPositionNumber - 1] = ut.slice_time_calc(
                             RepetitionTime, InstanceNumber, int(
                                 ImagesInAcquisition / vols_per_time), echo)
                     if acquisition_series == "odd-interleaved" or \
@@ -720,7 +731,8 @@ class Data2Bids:  # main conversion and file organization program
         assert part_match or filename
         if filename:
             try:
-                part_match = org.match_regexp(self._config["partLabel"], filename)
+                part_match = org.match_regexp(self._config["partLabel"],
+                                              filename)
             except AssertionError:
                 print("No participant found for %s" % filename)
             except KeyError as e:
@@ -780,7 +792,8 @@ class Data2Bids:  # main conversion and file organization program
                             highlevel.make_signal_header(
                                 op.splitext(op.basename(fname))[0],
                                 sample_rate=self.sample_rate[part_match]))
-                elif sig_len * 0.99 <= len(org.mat2df(fname)) <= sig_len * 1.01:
+                elif sig_len * 0.99 <= len(
+                        org.mat2df(fname)) <= sig_len * 1.01:
                     raise BufferError(file + "of size" + sig_len +
                                       "is not the same size as" + fname +
                                       "of size" + len(org.mat2df(fname)))
@@ -862,18 +875,18 @@ class Data2Bids:  # main conversion and file organization program
         for signal_header in signal_headers:
             signal_header["sample_rate"] = self.sample_rate[part_match]
             signal_header["sample_frequency"] = self.sample_rate[part_match]
-        for file in sorted(os.listdir(file_path)):
+
+        pattern = new_name.split("_ieeg", 1)[0] + "(?:_acq-" + \
+                  self._config["acq"]["content"][0] + ")?_run-(" + \
+                  self._config["runIndex"]["content"][0] + ")_events.tsv"
+        for file in sorted(f for f in os.listdir(file_path) if re.match(
+                pattern, f)):
             full_file = op.join(file_path, file)
-            match_tsv = re.match(
-                new_name.split("_ieeg", 1)[0] + "(?:_acq-" +
-                self._config["acq"]["content"][0] + ")?_run-(" +
-                self._config["runIndex"]["content"][0] + ")_events.tsv", file)
-            if match_tsv:
-                self.rewrite_tsv(full_file, part_match)
-                num_list = org.get_timing_from_tsv(full_file, signal_headers[
-                    0]["sample_rate"])
-                start_nums.append(tuple(num_list))
-                matches.append(match_tsv)
+            self.rewrite_tsv(full_file, part_match)
+            num_list = org.get_timing_from_tsv(full_file, signal_headers[
+                0]["sample_rate"])
+            start_nums.append(tuple(num_list))
+            matches.append(re.match(pattern, file))
         for i in range(len(start_nums)):
             if i == 0:
                 start = 0
@@ -977,7 +990,8 @@ class Data2Bids:  # main conversion and file organization program
 
     def part_file_sort(self, mat_files: List[PathLike]) -> Dict[str, PathLike]:
         part_sorted_mats = dict()
-        participants = [self.part_check(filename=fpath)[0] for fpath in mat_files]
+        participants = [self.part_check(filename=fpath)[0] for fpath in
+                        mat_files]
         for part, mat_file in zip(participants, mat_files):
             part_sorted_mats.setdefault(part, []).append(mat_file)
         return part_sorted_mats
@@ -996,7 +1010,8 @@ class Data2Bids:  # main conversion and file organization program
             row = data[1]
             match_name = row[event_fmt["IDcol"]] + "_"
             for cat, sep in event_fmt["Sep"].items():
-                match_name = match_name + org.gen_match_regexp(self._config[cat], str(row[sep]))
+                match_name = match_name + org.gen_match_regexp(
+                    self._config[cat], str(row[sep]))
             match_idx = df.index[(df[sep_fields] == row[sep_fields]).all(1)]
             match_name = match_name + self._config["ieeg"]["content"][0][1]
             self.write_events(match_name, df.loc[match_idx], filename)
@@ -1222,7 +1237,8 @@ class Data2Bids:  # main conversion and file organization program
                     # as dict for writing later
                     eeg.append(self.read_edf(op.splitext(
                         src_file_path)[0] + ".edf", self.channels[
-                        part_match], extra_arrays, extra_signal_headers))
+                                                 part_match], extra_arrays,
+                                             extra_signal_headers))
 
                     if remove_src_edf:
                         if self._is_verbose:
@@ -1254,7 +1270,7 @@ class Data2Bids:  # main conversion and file organization program
                     events = org.gather_metadata(mat_files)
                     df_list.append(dict(name=mat_files[0],
                                         data=events))
-                    
+
             if df_list:
                 checker = False
                 for df_dict in df_list:
@@ -1267,7 +1283,8 @@ class Data2Bids:  # main conversion and file organization program
                         filename, df = org.prep_coordsystem(
                             df_dict, part_match_z, self._bids_dir)
                         org.tsv_all_eeg(filename, df, self._data_types)
-                    elif self._config["eventFormat"]["AudioCorrection"] in name:
+                    elif self._config["eventFormat"][
+                        "AudioCorrection"] in name:
                         error = df_dict.get("error", None)
                         if error is not None:
                             raise error
@@ -1281,6 +1298,14 @@ class Data2Bids:  # main conversion and file organization program
                                      f"found data results:\n{file_list}")
 
             # check final file set
+            if len(set(names_list)) != len(names_list):
+                raise ValueError(
+                    "WARNING: Duplicate names found in file set. This is "
+                    "likely due to multiple edf files being found and not "
+                    "correctly configuring the distinctive naming difference "
+                    "between the two. Go back and check the config.json file."
+                    f"\nRemapped files: {names_list}"
+                )
             for new_name in names_list:
                 file_path = dst_file_path_list[names_list.index(new_name)]
                 full_name = op.join(file_path, new_name + ".edf")
