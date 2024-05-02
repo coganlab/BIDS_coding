@@ -26,10 +26,13 @@
             , "sampleRate": "recording.sample_rate"
             , "digital": true
             , "units": "uV"
+            ,  "size": 0.2
             }
 , "task": {"left" : "_?"
             , "right" : ".*?"
             , "content" : [ ["PhonemeSequence","PHONEMESEQUENCE"]
+                            ,["PhonemeSequence","PHONEME SEQUENCE"]
+                            ,["PhonemeSequence","PHONEMESEQUENCING"]
                             ,["PhonemeSequence", "PhonemeSequence"]
                             ,["PhonemeSequence", "PhonemeSequencing"]
                             ,["PhonemeSequence", "Phoneme_Sequencing"]
@@ -113,12 +116,12 @@
                 ,"Timing": { "start": "Start",
                           "end": "ResponseEnd" }
                 ,"SampleRate": 30000
-                ,"AudioCorrection": "n/a"
                 ,"Events" : [{"onset": "Start","duration": "(cueEnd - cueStart) * 30", "trial_num": "Trial","trial_type": "cue"},
                              {"onset": "Auditory", "stim_file": "sound", "trial_num": "Trial", "trial_type": "Audio"},
-                             {"onset": "Go", "duration":  "(goEnd - goStart) * 30", "trial_num": "Trial", "trial_type": "GoCue + SPLITCHAR + go"},
+                             {"onset": "Go", "duration":  "(goEnd - goStart) * 30", "trial_num": "Trial", "trial_type": "go"},
                              {"onset": "ResponseStart", "duration": "ResponseEnd - ResponseStart", "trial_num": "Trial","trial_type": "Response"}]
-}
+                ,"AudioCorrection": "PhonemeSequencingStimStarts.txt"
+        }
 , "split": { "Sep": "all",
             "buffer": 10,
             "practice": true},
