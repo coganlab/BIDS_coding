@@ -50,7 +50,7 @@ for TASK in "${TASKS[@]}"
             rm -rf "$OUTPUT_DIR/$SUB_ID"
         fi
         mkdir -p "$OUTPUT_DIR/$SUB_ID"
-
+#
         #CT scan .nii
         find "$ORIG_DATA_DIR/ECoG_Recon_Full/$SUB_ID/elec_recon" -name "postimpRaw.nii.gz" -type f -exec cp -v {} "$OUTPUT_DIR/$SUB_ID/${SUB_ID}_CT.nii.gz" \;
         find "$ORIG_DATA_DIR/ECoG_Recon_Full/$SUB_ID/elec_recon" -regex ".*\($SUB_ID.*CT.*\)\|\(postimpRaw\)\.nii" -type f -exec cp -v {} "$OUTPUT_DIR/$SUB_ID/${SUB_ID}_CT.nii" \;
