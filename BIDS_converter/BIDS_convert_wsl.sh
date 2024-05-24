@@ -1,4 +1,5 @@
-#!/bin/bash
+#!/usr/bin/env bash
+
 
 ORIG_DATA_DIR="$HOME/Library/CloudStorage/Box-Box/CoganLab"
 # OUTPUT_DIR="$ORIG_DATA_DIR/BIDS-1.1_GlobalLocal"
@@ -8,7 +9,6 @@ TASKS=("GlobalLocal")
 # D57 D59 D60 D61 D65 D66 D69 D70 D71 D72 D73)
 #D3 D5 D6 D7 D8 D9 D18 D20 D22 D23 D24 D26 D27 D28 D29 D30 D31 D32 D53
  #D57 D59 D60 D61 D63 D65 D66 D69 D70 D71 D72)
-
 
 #declare -l mylist[30]
 
@@ -59,15 +59,17 @@ for TASK in "${TASKS[@]}"
 #        find "$(dirname $ORIG_DATA_DIR)/ECoG_Recon/$SUB_ID/elec_recon" -name "${SUB_ID}_elec_locations_RAS.txt" -type f -exec cp -v {} "$OUTPUT_DIR/$SUB_ID/" \;
         find "$(dirname $ORIG_DATA_DIR)/ECoG_Recon/$SUB_ID/elec_recon" -regex ".*${SUB_ID}_elec_locations_RAS_.*\.txt" -type f -exec cp -v {} "$OUTPUT_DIR/$SUB_ID/" \;
         #T1 MRI file .mgz
-        find "$ORIG_DATA_DIR/ECoG_Recon_Full/$SUB_ID/elec_recon" -name "T1.nii.gz" -type f -exec cp {} "$OUTPUT_DIR/$SUB_ID/${SUB_ID}_T1w.nii.gz" \; | head -1
+        find "$ORIG_DATA_DIR/ECoG_Recon_Full/$SUB_ID/elec_recon" -name "T1.nii.gz" -type f -exec cp -vn {} "$OUTPUT_DIR/$SUB_ID/${SUB_ID}_T1w.nii.gz" \; | head -1
+        find "$ORIG_DATA_DIR/ECoG_Recon_Full/$SUB_ID/elec_recon" -name "T1.nii.gz" -type f -exec rsync -P {} "$OUTPUT_DIR/$SUB_ID/${SUB_ID}_T1w.nii.gz" \; | head -1
         #stim file corrections
-        if [ $TASK == "Phoneme_sequencing" ]
+        if [ $TASK == "Phoneme_Sequencing" ]
         then
-            cp -v "$ORIG_DATA_DIR/ECoG_Task_Data/response_coding/PhonemeSequencingStimStarts.txt" "$OUTPUT_DIR/$SUB_ID/${SUB_ID}_PhonemeSequencingStimStarts.txt"
+            cp -vn "$ORIG_DATA_DIR/ECoG_Task_Data/response_coding/PhonemeSequencingStimStarts.txt" "$OUTPUT_DIR/$SUB_ID/${SUB_ID}_PhonemeSequencingStimStarts.txt"
+            rsync -P "$ORIG_DATA_DIR/ECoG_Task_Data/response_coding/PhonemeSequencingStimStarts.txt" "$OUTPUT_DIR/$SUB_ID/${SUB_ID}_PhonemeSequencingStimStarts.txt"
         fi
         #eeg files
-        if ! find "$ORIG_DATA_DIR/D_Data/$TASK/$SUB_ID" -regex ".*\.\(EDF\)\|.*\.\(edf\)" -exec false {} +  ; then #search for edf files
-            find "$ORIG_DATA_DIR/D_Data/$TASK/$SUB_ID" -regex ".*\.\(EDF\)\|.*\.\(edf\)" -exec cp -v -t "$OUTPUT_DIR/$SUB_ID/" {} +
+        if ! find "$ORIG_DATA_DIR/D_Data/$TASK/" -iregex ".*$SUB_ID.*\.edf" -exec false {} +  ; then #search for edf files
+            find "$ORIG_DATA_DIR/D_Data/$TASK/" -iregex ".*$SUB_ID.*\.edf" -exec cp -v -t "$OUTPUT_DIR/$SUB_ID/" {} +
             find "$OUTPUT_DIR/$SUB_ID/" -regex ".*\.EDF" | xargs -I{} basename -s ".EDF" {} | xargs -I{} mv -v "$OUTPUT_DIR/$SUB_ID/{}.EDF" "$OUTPUT_DIR/$SUB_ID/{}.edf"
             if $ZIP ; then
                 find "$ORIG_DATA_DIR/D_Data/$TASK/$SUB_ID" -regex ".*\.\(EDF\)\|\(edf\)" | xargs -I{} basename {} | xargs -I{} cut -f 1 -d '.' {} | xargs -I{} echo "$OUTPUT_DIR/$SUB_ID/{}.edf" | xargs -I{} gzip -6 -v {}
@@ -79,7 +81,7 @@ for TASK in "${TASKS[@]}"
             if $ZIP ; then
                 for((i=0;i<=$z-1;i+=1));  do gzip -c -6 -v ${y[$i]} > "$OUTPUT_DIR/$SUB_ID/${SUB_ID}_${x[$i]}.gz" ; done
             else 
-                for((i=0;i<=$z-1;i+=1));  do cp -v ${y[$i]} "$OUTPUT_DIR/$SUB_ID/${SUB_ID}_${x[$i]}" ; done
+                for((i=0;i<=$z-1;i+=1));  do rsync -vP ${y[$i]} "$OUTPUT_DIR/$SUB_ID/${SUB_ID}_${x[$i]}" ; done
             fi
         fi
         #find "$ORIG_DATA_DIR/D_Data/$TASK/$SUB_ID" -type f -regex ".*$SUB_ID.*\.ieeg\.dat" | xargs -n 1 basename | xargs -I{} cp "$OUTPUT_DIR/$SUB_ID/{}" "$OUTPUT_DIR/$SUB_ID/${SUB_ID}_{}"
