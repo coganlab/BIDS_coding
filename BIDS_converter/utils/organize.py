@@ -333,7 +333,7 @@ def sort_by_list(df: pd.DataFrame, ord: list[str], col: str) -> pd.DataFrame:
 def prep_tsv(file_path: PathLike, task: str, pmatchz: str, ieeg_config: dict,
              bids_dir: PathLike) -> (str, pd.DataFrame):
     df = None
-    for name, var in ieeg_config["channels"].items():
+    for name, var in ieeg_config["headerData"]["channels"].items():
         if name in file_path:
             df = mat2df(file_path, var)
             if "highpass_cutoff" in df.columns.to_list():

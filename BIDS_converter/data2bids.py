@@ -217,7 +217,7 @@ class Data2Bids:  # main conversion and file organization program
         for i, file in enumerate(files):
             src = op.join(root, file)
             if any(f in op.basename(src) for f in
-                   ieeg_conf["channels"].keys()):
+                   ieeg_conf["headerData"]["channels"].keys()):
                 self._channels_file[part_match] = src
 
             for name, var in ieeg_conf["headerData"].items():
@@ -231,7 +231,7 @@ class Data2Bids:  # main conversion and file organization program
             self.channels[part_match] = self.channels[part_match] + org.mat2df(
                 src, var).tolist()
             self.sample_rate[part_match] = int(
-                org.mat2df(src, self._config['ieeg']['sampleRate']).iloc[0])
+                org.mat2df(src, self._config['ieeg']["headerData"]['sampleRate']).iloc[0])
             self._ignore.append(src)
         elif name.endswith((".txt", ".csv", ".tsv")):
             f = open(name, 'r')
@@ -699,7 +699,7 @@ class Data2Bids:  # main conversion and file organization program
             print("Reading " + file_name + "...")
             [array, signal_headers, _] = highlevel.read_edf(
                 file_name, ch_nrs=chn_nums,
-                digital=self._config["ieeg"]["digital"], verbose=True)
+                digital=self._config["ieeg"]["headerData"]["digital"], verbose=True)
             print("read it")
             if extra_arrays:
                 array = array + extra_arrays
