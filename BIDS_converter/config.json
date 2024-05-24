@@ -1,150 +1,184 @@
-{"dataFormat" : [".nii", ".nii.gz", ".gz", ".edf",".edf.gz", ".mgz", ".txt", ".mat"]
-, "compress" : true
-, "compressLevel" : 6
-,  "repetitionTimeInSec" : 2
-, "delayTimeInSec" : [ 0.028, 0.013, 0.026, 0.040]
-, "series" : "odd-interleaved"
-, "anat": {"left" : ".*?"
-    , "right" : ".*?"
-    , "content" : [ ["T1w","T1"]
-                    ,["CT","CT"]
-]
+{
+    "dataFormat": [".nii", ".nii.gz", ".gz", ".edf", ".edf.gz", ".mgz", ".txt", ".mat"],
+    "compress": true,
+    "compressLevel": 6,
+    "repetitionTimeInSec": 2,
+    "delayTimeInSec": [0.028, 0.013, 0.026, 0.040],
+    "series": "odd-interleaved",
+    "anat": {
+      "left": ".*?",
+      "right": ".*?",
+      "content": [
+        ["T1w", "T1"],
+        ["CT", "CT"]
+      ]
+    },
+    "ieeg": {
+      "left": ".*?",
+      "right": ".*?",
+      "content": [
+        ["ieeg", ".edf"],
+        ["ieeg", ".dat"],
+        ["ieeg", ".dat.gz"],
+        ["ieeg", ".edf.gz"]
+      ],
+      "binary?": false,
+      "binaryEncoding": "float32",
+      "headerData": {
+        "experiment.mat": "channels.name",
+        "default": "~/Library/CloudStorage/Box-Box/CoganLab/ECoG_Task_Data/Timestamps (MASTER).xlsx",
+        "channels": {
+          "experiment.mat": "channels"
+        },
+        "sampleRate": "recording.sample_rate",
+        "digital": true,
+        "units": "uV"
+      }
+    },
+    "task": {
+      "left": "_?",
+      "right": ".*?",
+      "content": [
+        ["PhonemeSequence", "PHONEMESEQUENCE"],
+        ["PhonemeSequence", "PhonemeSequence"],
+        ["PhonemeSequence", "PhonemeSequencing"],
+        ["PhonemeSequence", "Phoneme_Sequencing"],
+        ["PhonemeSequence", "phoneme_seq"],
+        ["PhonemeSequence", "Phoneme_Seq"],
+        ["UniquenessPoint", "Uniqueness_Point"],
+        ["UniquenessPoint", "UniquenessPoint"],
+        ["UniquenessPoint", "Uniqueness_point"],
+        ["UniquenessPoint", "UNIQUENESSPOINT"],
+        ["SentenceRep", "Sentence_Rep"],
+        ["SentenceRep", "SentenceRep"],
+        ["SentenceRep", "Sentence_rep"],
+        ["SentenceRep", "Sentence Rep"],
+        ["SentenceRep", "SENTENCEREP"],
+        ["SentenceRep", "sentence_rep"],
+        ["LexicalDecRepDelay", "LexicalDecRepDelay"],
+        ["LexicalDecRepDelay", "Lexical_Decision_Delay"],
+        ["LexicalDecRepDelay", "Lexical_Delay"],
+        ["LexicalDecRepDelay", "LexicalDecision_Delay"],
+        ["LexicalDecRepDelay", "LexicalDecisionDelay"],
+        ["LexicalDecRepDelay", "Lexical_decision_delay"],
+        ["LexicalDecRepDelay", "Lexicaldecision_delay"],
+        ["LexicalDecRepDelay", "LEXICAL_DECISION_DELAY"],
+        ["LexicalDecRepDelay", "LEXICALDECISION_DELAY"],
+        ["LexicalDecRepDelay", "LEXICAL_DECISIONDELAY"],
+        ["LexicalDecRepDelay", "lexi_withinblock"],
+        ["LexicalDecRepDelay", "lexi_within_block"],
+        ["LexicalDecRepDelay", "lexical_decision_repeat_within_delay"],
+        ["LexicalDecRepDelay", "LexicalRepeatWithin2XDelay"],
+        ["LexicalDecRepDelay", "LexicalRepeatWithinDelay"],
+        ["LexicalDecRepDelay", "LEXICALDECISIONMAKING"],
+        ["NeighborhoodSternberg", "Neighborhood_Sternberg"],
+        ["NeighborhoodSternberg", "NeighborhoodSternberg"],
+        ["NeighborhoodSternberg", "Neighborhood_sternberg"],
+        ["NeighborhoodSternberg", "NEIGHBORHOOD_STERNBERG"],
+        ["NeighborhoodSternberg", "neighborhood_sternberg"],
+        ["NeighborhoodSternberg", "SternbergNeighborhood"],
+        ["NeighborhoodSternberg", "STERNBERGNEIGHBORHOOD"],
+        ["GlobalLocal", "GLOBALLOCAL"],
+        ["GlobalLocal", "GlobalLocal"]
+      ]
+    },
+    "ieeg.loc": {
+      "left": ".*?",
+      "right": ".*?",
+      "content": [
+        ["RAS", ".txt"]
+      ]
+    },
+    "sessLabel": {
+      "left": "^[0-9]*?",
+      "right": "\\.((edf)|(mat))",
+      "content": ["[0-9]{46}"]
+    },
+    "runIndex": {
+      "left": "run",
+      "right": "_",
+      "content": ["[0-9]{1,3}"],
+      "fill": 2,
+      "repeat": false
+    },
+    "partLabel": {
+      "left": ".*?",
+      "right": "[_ (\\.edf)]?",
+      "content": ["D[0-9]{1,4}"],
+      "fill": 4
+    },
+    "echo": {
+      "left": "e",
+      "right": "\\.",
+      "content": ["[0-9]{2}"]
+    },
+    "acq": {
+      "left": "((Session)|(Part)|(part))",
+      "right": "[_ \\.]",
+      "content": ["[0-9]{1,3}"],
+      "fill": 2
+    },
+    "ce": {
+      "left": "_%&#$%",
+      "right": "_$#^#^",
+      "content": ["[0-9]{6}"]
+    },
+    "eventFiles": ".*([Tt]rial(s|Info).*?\\.mat)",
+    "eventFormat": {
+      "IDcol": "FilenamePrefix",
+      "Sep": {
+        "runIndex": "block",
+        "acq": "Rec"
+      },
+      "Timing": {
+        "start": "stimulus",
+        "end": "response"
+      },
+      "SampleRate": 30000,
+      "AudioCorrection": "n/a",
+      "Events": [
+        {
+          "onset": "stimulus",
+          "duration": "0.5 * 30",
+          "trial_num": "trial",
+          "trial_type": "Stimulus + SPLITCHAR + congruency + percIncongruent + SPLITCHAR + switchType + percSwitch + SPLITCHAR + globalStim + SPLITCHAR + localStim + SPLITCHAR + task + SPLITCHAR + target + SPLITCHAR + partResponded + SPLITCHAR + partResp + SPLITCHAR + corrResp + SPLITCHAR + trialCount + SPLITCHAR + blockTrialCount"
+        },
+        {
+          "onset": "response",
+          "duration": "RT",
+          "trial_num": "trial",
+          "trial_type": "Response + SPLITCHAR + congruency + percIncongruent + SPLITCHAR + switchType + percSwitch + SPLITCHAR + globalStim + SPLITCHAR + localStim + SPLITCHAR + task + SPLITCHAR + target + SPLITCHAR + partResponded + SPLITCHAR + partResp + SPLITCHAR + corrResp + SPLITCHAR + trialCount + SPLITCHAR + blockTrialCount"
+        }
+      ]
+    },
+    "split": {
+      "Sep": "all",
+      "buffer": 10,
+      "practice": true
+    },
+    "institution": "Duke University",
+    "coordsystem": "RAS",
+    "JSON_files": {
+      "events.json": {
+        "trial_num": {
+          "LongName": "Event number",
+          "Description": "Iteration number of event sequence"
+        },
+        "trial_type": {
+          "LongName": "Event type",
+          "Description": "Type of stimuli presented to the participant",
+          "Levels": {
+            "Listen": "Cue where the word 'Listen' is displayed",
+            "Audio": "A spoken word is played through a speaker",
+            "Speak": "Cue where the word 'Speak' is displayed",
+            "Response": "Participant's response is recorded"
+          }
+        }
+      },
+      "coordsystem.json": {
+        "IntendedFor": "sub-$SUB_ID\\anat\\sub-$SUB_ID_T1w.nii.gz",
+        "iEEGCoordinateSystem": "ACPC",
+        "iEEGCoordinateUnits": "mm"
+      }
     }
-, "ieeg": {"left" : ".*?"
-            , "right" : ".*?"
-            , "content" : [   ["ieeg",".edf"]
-                               , ["ieeg",".dat"]
-                               , ["ieeg",".dat.gz"]
-                               , ["ieeg",".edf.gz"]
-                            ]
-            , "binary?" : false
-            , "binaryEncoding": "float32"
-            , "headerData": {"experiment.mat": "channels.name",
-                             "default": "~/Box/CoganLab/ECoG_Task_Data/Timestamps (MASTER).xlsx"
   }
-            , "channels": {"experiment.mat":  "channels"}
-            , "sampleRate": "recording.sample_rate"
-            , "digital": true
-            , "units": "uV"
-            ,  "size": 0.2
-            }
-, "task": {"left" : "_?"
-            , "right" : ".*?"
-            , "content" : [ ["PhonemeSequence","PHONEMESEQUENCE"]
-                            ,["PhonemeSequence","PHONEME SEQUENCE"]
-                            ,["PhonemeSequence","PHONEMESEQUENCING"]
-                            ,["PhonemeSequence", "PhonemeSequence"]
-                            ,["PhonemeSequence", "PhonemeSequencing"]
-                            ,["PhonemeSequence", "Phoneme_Sequencing"]
-                            ,["PhonemeSequence", "phoneme_seq"]
-                            ,["PhonemeSequence", "Phoneme_Seq"]
-                            ,["UniquenessPoint", "Uniqueness_Point"]
-                            ,["UniquenessPoint", "UniquenessPoint"]
-                            ,["UniquenessPoint", "Uniqueness_point"]
-                            ,["UniquenessPoint", "UNIQUENESSPOINT"]
-                            ,["SentenceRep", "Sentence_Rep"]
-                            ,["SentenceRep", "SentenceRep"]
-                            ,["SentenceRep", "Sentence_rep"]
-                            ,["SentenceRep", "Sentence Rep"]
-                            ,["SentenceRep", "SENTENCEREP"]
-                            ,["SentenceRep", "sentence_rep"]
-                            ,["LexicalDecRepDelay", "LexicalDecRepDelay"]
-                            ,["LexicalDecRepDelay", "Lexical_Decision_Delay"]
-                            ,["LexicalDecRepDelay", "Lexical_Delay"]
-                            ,["LexicalDecRepDelay", "LexicalDecision_Delay"]
-                            ,["LexicalDecRepDelay", "LexicalDecisionDelay"]
-                            ,["LexicalDecRepDelay", "Lexical_decision_delay"]
-                            ,["LexicalDecRepDelay", "Lexicaldecision_delay"]
-                            ,["LexicalDecRepDelay", "LEXICAL_DECISION_DELAY"]
-                            ,["LexicalDecRepDelay", "LEXICALDECISION_DELAY"]
-                            ,["LexicalDecRepDelay", "LEXICAL_DECISIONDELAY"]
-                            ,["LexicalDecRepDelay", "lexi_withinblock"]
-                            ,["LexicalDecRepDelay", "lexi_within_block"]
-                            ,["LexicalDecRepDelay", "lexical_decision_repeat_within_delay"]
-                            ,["LexicalDecRepDelay", "LexicalRepeatWithin2XDelay"]
-                            ,["LexicalDecRepDelay", "LexicalRepeatWithinDelay"]
-                            ,["LexicalDecRepDelay", "LEXICALDECISIONMAKING"]
-                            ,["NeighborhoodSternberg", "Neighborhood_Sternberg"]
-                            ,["NeighborhoodSternberg", "NeighborhoodSternberg"]
-                            ,["NeighborhoodSternberg", "Neighborhood_sternberg"]
-                            ,["NeighborhoodSternberg", "NEIGHBORHOOD_STERNBERG"]
-                            ,["NeighborhoodSternberg", "neighborhood_sternberg"]
-                            ,["NeighborhoodSternberg", "SternbergNeighborhood"]
-                            ,["NeighborhoodSternberg", "STERNBERGNEIGHBORHOOD"]
-                            ,["GlobalLocal", "GLOBALLOCAL"]
-                            ,["GlobalLocal", "GlobalLocal"]
-]
-    }
-, "ieeg.loc":{"left" : ".*?"
-    , "right" : ".*?"
-    , "content" : [   ["RAS",".txt"]
-                    ]
-    }
-
-, "sessLabel" : {"left" : "^[0-9]*?"
-                , "right" : "\\.((edf)|(mat))"
-                , "content" :   ["[0-9]{46}"]
-                }
-, "runIndex" : {"left" : "run"
-                , "right" : "_"
-                , "content" : ["[0-9]{1,3}"]
-                , "fill" : 2
-                , "repeat" : false
-                }
-, "partLabel" : {"left" : ".*?"
-                , "right" : "[_ (\\.edf)]?"
-                , "content" : ["D[0-9]{1,4}"]
-                , "fill": 4
-                }
-, "echo" : {"left" : "e"
-    , "right" : "\\."
-    , "content" : ["[0-9]{2}"]
-    }
-, "acq" : {"left" : "((Session)|(Part)|(part)|_)"
-    , "right" : "[_ (\\.edf)]"
-    , "content" : ["[0-9]{1,3}"]
-    , "fill": 2
-    }
-, "ce" : {"left" : "_%&#$%"
-    , "right" : "_$#^#^"
-    , "content" : ["[0-9]{6}"]
-    }
-,"eventFiles" : ".*([Tt]rial(s|Info).*?\\.mat)"
-,"eventFormat" : {"IDcol" : "FilenamePrefix"
-                ,"Sep" : { "runIndex" : "block",
-                             "acq" : "Rec" }
-                ,"Timing": { "start": "Start",
-                          "end": "ResponseEnd" }
-                ,"SampleRate": 30000
-                ,"AudioCorrection": "n/a"
-                ,"Events" : [{"onset": "Start","duration": "(cueEnd - cueStart) * 30", "trial_num": "Trial","trial_type": "cue"},
-                             {"onset": "Auditory", "stim_file": "sound", "trial_num": "Trial", "trial_type": "Audio"},
-                             {"onset": "Go", "duration":  "(goEnd - goStart) * 30", "trial_num": "Trial", "trial_type": "GoCue + SPLITCHAR + go"},
-                             {"onset": "ResponseStart", "duration": "ResponseEnd - ResponseStart", "trial_num": "Trial","trial_type": "Response"}]
-}
-, "split": { "Sep": "all",
-            "buffer": 10,
-            "practice": true},
-  "institution": "Duke University",
-  "coordsystem": "RAS",
-  "JSON_files": {"events.json": {"trial_num": {
-                                      "LongName": "Event number",
-                                      "Description": "Iteration number of event sequence"
-                                  },
-                                  "trial_type": {
-                                    "LongName": "Event type",
-                                    "Description": "Type of stimuli presented to the participant",
-                                    "Levels": {
-                                      "Listen": "Cue where the word 'Listen' is displayed",
-                                      "Audio": "A spoken word is played through a speaker",
-                                      "Speak": "Cue where the word 'Speak' is displayed",
-                                      "Response": "Participant's response is recorded"
-                                    }
-                                  }
-                                },
-                "coordsystem.json": {"IntendedFor": "sub-$SUB_ID\\anat\\sub-$SUB_ID_T1w.nii.gz",
-                                    "iEEGCoordinateSystem": "ACPC",
-                                    "iEEGCoordinateUnits": "mm"
-                                      }
-                }
-}

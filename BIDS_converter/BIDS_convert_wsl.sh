@@ -1,7 +1,14 @@
 #!/usr/bin/env bash
 
-ORIG_DATA_DIR="$HOME/Box/CoganLab"
-TASKS=("Phoneme_Sequencing")
+
+ORIG_DATA_DIR="$HOME/Library/CloudStorage/Box-Box/CoganLab"
+# OUTPUT_DIR="$ORIG_DATA_DIR/BIDS-1.1_GlobalLocal"
+OUTPUT_DIR="$ORIG_DATA_DIR/BIDS-1.2_GlobalLocal"
+TASKS=("GlobalLocal")
+#(D3 D5 D6 D7 D8 D9 D12 D14 D15 D16 D17 D18 D20 D22 D23 D24 D26 D27 D28 D29 D30 D31 D32 D53
+# D57 D59 D60 D61 D65 D66 D69 D70 D71 D72 D73)
+#D3 D5 D6 D7 D8 D9 D18 D20 D22 D23 D24 D26 D27 D28 D29 D30 D31 D32 D53
+ #D57 D59 D60 D61 D63 D65 D66 D69 D70 D71 D72)
 
 #declare -l mylist[30]
 
@@ -9,8 +16,8 @@ TASKS=("Phoneme_Sequencing")
 for TASK in "${TASKS[@]}"
  do
     mapfile -t SUB_IDS < <(find "$ORIG_DATA_DIR/D_Data/$TASK" -maxdepth 1 -type d -name "D*" -exec basename {} \;)
-#    SUB_IDS=(D77)
-    OUTPUT_DIR="$HOME/Workspace/$TASK"
+    SUB_IDS=(D57)
+    # OUTPUT_DIR="$ORIG_DATA_DIR/$TASK"
     BIDS_DIR="$OUTPUT_DIR/BIDS"
     ZIP=false
 
@@ -24,10 +31,10 @@ for TASK in "${TASKS[@]}"
      then
         rm -rf $BIDS_DIR
     fi
-    mkdir -p $BIDS_DIR
-    mkdir -p "$OUTPUT_DIR/stimuli"
+    # mkdir -p $BIDS_DIR
+    # mkdir -p "$OUTPUT_DIR/stimuli"
     # shellcheck disable=SC2038
-    find "$ORIG_DATA_DIR/task_stimuli" -iname "$TASK" -type d -exec echo "{}/." \; | xargs -I{} cp -afv {} "$OUTPUT_DIR/stimuli/"
+    # find "$ORIG_DATA_DIR/task_stimuli" -iname "sentence_rep" -type d -exec echo "{}/." \; | xargs -I{} cp -afv {} "$OUTPUT_DIR/stimuli/"
     TASKLOWER=$(echo $TASK | tr '[:upper:]' '[:lower:]')
     #echo "$ORIG_DATA_DIR/task_stimuli/$TASKLOWER/."
     #cp -av "$ORIG_DATA_DIR/task_stimuli/$TASKLOWER/." "$BIDS_DIR/stimuli/"
@@ -44,7 +51,7 @@ for TASK in "${TASKS[@]}"
             rm -rf "$OUTPUT_DIR/$SUB_ID"
         fi
         mkdir -p "$OUTPUT_DIR/$SUB_ID"
-
+#
         #CT scan .nii
         find "$ORIG_DATA_DIR/ECoG_Recon_Full/$SUB_ID/elec_recon" -name "postimpRaw.nii.gz" -type f -exec cp -v {} "$OUTPUT_DIR/$SUB_ID/${SUB_ID}_CT.nii.gz" \;
         find "$ORIG_DATA_DIR/ECoG_Recon_Full/$SUB_ID/elec_recon" -regex ".*\($SUB_ID.*CT.*\)\|\(postimpRaw\)\.nii" -type f -exec cp -v {} "$OUTPUT_DIR/$SUB_ID/${SUB_ID}_CT.nii" \;
