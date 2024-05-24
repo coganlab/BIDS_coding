@@ -898,7 +898,7 @@ class Data2Bids:  # main conversion and file organization program
                                 exist_ok=True)
                     highlevel.write_edf(practice, np.split(array, [
                         0, start_nums[0][0]], axis=1)[1], signal_headers,
-                                        header, digital=self._config["ieeg"][
+                                        header, digital=self._config["ieeg"]["headerData"][
                             "digital"])
                     self.bidsignore("*practice*")
             else:
@@ -916,7 +916,7 @@ class Data2Bids:  # main conversion and file organization program
                 print(full_name + "(Samples[" + str(start) + ":" + str(
                     end) + "]) ---> " + edf_name)
             highlevel.write_edf(edf_name, new_array, signal_headers, header,
-                                digital=self._config["ieeg"]["digital"])
+                                digital=self._config["ieeg"]["headerData"]["digital"])
             # zero the timing so that each file starts at t=0
             if i > 0:
                 org.reset_zero(tsv_name, start_nums[i - 1][1],

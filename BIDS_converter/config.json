@@ -26,7 +26,7 @@
       "binaryEncoding": "float32",
       "headerData": {
         "experiment.mat": "channels.name",
-        "default": "~/Library/CloudStorage/Box-Box/CoganLab/ECoG_Task_Data/Timestamps (MASTER).xlsx",
+        "default": "~/Box/CoganLab/ECoG_Task_Data/Timestamps (MASTER).xlsx",
         "channels": {
           "experiment.mat": "channels"
         },
@@ -137,19 +137,10 @@
       "SampleRate": 30000,
       "AudioCorrection": "n/a",
       "Events": [
-        {
-          "onset": "stimulus",
-          "duration": "0.5 * 30",
-          "trial_num": "trial",
-          "trial_type": "Stimulus + SPLITCHAR + congruency + percIncongruent + SPLITCHAR + switchType + percSwitch + SPLITCHAR + globalStim + SPLITCHAR + localStim + SPLITCHAR + task + SPLITCHAR + target + SPLITCHAR + partResponded + SPLITCHAR + partResp + SPLITCHAR + corrResp + SPLITCHAR + trialCount + SPLITCHAR + blockTrialCount"
-        },
-        {
-          "onset": "response",
-          "duration": "RT",
-          "trial_num": "trial",
-          "trial_type": "Response + SPLITCHAR + congruency + percIncongruent + SPLITCHAR + switchType + percSwitch + SPLITCHAR + globalStim + SPLITCHAR + localStim + SPLITCHAR + task + SPLITCHAR + target + SPLITCHAR + partResponded + SPLITCHAR + partResp + SPLITCHAR + corrResp + SPLITCHAR + trialCount + SPLITCHAR + blockTrialCount"
-        }
-      ]
+                {"onset": "Start","duration": "(cueEnd - cueStart) * 30", "trial_num": "Trial","trial_type": "cue", "bad": "Noisy == 1"},
+                {"onset": "Auditory", "stim_file": "sound", "trial_num": "Trial", "trial_type": "Audio", "bad": "Noisy == 1"},
+                {"onset": "Go", "duration":  "(goEnd - goStart) * 30", "trial_num": "Trial", "trial_type": "go", "bad": "Noisy == 1"},
+                {"onset": "ResponseStart", "duration": "ResponseEnd - ResponseStart", "trial_num": "Trial","trial_type": "Response", "bad": "Noisy == 1"}]
     },
     "split": {
       "Sep": "all",
