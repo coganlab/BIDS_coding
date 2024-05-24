@@ -55,8 +55,8 @@ def frame2bids(df_in: pd.DataFrame, event_format: Dict[str, str],
 
 
 def reframe_events(df_in: pd.DataFrame, events: Union[list, dict],
-                   stim_dir: PathLike, mat_sample_rate,
-                   audio_correction) -> pd.DataFrame:
+                   stim_dir: PathLike, mat_sample_rate: int,
+                   audio_correction=None) -> pd.DataFrame:
     df = df_in.copy()
     new_df = None
     if isinstance(events, dict):
@@ -103,6 +103,13 @@ def reframe_events(df_in: pd.DataFrame, events: Union[list, dict],
                     float) / mat_sample_rate
             else:
                 temp_df[key] = eval_df(df, value)
+
+        if "bad" in temp_df.columns:
+            temp_df["bad"].fillna(False)
+            func = lambda r: "bad " + r["trial_type"] if r["bad"] and not r["trial_type"].startswith("bad") else r["trial_type"]
+            temp_df["trial_type"] = temp_df.apply(func, axis=1)
+            temp_df.drop("bad", axis=1, inplace=True)
+
         if "trial_num" not in temp_df.columns:
             temp_df["trial_num"] = [1 + i for i in list(range(temp_df.shape[0]))]
         temp_df.dropna(axis=0, how="all", subset=["onset", "duration"], inplace=True)
@@ -397,7 +404,7 @@ def eval_df(df: pd.DataFrame, exp: str) -> pd.Series:
     """
     if exp in df.columns:
         return df[exp].squeeze()
-    fields = [i for i in re.split(r"[ +\-/*%]", exp) if i != '']
+    fields = [i for i in re.split(r"[ +\-/*%(==)><(>=)(<=)]", exp) if i != '']
 
     df["SPLITCHAR"] = pd.Series(["/"] * df.shape[0], dtype="string")
     for name in fields:
