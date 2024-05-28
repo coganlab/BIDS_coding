@@ -326,15 +326,15 @@ def sort_by_list(df: pd.DataFrame, ord: list[str], col: str) -> pd.DataFrame:
 def prep_tsv(file_path: PathLike, task: str, pmatchz: str, ieeg_config: dict,
              bids_dir: PathLike) -> (str, pd.DataFrame):
     df = None
-    for name, var in ieeg_config["channels"].items():
+    for name, var in ieeg_config["headerData"]["channels"].items():
         if name in file_path:
             df = mat2df(file_path, var)
             if "highpass_cutoff" in df.columns.to_list():
                 df = df.rename(columns={"highpass_cutoff": "high_cutoff"})
             if "lowpass_cutoff" in df.columns.to_list():
                 df = df.rename(columns={"lowpass_cutoff": "low_cutoff"})
-    df["type"] = ieeg_config["type"]
-    df["units"] = ieeg_config["units"]
+    df["type"] = ieeg_config["type"] #uhhhh wtf is this???
+    df["units"] = ieeg_config["headerData"]["units"]
     new_row = pd.DataFrame(
         {"name": ["Trigger"], "high_cutoff": [1], "low_cutoff": [1000],
          "type": ["TRIG"], "units": ["uV"]})
