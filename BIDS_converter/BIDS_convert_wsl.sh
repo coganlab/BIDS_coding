@@ -16,7 +16,7 @@ TASKS=("SentenceRep")
 for TASK in "${TASKS[@]}"
  do
     mapfile -t SUB_IDS < <(find "$ORIG_DATA_DIR/D_Data/$TASK" -maxdepth 1 -type d -name "D*" -exec basename {} \;)
-#    SUB_IDS=(D30)
+    SUB_IDS=(D5 D7 D8 D9 D15 D16 D17 D18 D20 D22 D23 D24 D26 D27 D28 D29 D30 D31)
     # OUTPUT_DIR="$ORIG_DATA_DIR/$TASK"
     BIDS_DIR="$OUTPUT_DIR/BIDS"
     ZIP=false
@@ -67,15 +67,15 @@ for TASK in "${TASKS[@]}"
             rsync -P "$ORIG_DATA_DIR/ECoG_Task_Data/response_coding/PhonemeSequencingStimStarts.txt" "$OUTPUT_DIR/$SUB_ID/${SUB_ID}_PhonemeSequencingStimStarts.txt"
         fi
         #eeg files
-        if ! find "$ORIG_DATA_DIR/D_Data/$TASK/" -iregex ".*$SUB_ID.*\.edf" -exec false {} +  ; then #search for edf files
-            find "$ORIG_DATA_DIR/D_Data/$TASK/" -iregex ".*$SUB_ID.*\.edf" -exec cp -v -t "$OUTPUT_DIR/$SUB_ID/" {} +
+        if ! find "$ORIG_DATA_DIR/D_Data/$TASK/" -iregex ".*$SUB_ID .*\.edf" -exec false {} +  ; then #search for edf files
+            find "$ORIG_DATA_DIR/D_Data/$TASK/" -iregex ".*$SUB_ID .*\.edf" -exec cp -v -t "$OUTPUT_DIR/$SUB_ID/" {} +
             find "$OUTPUT_DIR/$SUB_ID/" -regex ".*\.EDF" | xargs -I{} basename -s ".EDF" {} | xargs -I{} mv -v "$OUTPUT_DIR/$SUB_ID/{}.EDF" "$OUTPUT_DIR/$SUB_ID/{}.edf"
             if $ZIP ; then
-                find "$ORIG_DATA_DIR/D_Data/$TASK/$SUB_ID" -regex ".*\.\(EDF\)\|\(edf\)" | xargs -I{} basename {} | xargs -I{} cut -f 1 -d '.' {} | xargs -I{} echo "$OUTPUT_DIR/$SUB_ID/{}.edf" | xargs -I{} gzip -6 -v {}
+                find "$ORIG_DATA_DIR/D_Data/$TASK/$SUB_ID " -regex ".*\.\(EDF\)\|\(edf\)" | xargs -I{} basename {} | xargs -I{} cut -f 1 -d '.' {} | xargs -I{} echo "$OUTPUT_DIR/$SUB_ID/{}.edf" | xargs -I{} gzip -6 -v {}
             fi
         else #if no edf files find binary files
-            x=( $(find "$ORIG_DATA_DIR/D_Data/$TASK/$SUB_ID" -regex ".*$SUB_ID.*\.ieeg.dat" -type f | rev | sed -r "s|/|_|" | sed -r "s|/|noisseS/|" | rev | xargs -n 1 basename | sed -r "s|${SUB_ID}_||") )
-            y=( $(find "$ORIG_DATA_DIR/D_Data/$TASK/$SUB_ID" -regex ".*$SUB_ID.*\.ieeg.dat") )
+            x=( $(find "$ORIG_DATA_DIR/D_Data/$TASK/$SUB_ID " -regex ".*$SUB_ID.*\.ieeg.dat" -type f | rev | sed -r "s|/|_|" | sed -r "s|/|noisseS/|" | rev | xargs -n 1 basename | sed -r "s|${SUB_ID}_||") )
+            y=( $(find "$ORIG_DATA_DIR/D_Data/$TASK/$SUB_ID " -regex ".*$SUB_ID.*\.ieeg.dat") )
             z=${#x[@]}
             if $ZIP ; then
                 for((i=0;i<=$z-1;i+=1));  do gzip -c -6 -v ${y[$i]} > "$OUTPUT_DIR/$SUB_ID/${SUB_ID}_${x[$i]}.gz" ; done
