@@ -3,7 +3,7 @@
 
 ORIG_DATA_DIR="$HOME/Box/CoganLab"
 # OUTPUT_DIR="$ORIG_DATA_DIR/BIDS-1.1_GlobalLocal"
-OUTPUT_DIR="$ORIG_DATA_DIR/BIDS-1.2_GlobalLocal"
+OUTPUT_DIR="$HOME/BIDS-1.2_GlobalLocal"
 TASKS=("GlobalLocal")
 #(D3 D5 D6 D7 D8 D9 D12 D14 D15 D16 D17 D18 D20 D22 D23 D24 D26 D27 D28 D29 D30 D31 D32 D53
 # D57 D59 D60 D61 D65 D66 D69 D70 D71 D72 D73)
@@ -15,8 +15,8 @@ TASKS=("GlobalLocal")
 #BIDS_DIR="$OUTPUT_DIR/$TASK/BIDS"
 for TASK in "${TASKS[@]}"
  do
-    # mapfile -t SUB_IDS < <(find "$ORIG_DATA_DIR/D_Data/$TASK" -maxdepth 1 -type d -name "D*" -exec basename {} \;)
-    SUB_IDS=(D57)
+    mapfile -t SUB_IDS < <(find "$ORIG_DATA_DIR/D_Data/$TASK" -maxdepth 1 -type d -name "D*" -exec basename {} \;)
+    SUB_IDS=(D107A)
     # OUTPUT_DIR="$ORIG_DATA_DIR/$TASK"
     BIDS_DIR="$OUTPUT_DIR/BIDS"
     ZIP=false
