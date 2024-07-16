@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 
-ORIG_DATA_DIR="$HOME/Library/CloudStorage/Box-Box/CoganLab"
+ORIG_DATA_DIR="$HOME/Box/CoganLab"
 # OUTPUT_DIR="$ORIG_DATA_DIR/BIDS-1.1_GlobalLocal"
 OUTPUT_DIR="$ORIG_DATA_DIR/BIDS-1.2_GlobalLocal"
 TASKS=("GlobalLocal")
