@@ -26,7 +26,7 @@
     "binaryEncoding": "float32",
     "headerData": {
       "experiment.mat": "channels.name",
-      "default": "~/Library/CloudStorage/Box-Box/CoganLab/ECoG_Task_Data/Timestamps (MASTER).xlsx",
+      "default": "~/Box/CoganLab/ECoG_Task_Data/Timestamps (MASTER).xlsx",
       "channels": {
         "experiment.mat": "channels"
       },
