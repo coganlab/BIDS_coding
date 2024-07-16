@@ -2,7 +2,7 @@
 
 ORIG_DATA_DIR="$HOME/Box/CoganLab"
 # OUTPUT_DIR="$ORIG_DATA_DIR/BIDS-1.1_GlobalLocal"
-OUTPUT_DIR="$ORIG_DATA_DIR/BIDS-1.2_GlobalLocal"
+OUTPUT_DIR="$HOME/BIDS-1.2_GlobalLocal"
 TASKS=("GlobalLocal")
 
 #(D3 D5 D6 D7 D8 D9 D12 D14 D15 D16 D17 D18 D20 D22 D23 D24 D26 D27 D28 D29 D30 D31 D32 D53
@@ -100,6 +100,10 @@ for TASK in "${TASKS[@]}"
         #find "$ORIG_DATA_DIR/ECoG_Task_Data" -type f -regex "Timestamps [MASTER].xlsx"  -exec cp -v {} "$OUTPUT_DIR/$SUB_ID/${SUB_ID}_timstamps.xlsx" \;
         #the big bad python code to convert the renamed files to BIDS
         #requires numpy, nibabel, and pathlib modules
+
+        # # Create necessary directories before writing files
+        # mkdir -p "$BIDS_DIR/sub-${SUB_ID}/ieeg"
+
         python -m data2bids -c config.json -i "$OUTPUT_DIR/$SUB_ID" -o $BIDS_DIR -v || { echo "BIDS conversion for $SUB_ID failed, trying next subject" ; continue; }
 
 		#rm -rf "$OUTPUT_DIR/$SUB_ID"
