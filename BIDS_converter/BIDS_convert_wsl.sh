@@ -16,7 +16,8 @@ TASKS=("GlobalLocal")
 for TASK in "${TASKS[@]}"
  do
     SUB_IDS=(D110)
-    mapfile -t SUB_IDS < <(find "$ORIG_DATA_DIR/D_Data/$TASK" -maxdepth 1 -type d -name "D*" -exec basename {} \;)
+    #uncomment mapfile line to run for all subjects
+    # mapfile -t SUB_IDS < <(find "$ORIG_DATA_DIR/D_Data/$TASK" -maxdepth 1 -type d -name "D*" -exec basename {} \;)
     # OUTPUT_DIR="$ORIG_DATA_DIR/$TASK"
     BIDS_DIR="$OUTPUT_DIR/BIDS"
     ZIP=false
