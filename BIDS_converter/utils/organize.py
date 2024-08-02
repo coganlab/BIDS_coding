@@ -12,7 +12,7 @@ from numpy import nan
 from .utils import is_number, PathLike, str2num
 
 
-def gather_metadata(mat_files: List[PathLike], labels: List[str] = None) -> pd.DataFrame:
+def gather_metadata(mat_files: List[PathLike]) -> pd.DataFrame:
     df = pd.DataFrame()
     for mat_file in mat_files:
         df_new = mat2df(mat_file)
@@ -36,7 +36,7 @@ def frame2bids(df_in: pd.DataFrame, event_format: Dict[str, str],
     # start_at = df_in[event_format["Events"][0]["onset"]].iloc[
     #         0] / event_format["SampleRate"]
     new_df = reframe_events(df_in, event_format["Events"].copy(),
-                            stim_dir, event_format["SampleRate"])
+                            stim_dir, event_format["SampleRate"], event_format["AudioCorrection"])
 
     for name in ["onset", "duration"]:
         if not (pd.api.types.is_float_dtype(
@@ -55,7 +55,8 @@ def frame2bids(df_in: pd.DataFrame, event_format: Dict[str, str],
 
 
 def reframe_events(df_in: pd.DataFrame, events: Union[list, dict],
-                   stim_dir: PathLike, mat_sample_rate) -> pd.DataFrame:
+                   stim_dir: PathLike, mat_sample_rate,
+                   audio_correction) -> pd.DataFrame:
     df = df_in.copy()
     new_df = None
     if isinstance(events, dict):
@@ -105,37 +106,35 @@ def reframe_events(df_in: pd.DataFrame, events: Union[list, dict],
         if "trial_num" not in temp_df.columns:
             temp_df["trial_num"] = [1 + i for i in list(range(temp_df.shape[0]))]
         temp_df.dropna(axis=0, how="all", subset=["onset", "duration"], inplace=True)
-            # TODO: make code below work for non correction case
-        ''' 
-            if "duration" not in temp_df.columns:
+        # TODO: make code below work for non correction case
+        if "duration" not in temp_df.columns:
             if "stim_file" in temp_df.columns:
                 temp = []
                 t_correct = []
                 for _, fname in temp_df["stim_file"].iteritems():
                     if fname.endswith(".wav"):
-                        if self.stim_dir is not None:
-                            fname = op.join(self.stim_dir, fname)
-                            dir = self.stim_dir
+                        if stim_dir is not None:
+                            fname = op.join(stim_dir, fname)
+                            dir = stim_dir
                         else:
-                            dir = self._data_dir
+                            raise FileNotFoundError("stim_dir required for"
+                            " .wav files")
                         try:
                             frames, data = wavfile.read(fname)
                         except FileNotFoundError as e:
-                            print(fname + " not found in current directory
-                             or in " + dir)
+                            print(fname + " not found in current directory"
+                             "or in " + dir)
                             raise e
                         if audio_correction is not None:
                             correct = audio_correction.set_index(0).squeeze
                             ()[op.basename(
-                                op.splitext(fname)[0])] * self._config["eve
-                                ntFormat"]["SampleRate"]
+                                op.splitext(fname)[0])] * mat_sample_rate
                         else:
                             correct = 0
-                        duration = (data.size / frames) * self._config["eve
-                        ntFormat"]["SampleRate"]
+                        duration = (data.size / frames) * mat_sample_rate
                     else:
-                        raise NotImplementedError("current build only suppo
-                        rts .wav stim files")
+                        raise NotImplementedError("current build only suppo"
+                        "rts .wav stim files")
                     temp.append(duration)
                     t_correct.append(correct)
                 temp_df["duration"] = temp
@@ -147,10 +146,9 @@ def reframe_events(df_in: pd.DataFrame, events: Union[list, dict],
                     temp_df["onset"] = temp_df.eval("onset + correct")
                     temp_df = temp_df.drop(columns=["correct"])
             else:
-                raise LookupError("duration of event or copy of audio file 
-                required but not found in " +
-                                  self._config_path)
-        '''
+                raise LookupError("duration of event or copy of audio file "
+                "required but not found in config file")
+
         temp_df["event_order"] = event_order
         if new_df is None:
             new_df = temp_df
@@ -221,7 +219,7 @@ def check_lower(item: str, string_list: List[str]) -> str:
     raise FileNotFoundError("No stim files match {}".format(item))
 
 
-def trigger_from_excel(filename: PathLike, participant: str) -> Union[int, str]:
+def from_excel(filename: PathLike, participant: str, col: str) -> Union[int, str]:
     """replace trigger channels with trigger label
 
     :param filename:
@@ -234,16 +232,16 @@ def trigger_from_excel(filename: PathLike, participant: str) -> Union[int, str]:
     xls_file = filename
     xls_df = pd.ExcelFile(filename).parse(participant)
 
-    if any("Trigger" in column for column in xls_df):
+    if any(col in column for column in xls_df):
         for column in xls_df:
-            if "Trigger" in column:
+            if col in column:
                 trig_label = xls_df[column].iloc[0]
                 if is_number(trig_label):
                     return int(trig_label)
                 else:
                     return trig_label
     else:
-        raise KeyError("'Trigger' not found in " + xls_file)
+        raise KeyError(f"'{col}' not found in " + xls_file)
 
 
 def match_regexp(config_regexp: Dict[str, Any], filename: PathLike,
@@ -319,32 +317,40 @@ def gen_match_regexp(config_regexp: Dict[str, Any], data: str,
                 newname=newname, given=config_regexp))
 
 
-def make_channels_tsv(file_path: PathLike, task: str, pmatchz: str,
-                      ieeg_config: dict, bids_dir: PathLike, data_types: Dict[str, bool]):
+def sort_by_list(df: pd.DataFrame, ord: list[str], col: str) -> pd.DataFrame:
+    """sorts a dataframe by a list of categories"""
+    df[col] = pd.Categorical(df[col], categories=ord, ordered=True)
+    return df.sort_values(col)
+
+
+def prep_tsv(file_path: PathLike, task: str, pmatchz: str, ieeg_config: dict,
+             bids_dir: PathLike) -> (str, pd.DataFrame):
     df = None
-    for name, var in ieeg_config["channels"].items():
+    for name, var in ieeg_config["headerData"]["channels"].items():
         if name in file_path:
             df = mat2df(file_path, var)
             if "highpass_cutoff" in df.columns.to_list():
                 df = df.rename(columns={"highpass_cutoff": "high_cutoff"})
             if "lowpass_cutoff" in df.columns.to_list():
                 df = df.rename(columns={"lowpass_cutoff": "low_cutoff"})
-    df["type"] = ieeg_config["type"]
-    df["units"] = ieeg_config["units"]
-    df = df.append(
-        {"name": "Trigger", "high_cutoff": 1, "low_cutoff": 1000,
-         "type": "TRIG", "units": "uV"}, ignore_index=True)
+    df["type"] = ieeg_config["type"] #uhhhh wtf is this???
+    df["units"] = ieeg_config["headerData"]["units"]
+    new_row = pd.DataFrame(
+        {"name": ["Trigger"], "high_cutoff": [1], "low_cutoff": [1000],
+         "type": ["TRIG"], "units": ["uV"]})
+    df = pd.concat([df, new_row], ignore_index=True)
     df = pd.concat([df["name"], df["type"], df["units"], df["low_cutoff"],
                     df["high_cutoff"]], axis=1)
     filename = op.join(bids_dir, "sub-{}".format(pmatchz),
                        "sub-" + pmatchz + "_task-{}".format(
                            task) + "_channels.tsv")
-    tsv_all_eeg(filename, df, data_types)
+    return filename, df
 
 
 def tsv_all_eeg(fname: PathLike, df: pd.DataFrame, data_types: Dict[str, bool]):
     """Writes tsv files into each folder containing eeg data
 
+    :param data_types:
     :param fname:
     :type fname:
     :param df:
@@ -359,9 +365,9 @@ def tsv_all_eeg(fname: PathLike, df: pd.DataFrame, data_types: Dict[str, bool]):
         df.to_csv(file_name, sep="\t", index=False)
 
 
-def make_coordsystem(txt_df_dict: Dict[str, Union[pd.DataFrame, str]],
-                     part_match_z: str, bids_dir: PathLike,
-                     data_types: Dict[str, bool]):
+def prep_coordsystem(txt_df_dict: Dict[str, Union[pd.DataFrame, str]],
+                     part_match_z: str, bids_dir: PathLike) -> (
+        str, pd.DataFrame):
     if txt_df_dict["error"] is not None:
         raise txt_df_dict["error"]
     df: pd.DataFrame = txt_df_dict["data"]
@@ -372,9 +378,9 @@ def make_coordsystem(txt_df_dict: Dict[str, Union[pd.DataFrame, str]],
     df = pd.concat(
         [df["name"], df["x"], df["y"], df["z"], df["hemisphere"]], axis=1)
     filename = op.join(bids_dir, "sub-" + part_match_z,
-                       "sub-{}_space-Talairach_electrodes.tsv"
+                       "sub-{}_space-ACPC_electrodes.tsv"
                        "".format(part_match_z))
-    tsv_all_eeg(filename, df, data_types)
+    return filename, df
 
 
 def eval_df(df: pd.DataFrame, exp: str) -> pd.Series:
@@ -391,14 +397,24 @@ def eval_df(df: pd.DataFrame, exp: str) -> pd.Series:
     """
     if exp in df.columns:
         return df[exp].squeeze()
-    for name in [i for i in re.split(r"[ +\-/*%]", exp) if i != '']:
+    fields = [i for i in re.split(r"[ +\-/*%]", exp) if i != '']
+
+    df["SPLITCHAR"] = pd.Series(["/"] * df.shape[0], dtype="string")
+    for name in fields:
         if name in df.columns:
             if is_number(df[name]):
                 df[name] = df[name].astype(float)
+            elif all(f in df.columns for f in fields):
+                out = df[fields.pop(0)].copy()
+                while fields:
+                    out += df[fields.pop(0)].copy().astype(str)
+                return out
             else:
                 df[name] = df[name]
         elif not is_number(name):
-            if len([i for i in re.split(r"[ +\-/*%]", exp) if i != '']) > 1:
+            if len(fields) > 1:
+                df[name] = pd.Series([name] * df.shape[0],
+                                     dtype="string")
                 continue
             return pd.Series([name] * df.shape[0], dtype="string")
         else:
