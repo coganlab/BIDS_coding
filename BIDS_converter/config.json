@@ -78,6 +78,7 @@
       ["NeighborhoodSternberg", "neighborhood_sternberg"],
       ["NeighborhoodSternberg", "SternbergNeighborhood"],
       ["NeighborhoodSternberg", "STERNBERGNEIGHBORHOOD"],
+      ["NeighborhoodSternberg", "NEIGHBORHOOD"],
       ["GlobalLocal", "GLOBALLOCAL"],
       ["GlobalLocal", "GlobalLocal"]
     ]
