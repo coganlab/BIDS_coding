@@ -136,20 +136,10 @@
     },
     "SampleRate": 30000,
     "AudioCorrection": "n/a",
-    "Events": [
-      {
-        "onset": "stimulus",
-        "duration": "0.5 * 30",
-        "trial_num": "trial",
-        "trial_type": "Stimulus + SPLITCHAR + congruency + percIncongruent + SPLITCHAR + switchType + percSwitch + SPLITCHAR + BigLetter + globalStim + SPLITCHAR + SmallLetter + localStim + SPLITCHAR + Task + task + SPLITCHAR + TargetLetter + target + SPLITCHAR + Responded + partResponded + SPLITCHAR + ParticipantResponse + partResp + SPLITCHAR + CorrectResponse + corrResp + SPLITCHAR + TrialCount + trialCount + SPLITCHAR + BlockTrialCount + blockTrialCount + SPLITCHAR + ReactionTime + RT + SPLITCHAR + Accuracy + acc + SPLITCHAR + subject_ID"
-      },
-      {
-        "onset": "response",
-        "duration": "RT",
-        "trial_num": "trial",
-        "trial_type": "Response + SPLITCHAR + congruency + percIncongruent + SPLITCHAR + switchType + percSwitch + SPLITCHAR + BigLetter + globalStim + SPLITCHAR + SmallLetter + localStim + SPLITCHAR + Task + task + SPLITCHAR + TargetLetter + target + SPLITCHAR + Responded + partResponded + SPLITCHAR + ParticipantResponse + partResp + SPLITCHAR + CorrectResponse + corrResp + SPLITCHAR + TrialCount + trialCount + SPLITCHAR + BlockTrialCount + blockTrialCount + SPLITCHAR + ReactionTime + RT + SPLITCHAR + Accuracy + acc + SPLITCHAR + subject_ID"
-      }
-    ]
+    "Events" : [{"onset": "ListenCueOnset","duration": "750 * 30", "trial_num": "Trial","trial_type": "cue"},
+                {"onset": "StimAuditory", "stim_file": "stimulusSounds_name", "trial_num": "Trial", "trial_type": "StimlusCategory"},
+                {"onset": "ProbeAuditory", "stim_file":  "probeSound_name", "trial_num": "Trial", "trial_type": "ProbeCategory"},
+                {"onset": "ResponseOnset", "duration": "100 * 30", "trial_num": "Trial","trial_type": "Response"}]
   },
   "split": {
     "Sep": "all",
