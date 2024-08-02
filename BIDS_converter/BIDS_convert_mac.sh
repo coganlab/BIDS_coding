@@ -1,11 +1,11 @@
 #!/usr/bin/env bash
 
-ORIG_DATA_DIR="$HOME/Library/CloudStorage/Box-Box/CoganLab"
-# OUTPUT_DIR="$ORIG_DATA_DIR/BIDS-1.2_GlobalLocal"
-OUTPUT_DIR="$HOME/Desktop/BIDS-1.2_GlobalLocal"
+ORIG_DATA_DIR="$HOME/Box/CoganLab"
+# OUTPUT_DIR="$ORIG_DATA_DIR/BIDS-1.1_GlobalLocal"
+OUTPUT_DIR="$HOME/Workspace/Neighborhood"
+TASKS=("Neighborhood_Sternberg")
+SUB_IDS=(D59)
 
-TASKS=("GlobalLocal")
-SUB_IDS=(D57)
 
 for TASK in "${TASKS[@]}"
 do
@@ -20,7 +20,10 @@ do
     if [ -d "$BIDS_DIR" ]; then
         rm -rf "$BIDS_DIR"
     fi
-
+    # mkdir -p $BIDS_DIR
+    mkdir -p "$OUTPUT_DIR/stimuli"
+    # shellcheck disable=SC2038
+    find "$ORIG_DATA_DIR/task_stimuli" -iname "Neighborhood_Sternberg" -type d -exec echo "{}/." \; | xargs -I{} cp -afv {} "$OUTPUT_DIR/stimuli/"
     TASKLOWER=$(echo "$TASK" | tr '[:upper:]' '[:lower:]')
 
     for SUB_ID in "${SUB_IDS[@]}"
