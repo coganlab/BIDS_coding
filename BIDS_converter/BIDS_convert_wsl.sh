@@ -17,7 +17,7 @@ SUB_IDS=(D59)
 for TASK in "${TASKS[@]}"
  do
     #uncomment mapfile line to run for all subjects
-    # mapfile -t SUB_IDS < <(find "$ORIG_DATA_DIR/D_Data/$TASK" -maxdepth 1 -type d -name "D*" -exec basename {} \;)
+#    mapfile -t SUB_IDS < <(find "$ORIG_DATA_DIR/D_Data/$TASK" -maxdepth 1 -type d -name "D*" -exec basename {} \;)
     # OUTPUT_DIR="$ORIG_DATA_DIR/$TASK"
     BIDS_DIR="$OUTPUT_DIR/BIDS"
     ZIP=false
@@ -33,9 +33,9 @@ for TASK in "${TASKS[@]}"
         rm -rf $BIDS_DIR
     fi
     # mkdir -p $BIDS_DIR
-    # mkdir -p "$OUTPUT_DIR/stimuli"
+    mkdir -p "$OUTPUT_DIR/stimuli"
     # shellcheck disable=SC2038
-    # find "$ORIG_DATA_DIR/task_stimuli" -iname "sentence_rep" -type d -exec echo "{}/." \; | xargs -I{} cp -afv {} "$OUTPUT_DIR/stimuli/"
+    find "$ORIG_DATA_DIR/task_stimuli" -iname "Neighborhood_Sternberg" -type d -exec echo "{}/." \; | xargs -I{} cp -afv {} "$OUTPUT_DIR/stimuli/"
     TASKLOWER=$(echo $TASK | tr '[:upper:]' '[:lower:]')
     #echo "$ORIG_DATA_DIR/task_stimuli/$TASKLOWER/."
     #cp -av "$ORIG_DATA_DIR/task_stimuli/$TASKLOWER/." "$BIDS_DIR/stimuli/"
