@@ -132,15 +132,15 @@
       "acq": "Rec"
     },
     "Timing": {
-      "start": "ListenCueOnset",
-      "end": "ResponseOnset"
+      "start": "Start",
+      "end": "ProbeAuditory + (ReactionTime * 30000)"
     },
     "SampleRate": 30000,
     "AudioCorrection": "n/a",
-    "Events" : [{"onset": "ListenCueOnset","duration": "750 * 30", "trial_num": "Trial","trial_type": "cue"},
+    "Events" : [{"onset": "Start","duration": "750 * 30", "trial_num": "Trial","trial_type": "cue"},
                 {"onset": "StimAuditory", "stim_file": "stimulusSounds_name", "trial_num": "Trial", "trial_type": "StimulusCategory"},
-                {"onset": "ProbeAuditory", "stim_file":  "probeSound_name", "trial_num": "Trial", "trial_type": "ProbeCategory"},
-                {"onset": "ResponseOnset", "duration": "100 * 30", "trial_num": "Trial","trial_type": "Response"}]
+                {"onset": "Go", "stim_file":  "probeSound_name", "trial_num": "Trial", "trial_type": "ProbeCategory"},
+                {"onset": "Go + (ReactionTime * 30000)", "duration": "100 * 30", "trial_num": "Trial","trial_type": "Response"}]
   },
   "split": {
     "Sep": "all",
