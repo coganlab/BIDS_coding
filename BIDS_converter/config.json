@@ -139,7 +139,7 @@
     },
     "SampleRate": 30000,
     "AudioCorrection": "n/a",
-    "Events" : [{"onset": "Start","duration": "750 * 30", "trial_num": "Trial","trial_type": "cue"},
+    "Events" : [{"onset": "Start","duration": "750 * 30", "trial_num": "trial","trial_type": "MyStartCue + SPLITCHAR + columname"},
                 {"onset": "StimAuditory", "stim_file": "stimulusSounds_name", "trial_num": "Trial", "trial_type": "StimulusCategory"},
                 {"onset": "Go", "stim_file":  "probeSound_name", "trial_num": "Trial", "trial_type": "ProbeCategory"},
                 {"onset": "Go + (ReactionTime * 30000)", "duration": "100 * 30", "trial_num": "Trial","trial_type": "Response"}]
