@@ -80,7 +80,9 @@
       ["NeighborhoodSternberg", "STERNBERGNEIGHBORHOOD"],
       ["NeighborhoodSternberg", "NEIGHBORHOOD"],
       ["GlobalLocal", "GLOBALLOCAL"],
-      ["GlobalLocal", "GlobalLocal"]
+      ["GlobalLocal", "GlobalLocal"],
+      ["AssociativeMemory", "AssociativeMemory"],
+      ["AssociativeMemory", "MEMORY"]
     ]
   },
   "ieeg.loc": {
