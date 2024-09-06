@@ -2,9 +2,9 @@
 
 ORIG_DATA_DIR="$HOME/Box/CoganLab"
 # OUTPUT_DIR="$ORIG_DATA_DIR/BIDS-1.1_GlobalLocal"
-OUTPUT_DIR="$HOME/Workspace/Neighborhood"
-TASKS=("Neighborhood_Sternberg")
-SUB_IDS=(D59)
+OUTPUT_DIR="$HOME/Workspace/Lexical"
+TASKS=("LexicalDecRepDelay")
+SUB_IDS=(D103)
 
 #(D3 D5 D6 D7 D8 D9 D12 D14 D15 D16 D17 D18 D20 D22 D23 D24 D26 D27 D28 D29 D30 D31 D32 D53
 # D57 D59 D60 D61 D65 D66 D69 D70 D71 D72 D73)
@@ -35,7 +35,7 @@ for TASK in "${TASKS[@]}"
     # mkdir -p $BIDS_DIR
     mkdir -p "$OUTPUT_DIR/stimuli"
     # shellcheck disable=SC2038
-    find "$ORIG_DATA_DIR/task_stimuli" -iname "Neighborhood_Sternberg" -type d -exec echo "{}/." \; | xargs -I{} cp -afv {} "$OUTPUT_DIR/stimuli/"
+    find "$ORIG_DATA_DIR/task_stimuli" -iname "LexicalDecRepDelay" -type d -exec echo "{}/." \; | xargs -I{} cp -afv {} "$OUTPUT_DIR/stimuli/"
     TASKLOWER=$(echo $TASK | tr '[:upper:]' '[:lower:]')
     #echo "$ORIG_DATA_DIR/task_stimuli/$TASKLOWER/."
     #cp -av "$ORIG_DATA_DIR/task_stimuli/$TASKLOWER/." "$BIDS_DIR/stimuli/"
