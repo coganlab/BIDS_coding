@@ -17,7 +17,7 @@ SUB_IDS=(D103)
 for TASK in "${TASKS[@]}"
  do
     #uncomment mapfile line to run for all subjects
-    mapfile -t SUB_IDS < <(find "$ORIG_DATA_DIR/D_Data/$TASK" -maxdepth 1 -type d -name "D*" -exec basename {} \;)
+    #mapfile -t SUB_IDS < <(find "$ORIG_DATA_DIR/D_Data/$TASK" -maxdepth 1 -type d -name "D*" -exec basename {} \;) # This line taks all the subjects
     # OUTPUT_DIR="$ORIG_DATA_DIR/$TASK"
     BIDS_DIR="$OUTPUT_DIR/BIDS"
     ZIP=false
