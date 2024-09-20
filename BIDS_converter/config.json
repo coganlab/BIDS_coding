@@ -139,7 +139,7 @@
     "SampleRate": 30000,
     "AudioCorrection": "n/a",
     "Events" : [{"onset": "Start","duration": "750 * 30", "trial_num": "Trial","trial_type": "cue"},
-                {"onset": "Auditory", "duration": "StimEnd_mfa - StimStart_mfa", "trial_num": "Trial", "trial_type": "StimCue"},
+                {"onset": "Auditory", "duration": "StimEnd_mfa - Auditory", "trial_num": "Trial", "trial_type": "StimCue"},
                 {"onset": "Go", "duration":  "750 * 30", "trial_num": "Trial", "trial_type": "go"},
                 {"onset": "ResponseStart", "duration": "ResponseEnd - ResponseStart", "trial_num": "Trial","trial_type": "Resp_err"}]
   },
