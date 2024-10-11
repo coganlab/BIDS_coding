@@ -83,7 +83,8 @@
       ["GlobalLocal", "GLOBALLOCAL"],
       ["GlobalLocal", "GlobalLocal"],
       ["PictureNaming", "PICNAMING"],
-      ["PictureNaming", "Picture Naming"]
+      ["PictureNaming", "Picture Naming"],
+      ["PictureNaming", "Picture_Naming"]
     ]
   },
   "ieeg.loc": {
