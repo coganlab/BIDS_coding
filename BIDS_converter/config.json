@@ -81,7 +81,9 @@
       ["NeighborhoodSternberg", "STERNBERGNEIGHBORHOOD"],
       ["NeighborhoodSternberg", "NEIGHBORHOOD"],
       ["GlobalLocal", "GLOBALLOCAL"],
-      ["GlobalLocal", "GlobalLocal"]
+      ["GlobalLocal", "GlobalLocal"],
+      ["PictureNaming", "PICNAMING"],
+      ["PictureNaming", "Picture Naming"]
     ]
   },
   "ieeg.loc": {
@@ -134,15 +136,14 @@
     },
     "Timing": {
       "start": "Start",
-      "end": "ResponseEnd"
+      "end": "Go"
     },
     "SampleRate": 30000,
     "AudioCorrection": "n/a",
-    "Events" : [{"onset": "Start","duration": "750 * 30", "trial_num": "Trial","trial_type": "Cue_Tag"},
-                {"onset": "Auditory", "duration": "StimEnd_mfa - Auditory", "trial_num": "Trial", "trial_type": "Auditory_Tag"},
-                {"onset": "StimEnd_mfa", "duration": "Go - StimEnd_mfa", "trial_num": "Trial", "trial_type": "Delay_Tag"},
-                {"onset": "Go", "duration":  "750 * 30", "trial_num": "Trial", "trial_type": "Go_Tag"},
-                {"onset": "ResponseStart", "duration": "ResponseEnd - ResponseStart", "trial_num": "Trial","trial_type": "Response_Tag"}]
+    "Events" : [{"onset": "Start","duration": "750 * 30", "trial_num": "Trial","trial_type": "Start"},
+                {"onset": "Auditory", "duration": "ResponseDuration * 30000", "trial_num": "Trial", "trial_type": "Auditory"},
+                {"onset": "Go", "duration":  "750 * 30", "trial_num": "Trial", "trial_type": "Go"},
+                {"onset": "ResponseStart", "duration": "ResponseEnd - ResponseStart", "trial_num": "Trial","trial_type": "Response"}]
   },
   "split": {
     "Sep": "all",
