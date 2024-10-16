@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 ORIG_DATA_DIR="$HOME/Box/CoganLab"
-# OUTPUT_DIR="$ORIG_DATA_DIR/BIDS-1.1_GlobalLocal"
+#OUTPUT_DIR="$ORIG_DATA_DIR/BIDS-1.2_PictureNaming"
 OUTPUT_DIR="$HOME/Workspace/PictureNaming"
 TASKS=("Picture_Naming")
 SUB_IDS=(D107)
@@ -19,7 +19,7 @@ for TASK in "${TASKS[@]}"
     #uncomment mapfile line to run for all subjects
     mapfile -t SUB_IDS < <(find "$ORIG_DATA_DIR/D_Data/$TASK" -maxdepth 1 -type d -name "D*" -exec basename {} \;) # This line taks all the subjects
     # OUTPUT_DIR="$ORIG_DATA_DIR/$TASK"
-    BIDS_DIR="$OUTPUT_DIR/BIDS"
+    BIDS_DIR="$ORIG_DATA_DIR/BIDS-1.2_PictureNaming/BIDS"
     ZIP=false
 
     if [ -d $OUTPUT_DIR ]
