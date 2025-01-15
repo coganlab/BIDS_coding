@@ -76,6 +76,8 @@
       ["LexicalDecRepDelay", "LexDecRep_Delay"],
       ["LexicalDecRepDelay","LexDec_Delay"],
       ["LexicalDecRepDelay", "LexicalDecisionRepeat_Delay"],
+      ["LexicalDecRepNoDelay", "Lexical_NoDelay"],
+      ["LexicalDecRepNoDelay","LEXICALNODELAY"],
       ["NeighborhoodSternberg", "Neighborhood_Sternberg"],
       ["NeighborhoodSternberg", "NeighborhoodSternberg"],
       ["NeighborhoodSternberg", "Neighborhood_sternberg"],
@@ -144,8 +146,6 @@
     "AudioCorrection": "n/a",
     "Events" : [{"onset": "Start","duration": "750 * 30", "trial_num": "Trial","trial_type": "Cue_Tag"},
                 {"onset": "Auditory", "duration": "StimEnd_mfa - Auditory", "trial_num": "Trial", "trial_type": "Auditory_Tag"},
-                {"onset": "StimEnd_mfa", "duration": "Go - StimEnd_mfa", "trial_num": "Trial", "trial_type": "Delay_Tag"},
-                {"onset": "Go", "duration":  "750 * 30", "trial_num": "Trial", "trial_type": "Go_Tag"},
                 {"onset": "ResponseStart", "duration": "ResponseEnd - ResponseStart", "trial_num": "Trial","trial_type": "Response_Tag"}]
   },
   "split": {
