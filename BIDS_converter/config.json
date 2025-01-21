@@ -76,6 +76,8 @@
       ["LexicalDecRepDelay", "LexDecRep_Delay"],
       ["LexicalDecRepDelay","LexDec_Delay"],
       ["LexicalDecRepDelay", "LexicalDecisionRepeat_Delay"],
+      ["Retro_Cue","COGAN_RETROCUE"],
+      ["Retro_Cue","Retro_Cue"],
       ["NeighborhoodSternberg", "Neighborhood_Sternberg"],
       ["NeighborhoodSternberg", "NeighborhoodSternberg"],
       ["NeighborhoodSternberg", "Neighborhood_sternberg"],
@@ -137,15 +139,15 @@
       "acq": "Rec"
     },
     "Timing": {
-      "start": "Start",
+      "start": "audio1Start",
       "end": "ResponseEnd"
     },
     "SampleRate": 30000,
     "AudioCorrection": "n/a",
-    "Events" : [{"onset": "Start","duration": "750 * 30", "trial_num": "Trial","trial_type": "Cue_Tag"},
-                {"onset": "Auditory", "duration": "StimEnd_mfa - Auditory", "trial_num": "Trial", "trial_type": "Auditory_Tag"},
-                {"onset": "StimEnd_mfa", "duration": "Go - StimEnd_mfa", "trial_num": "Trial", "trial_type": "Delay_Tag"},
-                {"onset": "Go", "duration":  "750 * 30", "trial_num": "Trial", "trial_type": "Go_Tag"},
+    "Events" : [{"onset": "audio1Start","duration": "Stim1End_mfa-audio1Start", "trial_num": "Trial","trial_type": "Audio1_Tag"},
+                {"onset": "audio2Start","duration": "Stim2End_mfa-audio2Start", "trial_num": "Trial","trial_type": "Audio2_Tag"},
+                {"onset": "RetroStart", "duration": "RetroEnd - RetroStart", "trial_num": "Trial", "trial_type": "Retrocue_Tag"},
+                {"onset": "GoStart", "duration":  "GoEnd - GoStart", "trial_num": "Trial", "trial_type": "Go_Tag"},
                 {"onset": "ResponseStart", "duration": "ResponseEnd - ResponseStart", "trial_num": "Trial","trial_type": "Response_Tag"}]
   },
   "split": {
