@@ -81,6 +81,7 @@
       ["LexicalDecRepNoDelay", "Lexical_DecRep_Pt2"],
       ["LexicalDecRepNoDelay","Lexical_DecisionRepeat_NoDelay"],
       ["LexicalDecRepNoDelay","LEXICALNODELAY"],
+      ["LexicalDecRepNoDelay","Lexical_No_Delay"],
       ["NeighborhoodSternberg", "Neighborhood_Sternberg"],
       ["NeighborhoodSternberg", "NeighborhoodSternberg"],
       ["NeighborhoodSternberg", "Neighborhood_sternberg"],
@@ -147,7 +148,7 @@
     },
     "SampleRate": 30000,
     "AudioCorrection": "n/a",
-    "Events" : [{"onset": "Start","duration": "750 * 30", "trial_num": "Trial","trial_type": "Cue_Tag"}, // add an item for brightness here.//
+    "Events" : [{"onset": "Start","duration": "750 * 30", "trial_num": "Trial","trial_type": "Cue_Tag"}, 
                 {"onset": "StimStart", "duration": "StimEnd - StimStart", "trial_num": "Trial", "trial_type": "Stimulus_Tag"},
                 {"onset": "Auditory", "duration": "StimEnd_mfa - Auditory", "trial_num": "Trial", "trial_type": "Auditory_Tag"},
                 {"onset": "ResponseStart", "duration": "ResponseEnd - ResponseStart", "trial_num": "Trial","trial_type": "Response_Tag"}]
