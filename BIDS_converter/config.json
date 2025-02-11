@@ -147,7 +147,8 @@
     },
     "SampleRate": 30000,
     "AudioCorrection": "n/a",
-    "Events" : [{"onset": "Start","duration": "750 * 30", "trial_num": "Trial","trial_type": "Cue_Tag"},
+    "Events" : [{"onset": "Start","duration": "750 * 30", "trial_num": "Trial","trial_type": "Cue_Tag"}, // add an item for brightness here.//
+                {"onset": "StimStart", "duration": "StimEnd - StimStart", "trial_num": "Trial", "trial_type": "Stimulus_Tag"},
                 {"onset": "Auditory", "duration": "StimEnd_mfa - Auditory", "trial_num": "Trial", "trial_type": "Auditory_Tag"},
                 {"onset": "ResponseStart", "duration": "ResponseEnd - ResponseStart", "trial_num": "Trial","trial_type": "Response_Tag"}]
   },
