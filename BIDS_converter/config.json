@@ -82,6 +82,8 @@
       ["LexicalDecRepNoDelay","Lexical_DecisionRepeat_NoDelay"],
       ["LexicalDecRepNoDelay","LEXICALNODELAY"],
       ["LexicalDecRepNoDelay","Lexical_No_Delay"],
+      ["LexicalDecRepNoDelay","Lexical_NoDelay"],
+      ["LexicalDecRepNoDelay","LexicalDecRepNoDelay"],
       ["NeighborhoodSternberg", "Neighborhood_Sternberg"],
       ["NeighborhoodSternberg", "NeighborhoodSternberg"],
       ["NeighborhoodSternberg", "Neighborhood_sternberg"],
