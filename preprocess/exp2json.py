@@ -83,5 +83,5 @@ for task in TASKS:
 
                     data = {"channels": names, "dtype": dtype, "trigger": trig}
 
-                    updateJsonFile("subjects.json", data, task, sub)
+                    updateJsonFile("../subjects.json", data, task, sub)
 
