@@ -4,7 +4,7 @@ pydicom
 bids>=0.0
 exrex
 matplotlib
-pyqt5
+# pyqt5
 pyEDFlib
 matgrab
 pytest

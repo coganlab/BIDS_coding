@@ -10,5 +10,6 @@ dependencies:
   - scipy
   - numpy
   - pandas
+  - spyder
   - pip:
     - -r requirements.txt
