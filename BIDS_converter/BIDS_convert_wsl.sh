@@ -31,7 +31,7 @@ for TASK in "${TASKS[@]}"
     # mkdir -p $BIDS_DIR
     mkdir -p "$OUTPUT_DIR/stimuli"
     # shellcheck disable=SC2038
-    find "$ORIG_DATA_DIR/task_stimuli" -iname "LexicalDecRepDelay" -type d -exec echo "{}/." \; | xargs -I{} cp -afv {} "$OUTPUT_DIR/stimuli/"
+    find "$ORIG_DATA_DIR/task_stimuli" -iname "Lexical_Delay" -type d -exec echo "{}/." \; | xargs -I{} cp -afv {} "$OUTPUT_DIR/stimuli/"
     TASKLOWER=$(echo $TASK | tr '[:upper:]' '[:lower:]')
     #echo "$ORIG_DATA_DIR/task_stimuli/$TASKLOWER/."
     #cp -av "$ORIG_DATA_DIR/task_stimuli/$TASKLOWER/." "$BIDS_DIR/stimuli/"
@@ -45,6 +45,13 @@ for TASK in "${TASKS[@]}"
         # Echo the SUB_ID to check if it's working
         echo "Processing subject ID: $SUB_ID"
 
+        # Special case: D139 uses D139A for Recon data
+        if [ "$SUB_ID" == "D139" ]; then
+            RECON_ID="D139A"
+        else
+            RECON_ID="$SUB_ID"
+        fi
+
         if [ -d "$OUTPUT_DIR/$SUB_ID" ]
         then
             # shellcheck disable=SC2115
@@ -53,14 +60,14 @@ for TASK in "${TASKS[@]}"
         mkdir -p "$OUTPUT_DIR/$SUB_ID"
 #
         #CT scan .nii
-        find "$ORIG_DATA_DIR/ECoG_Recon_Full/$SUB_ID/elec_recon" -name "postimpRaw.nii.gz" -type f -exec cp -v {} "$OUTPUT_DIR/$SUB_ID/${SUB_ID}_CT.nii.gz" \;
-        find "$ORIG_DATA_DIR/ECoG_Recon_Full/$SUB_ID/elec_recon" -regex ".*\($SUB_ID.*CT.*\)\|\(postimpRaw\)\.nii" -type f -exec cp -v {} "$OUTPUT_DIR/$SUB_ID/${SUB_ID}_CT.nii" \;
+        find "$ORIG_DATA_DIR/ECoG_Recon_Full/$RECON_ID/elec_recon" -name "postimpRaw.nii.gz" -type f -exec cp -v {} "$OUTPUT_DIR/$SUB_ID/${SUB_ID}_CT.nii.gz" \;
+        find "$ORIG_DATA_DIR/ECoG_Recon_Full/$RECON_ID/elec_recon" -regex ".*\($RECON_ID.*CT.*\)\|\(postimpRaw\)\.nii" -type f -exec cp -v {} "$OUTPUT_DIR/$SUB_ID/${SUB_ID}_CT.nii" \;
         #electrode locations .txt
-#        find "$(dirname $ORIG_DATA_DIR)/ECoG_Recon/$SUB_ID/elec_recon" -name "${SUB_ID}_elec_locations_RAS.txt" -type f -exec cp -v {} "$OUTPUT_DIR/$SUB_ID/" \;
-        find "$(dirname $ORIG_DATA_DIR)/ECoG_Recon/$SUB_ID/elec_recon" -regex ".*${SUB_ID}_elec_locations_RAS_.*\.txt" -type f -exec cp -v {} "$OUTPUT_DIR/$SUB_ID/" \;
+#        find "$(dirname $ORIG_DATA_DIR)/ECoG_Recon/$RECON_ID/elec_recon" -name "${RECON_ID}_elec_locations_RAS.txt" -type f -exec cp -v {} "$OUTPUT_DIR/$SUB_ID/" \;
+        find "$(dirname $ORIG_DATA_DIR)/ECoG_Recon/$RECON_ID/elec_recon" -regex ".*${RECON_ID}_elec_locations_RAS_.*\.txt" -type f -exec cp -v {} "$OUTPUT_DIR/$SUB_ID/" \;
         #T1 MRI file .mgz
-        find "$ORIG_DATA_DIR/ECoG_Recon_Full/$SUB_ID/elec_recon" -name "T1.nii.gz" -type f -exec cp -vn {} "$OUTPUT_DIR/$SUB_ID/${SUB_ID}_T1w.nii.gz" \; | head -1
-        find "$ORIG_DATA_DIR/ECoG_Recon_Full/$SUB_ID/elec_recon" -name "T1.nii.gz" -type f -exec rsync -P {} "$OUTPUT_DIR/$SUB_ID/${SUB_ID}_T1w.nii.gz" \; | head -1
+        find "$ORIG_DATA_DIR/ECoG_Recon_Full/$RECON_ID/elec_recon" -name "T1.nii.gz" -type f -exec cp -vn {} "$OUTPUT_DIR/$SUB_ID/${SUB_ID}_T1w.nii.gz" \; | head -1
+        find "$ORIG_DATA_DIR/ECoG_Recon_Full/$RECON_ID/elec_recon" -name "T1.nii.gz" -type f -exec rsync -P {} "$OUTPUT_DIR/$SUB_ID/${SUB_ID}_T1w.nii.gz" \; | head -1
         #stim file corrections
         if [ $TASK == "Phoneme_Sequencing" ]
         then

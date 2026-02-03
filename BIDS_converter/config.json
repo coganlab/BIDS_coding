@@ -1,5 +1,5 @@
 {
-  "dataFormat": [".nii", ".nii.gz", ".gz", ".edf", ".edf.gz", ".mgz", ".txt", ".mat"],
+  "dataFormat": [".nii", ".nii.gz", ".gz", ".edf", ".edf.gz", ".mgz", ".txt", ".mat", ".dat", ".dat.gz", ".ieeg.dat"],
   "compress": true,
   "compressLevel": 6,
   "repetitionTimeInSec": 2,
@@ -22,8 +22,13 @@
       ["ieeg", ".dat.gz"],
       ["ieeg", ".edf.gz"]
     ],
-    "binary?": false,
+    "binary?": true,
     "binaryEncoding": "float32",
+    "type": "ECOG",
+    "units": "uV",
+    "channels": {
+      "experiment.mat": "channels"
+    },
     "headerData": {
       "experiment.mat": "channels.name",
       "default": "~/Box/CoganLab/ECoG_Task_Data/Timestamps (MASTER).xlsx",
@@ -76,6 +81,14 @@
       ["LexicalDecRepDelay", "LexDecRep_Delay"],
       ["LexicalDecRepDelay","LexDec_Delay"],
       ["LexicalDecRepDelay", "LexicalDecisionRepeat_Delay"],
+      ["LexicalDecRepNoDelay", "Lexical_NoDelay"],
+      ["LexicalDecRepNoDelay", "Lexical_DecRep_Pt1"],
+      ["LexicalDecRepNoDelay", "Lexical_DecRep_Pt2"],
+      ["LexicalDecRepNoDelay","Lexical_DecisionRepeat_NoDelay"],
+      ["LexicalDecRepNoDelay","LEXICALNODELAY"],
+      ["LexicalDecRepNoDelay","Lexical_No_Delay"],
+      ["LexicalDecRepNoDelay","Lexical_NoDelay"],
+      ["LexicalDecRepNoDelay","LexicalDecRepNoDelay"],
       ["NeighborhoodSternberg", "Neighborhood_Sternberg"],
       ["NeighborhoodSternberg", "NeighborhoodSternberg"],
       ["NeighborhoodSternberg", "Neighborhood_sternberg"],

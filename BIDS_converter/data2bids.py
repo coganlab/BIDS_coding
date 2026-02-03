@@ -872,7 +872,7 @@ class Data2Bids:  # main conversion and file organization program
                 array = np.reshape(data, [len(headers_dict), -1], order='F')
                 # byte order is Fortran encoding, dont know why
                 signal_headers = highlevel.make_signal_headers(
-                    headers_dict, sample_rate=self.sample_rate[part_match],
+                    headers_dict, sample_frequency=self.sample_rate[part_match],
                     physical_max=np.amax(array), physical_min=(np.amin(array)))
                 print("converting binary" + source + " to edf" +
                       op.splitext(source)[0] + ".edf")
@@ -911,7 +911,7 @@ class Data2Bids:  # main conversion and file organization program
         new_name, file_path, part_match = self.generate_names(
             old_name, verbose=False)[0:3]
         for signal_header in signal_headers:
-            signal_header["sample_rate"] = self.sample_rate[part_match]
+            # signal_header["sample_rate"] = self.sample_rate[part_match]
             signal_header["sample_frequency"] = self.sample_rate[part_match]
 
         pattern = new_name.split("_ieeg", 1)[0] + "(?:_acq-" + \
@@ -921,8 +921,10 @@ class Data2Bids:  # main conversion and file organization program
                 pattern, f)):
             full_file = op.join(file_path, file)
             self.rewrite_tsv(full_file, part_match)
-            num_list = org.get_timing_from_tsv(full_file, signal_headers[
-                0]["sample_rate"])
+            # num_list = org.get_timing_from_tsv(full_file, signal_headers[
+            #     0]["sample_frequency"], correct)
+            num_list = org.get_timing_from_tsv(full_file,
+                                             self.sample_rate[part_match])
             start_nums.append(tuple(num_list))
             matches.append(re.match(pattern, file))
         for i in range(len(start_nums)):
@@ -966,7 +968,7 @@ class Data2Bids:  # main conversion and file organization program
     def rewrite_tsv(self, tsv_name: PathLike, part_match: str):
         df = pd.read_csv(tsv_name, sep="\t", header=0)
         os.remove(tsv_name)
-        df.replace("[]", np.NaN, inplace=True)
+        df.replace("[]", np.nan, inplace=True)
 
         # all other column manipulation and math in frame2bids
         df_new = org.frame2bids(df, self._config["eventFormat"],
