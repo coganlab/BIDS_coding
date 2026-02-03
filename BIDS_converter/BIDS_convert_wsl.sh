@@ -5,7 +5,7 @@ ORIG_DATA_DIR="$HOME/Box/CoganLab"
 OUTPUT_DIR="$HOME/Workspace/Lexical"
 TASKS=("LexicalDecRepDelay")
 # SUB_IDS=(D42 D44 D47)
-SUB_IDS=(D127)
+SUB_IDS=(D132 D134 D135 D137 D139 D140)
 
 #declare -l mylist[30]
 
@@ -31,7 +31,7 @@ for TASK in "${TASKS[@]}"
     # mkdir -p $BIDS_DIR
     mkdir -p "$OUTPUT_DIR/stimuli"
     # shellcheck disable=SC2038
-    find "$ORIG_DATA_DIR/task_stimuli" -iname "Lexical_Delay" -type d -exec echo "{}/." \; | xargs -I{} cp -afv {} "$OUTPUT_DIR/stimuli/"
+    find "$ORIG_DATA_DIR/task_stimuli" -iname "LexicalDecRepDelay" -type d -exec echo "{}/." \; | xargs -I{} cp -afv {} "$OUTPUT_DIR/stimuli/"
     TASKLOWER=$(echo $TASK | tr '[:upper:]' '[:lower:]')
     #echo "$ORIG_DATA_DIR/task_stimuli/$TASKLOWER/."
     #cp -av "$ORIG_DATA_DIR/task_stimuli/$TASKLOWER/." "$BIDS_DIR/stimuli/"
