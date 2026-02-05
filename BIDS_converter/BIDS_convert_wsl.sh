@@ -5,7 +5,7 @@ ORIG_DATA_DIR="$HOME/Box/CoganLab"
 OUTPUT_DIR="$HOME/Workspace/Lexical"
 TASKS=("LexicalDecRepDelay")
 # SUB_IDS=(D42 D44 D47)
-SUB_IDS=(D132 D134 D135 D137 D139 D140)
+SUB_IDS=(D129)
 
 #declare -l mylist[30]
 
